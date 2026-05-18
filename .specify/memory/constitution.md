@@ -1,50 +1,116 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+==============================================================================
+同步影響報告
+==============================================================================
+版本變更：[空白模板] → 1.0.0
+修改原則：無（首次建立）
+新增章節：
+  - 核心原則（5 條）
+  - 技術標準
+  - 開發工作流程
+  - 治理規則
+移除章節：無
+模板更新狀態：
+  - .specify/templates/plan-template.md ✅ 已確認（Constitution Check 區塊無需修改）
+  - .specify/templates/spec-template.md ✅ 已確認（語言原則已透過憲法傳達）
+  - .specify/templates/tasks-template.md ✅ 已確認（任務分類無需修改）
+後續待辦：
+  - 確認具體技術堆疊（語言/框架）後，可修訂技術標準章節
+  - 建立後端/前端資料夾結構後，更新專案結構慣例
+==============================================================================
+-->
 
-## Core Principles
+# 課程出勤點名系統憲法
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+## 核心原則
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### I. 文件語言規範（不可妥協）
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+所有規格、計畫與使用者面向文件 **必須** 以繁體中文（zh-TW）撰寫。
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+- 功能規格（spec.md）、實作計畫（plan.md）、任務清單（tasks.md）MUST 以繁體中文撰寫
+- 使用者介面文字、錯誤訊息、說明文件 MUST 以繁體中文呈現
+- 程式碼內部識別字（變數名、函式名）可使用英文
+- 程式碼行內註解可使用英文，但公開 API 文件 MUST 提供繁體中文說明
+- 任何 AI 協作產出的文件若非繁體中文，視為違規，須立即修正
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+**理由**：本系統的主要使用者（教師、學生、行政人員）以繁體中文為母語，清晰的中文文件可降低誤解風險，提升協作效率。
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+### II. 使用者優先設計
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+系統設計 MUST 以教師與學生的實際操作情境為核心，功能以最直觀易用的方式實現。
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+- 每項功能 MUST 能以「教師視角」與「學生視角」各自獨立描述
+- 新功能 MUST 附有真實使用情境（User Story），說明誰、在什麼情況下、如何使用
+- 介面流程 MUST 盡量減少操作步驟，避免強迫使用者記憶系統狀態
+- 功能範圍 MUST 優先考慮核心出勤管理需求，非核心需求延後或列為選配
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+**理由**：過度複雜的系統會導致教師拒絕使用，造成點名資料缺漏，喪失建置系統的根本價值。
 
-## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
+### III. 測試驅動開發（強制執行）
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+測試 MUST 先於實作撰寫，並依循紅燈-綠燈-重構循環。
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+- 流程 MUST 為：撰寫測試 → 使用者確認測試情境 → 確認測試失敗（紅燈）→ 實作功能 → 測試通過（綠燈）→ 重構
+- 整合測試 MUST 涵蓋：新功能契約測試、跨元件通訊、共用資料結構變更
+- 不得為了讓測試通過而修改測試本身（除非需求本身已變更）
+- 每個 User Story 在標記完成前 MUST 有對應的可執行測試
+
+**理由**：出勤資料具有法律效力意涵（如出席率、成績計算），資料正確性不容妥協，測試先行可防止回歸錯誤。
+
+### IV. 資料安全與隱私保護
+
+學生出勤資料屬敏感個人資訊，MUST 依最小權限原則處理與存取。
+
+- 存取控制 MUST 明確區分角色：管理員、教師、學生，各自僅能存取其權限範圍內的資料
+- 學生個人資料（姓名、學號、出勤紀錄）MUST 不得在未授權情況下對外揭露
+- 資料保留政策 MUST 在規格中明確定義（例如：學期結束後保留年限）
+- 系統 MUST 記錄關鍵操作的稽核日誌（誰、何時、異動了什麼）
+
+**理由**：出勤紀錄涉及學生隱私與學校法規遵循義務，未妥善保護可能造成法律風險與信任損失。
+
+### V. 簡潔性（YAGNI 原則）
+
+系統 MUST 以最簡單的方式滿足當下已確認的需求，不為假設性的未來需求預先設計。
+
+- 每項設計決策 MUST 能對應到已確認的使用者需求或技術約束
+- 若引入額外複雜度，MUST 在計畫文件中說明理由，並記錄於複雜度追蹤表
+- 重構 SHOULD 在功能穩定後進行，而非邊開發邊重構
+- 「因為將來可能需要」不構成引入抽象層或額外依賴的充分理由
+
+**理由**：避免過度工程化，讓小型團隊能維持開發速度，並降低維護負擔。
+
+## 技術標準
+
+本節定義技術選型的原則性約束。具體技術堆疊應在各功能的實作計畫（plan.md）中確認。
+
+- 技術選型 MUST 優先考慮團隊熟悉度與社群活躍度，避免引入孤立的技術依賴
+- 前後端介面 MUST 採用明確定義的契約（如 OpenAPI 規格或 GraphQL Schema），並以繁體中文描述各端點的業務語義
+- 資料庫結構變更 MUST 透過版本化遷移腳本管理，不得直接修改生產資料庫
+- 外部服務整合（如身份驗證、推播通知）MUST 在規格中評估替代方案，並說明選擇理由
+- 效能目標 MUST 在規格中以可量測的指標定義（例如：點名頁面載入時間 < 2 秒）
+
+## 開發工作流程
+
+本節定義功能從構想到上線的標準流程。
+
+- 每項新功能 MUST 依序完成：`/speckit-specify` → `/speckit-clarify`（視需要）→ `/speckit-plan` → `/speckit-tasks` → `/speckit-implement`
+- 規格文件（spec.md）MUST 在計畫（plan.md）開始前由使用者確認
+- 任務清單（tasks.md）MUST 按 User Story 優先序排列，確保 P1 功能可獨立交付
+- 程式碼審查 MUST 驗證是否符合本憲法各項原則，尤其是語言規範與測試覆蓋
+- 每個任務完成後 SHOULD 提交一個獨立的 Git commit，訊息以繁體中文或英文撰寫皆可，但須清楚描述變更內容
+
+## 治理
+
+本憲法凌駕於所有其他開發慣例之上。若有衝突，以本憲法為準。
+
+- 憲法修訂 MUST 透過 `/speckit-constitution` 指令執行，並記錄版本變更與修訂理由
+- 修訂類型依語意版本規則決定：
+  - **MAJOR**：不相容的原則移除或重新定義
+  - **MINOR**：新增原則或章節，或實質擴充現有指引
+  - **PATCH**：文字澄清、措辭調整、錯字修正
+- 所有 PR 審查 MUST 確認變更符合本憲法，不符合者應在合併前修正或記錄例外理由
+- 若因特殊情況需要偏離憲法原則，MUST 在對應的計畫文件的「複雜度追蹤」表格中記錄說明
+- 本專案的開發指引文件為 `CLAUDE.md`（Claude Code）及 `AGENTS.md`（Codex），兩者內容 MUST 與本憲法保持一致
+
+**Version**: 1.0.0 | **Ratified**: 2026-05-18 | **Last Amended**: 2026-05-18
