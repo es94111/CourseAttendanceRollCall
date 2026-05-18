@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Skill(speckit-constitution)",
-      "PowerShell(& \"D:\\\\SynologyDrive\\\\web\\\\CourseAttendanceRollCall\\\\.specify\\\\extensions\\\\git\\\\scripts\\\\powershell\\\\create-new-feature.ps1\" -Json -ShortName \"course-attendance-rollcall\" \"課程點名系統：QR Code點名、Google登入、出席統計\")"
+      "PowerShell(& \"D:\\\\SynologyDrive\\\\web\\\\CourseAttendanceRollCall\\\\.specify\\\\extensions\\\\git\\\\scripts\\\\powershell\\\\create-new-feature.ps1\" -Json -ShortName \"course-attendance-rollcall\" \"課程點名系統：QR Code點名、Google登入、出席統計\")",
+      "PowerShell(.specify/scripts/powershell/check-prerequisites.ps1 -Json -PathsOnly)",
+      "Bash(powershell -File \".specify/scripts/powershell/check-prerequisites.ps1\" -Json -PathsOnly)",
+      "PowerShell(.\\\\.specify\\\\scripts\\\\powershell\\\\check-prerequisites.ps1 -Json -PathsOnly)"
     ]
   }
 }
