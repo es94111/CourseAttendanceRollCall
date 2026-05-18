@@ -5,7 +5,14 @@
       "PowerShell(& \"D:\\\\SynologyDrive\\\\web\\\\CourseAttendanceRollCall\\\\.specify\\\\extensions\\\\git\\\\scripts\\\\powershell\\\\create-new-feature.ps1\" -Json -ShortName \"course-attendance-rollcall\" \"課程點名系統：QR Code點名、Google登入、出席統計\")",
       "PowerShell(.specify/scripts/powershell/check-prerequisites.ps1 -Json -PathsOnly)",
       "Bash(powershell -File \".specify/scripts/powershell/check-prerequisites.ps1\" -Json -PathsOnly)",
-      "PowerShell(.\\\\.specify\\\\scripts\\\\powershell\\\\check-prerequisites.ps1 -Json -PathsOnly)"
+      "PowerShell(.\\\\.specify\\\\scripts\\\\powershell\\\\check-prerequisites.ps1 -Json -PathsOnly)",
+      "Bash(powershell -File \".specify/scripts/powershell/setup-plan.ps1\" -Json)",
+      "Bash(powershell -File \".specify/scripts/powershell/setup-tasks.ps1\" -Json)",
+      "Skill(speckit-analyze)",
+      "Bash(powershell -File \".specify/scripts/powershell/check-prerequisites.ps1\" -Json -RequireTasks -IncludeTasks)",
+      "Bash(powershell -Command ' *)",
+      "Bash(powershell -Command 'Select-String -Path '\\\\''specs\\\\001-course-attendance-rollcall\\\\plan.md'\\\\'' -Pattern '\\\\''statistics|students.*data'\\\\'' | ForEach-Object { Write-Host $_.LineNumber'\\\\'': '\\\\''$_.Line.Trim\\(\\) }')",
+      "PowerShell(& \"D:\\\\SynologyDrive\\\\web\\\\CourseAttendanceRollCall\\\\.specify\\\\scripts\\\\powershell\\\\check-prerequisites.ps1\" -Json -RequireTasks -IncludeTasks 2>&1)"
     ]
   }
 }
