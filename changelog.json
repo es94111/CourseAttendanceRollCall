@@ -22,6 +22,22 @@
         {
           "tag": "new",
           "text": "完成首頁自動導向登入頁的流程，未登入的使用者打開系統時會直接進入登入畫面。"
+        },
+        {
+          "tag": "fix",
+          "text": "修正部署至反向代理（如自訂網域）後 Google 登入顯示 Server error／UntrustedHost 的問題，Auth.js 現在會正確信任部署網域。"
+        },
+        {
+          "tag": "new",
+          "text": "Docker 容器啟動時會自動執行資料庫遷移（prisma migrate deploy），首次部署或升級時無需手動操作即可直接登入使用。"
+        },
+        {
+          "tag": "new",
+          "text": "README 新增完整 Docker 部署指南，包含 docker-compose 一鍵啟動、自建 image 上正式環境、Google OAuth 設定、CI/CD 流程與常見錯誤對照表。"
+        },
+        {
+          "tag": "new",
+          "text": ".env.example 補上每個環境變數的用途說明、密鑰生成指令與 Google Cloud Console 設定步驟，降低初次部署門檻。"
         }
       ]
     }

@@ -37,8 +37,7 @@ COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=builder /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
-RUN printf '#!/bin/sh\nset -e\necho "[entrypoint] Running prisma migrate deploy..."\nnode_modules/.bin/prisma migrate deploy --schema=prisma/schema.prisma\necho "[entrypoint] Starting: $*"\nexec "$@"\n' > /usr/local/bin/entrypoint.sh \
+RUN printf '#!/bin/sh\nset -e\necho "[entrypoint] Running prisma migrate deploy..."\nnode ./node_modules/prisma/build/index.js migrate deploy --schema=prisma/schema.prisma\necho "[entrypoint] Starting: $*"\nexec "$@"\n' > /usr/local/bin/entrypoint.sh \
  && chmod +x /usr/local/bin/entrypoint.sh \
  && mkdir -p logs
 EXPOSE 3000
