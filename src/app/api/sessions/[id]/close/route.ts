@@ -1,0 +1,13 @@
+import { prisma } from "@/lib/prisma"
+import { handleRouteError, json, requireAdmin } from "@/lib/api"
+
+export async function POST(_request: Request, { params }: any) {
+  const guard = await requireAdmin()
+  if ("response" in guard) return guard.response
+  try {
+    await prisma.attendanceSession.update({ where: { id: params.id }, data: { status: "closed" } })
+    return json({ message: "點名已關閉" })
+  } catch (cause) {
+    return handleRouteError(cause)
+  }
+}

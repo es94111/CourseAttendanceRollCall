@@ -20,13 +20,13 @@
 
 **Purpose**: 建立專案骨架與基礎工具配置
 
-- [ ] T001 建立 Next.js App Router 專案，安裝 next、next-auth、@auth/prisma-adapter、@prisma/client、prisma、qrcode、csv-stringify、zod、winston、winston-daily-rotate-file，根目錄為 `./`
-- [ ] T002 [P] 配置 TypeScript（tsconfig.json）、ESLint（eslint.config.mjs）、Prettier（.prettierrc）
-- [ ] T003 [P] 配置 Tailwind CSS（tailwind.config.ts）與初始化 shadcn/ui（components.json）
-- [ ] T004 [P] 建立 Docker 容器配置（docker/Dockerfile、docker/docker-compose.yml），含 PostgreSQL healthcheck、logs Volume 掛載，以及 `TZ=Asia/Taipei` 環境變數設定（確保 Node.js 進程使用 UTC+8，TC-007）；docker-compose.yml 需包含 PostgreSQL data Volume 掛載的健康驗證設定，確保容器重啟後資料不遺失（FR-025）
-- [ ] T005 [P] 建立環境變數範本（.env.example），含 DATABASE_URL、NEXTAUTH_URL、NEXTAUTH_SECRET、GOOGLE_CLIENT_ID、GOOGLE_CLIENT_SECRET、QR_SECRET、ADMIN_EMAILS、`TZ=Asia/Taipei`（TC-007 UTC+8 固定時區）
-- [ ] T006 [P] 建立共用型別定義（src/types/index.ts），含 UserRole、CourseStatus、SessionStatus、AttendanceStatus、AuditEventType（值：`export_attendance | manual_attendance_override | leave_record_add | void_session | role_change | delete_student_data | session_opened`）及所有 API 回應型別（L1、L5）
-- [ ] T007 [P] 配置 Vitest 測試框架（vitest.config.ts），設定 supertest 整合測試環境與測試目錄結構（tests/unit/、tests/integration/、tests/contract/）
+- [X] T001 建立 Next.js App Router 專案，安裝 next、next-auth、@auth/prisma-adapter、@prisma/client、prisma、qrcode、csv-stringify、zod、winston、winston-daily-rotate-file，根目錄為 `./`
+- [X] T002 [P] 配置 TypeScript（tsconfig.json）、ESLint（eslint.config.mjs）、Prettier（.prettierrc）
+- [X] T003 [P] 配置 Tailwind CSS（tailwind.config.ts）與初始化 shadcn/ui（components.json）
+- [X] T004 [P] 建立 Docker 容器配置（docker/Dockerfile、docker/docker-compose.yml），含 PostgreSQL healthcheck、logs Volume 掛載，以及 `TZ=Asia/Taipei` 環境變數設定（確保 Node.js 進程使用 UTC+8，TC-007）；docker-compose.yml 需包含 PostgreSQL data Volume 掛載的健康驗證設定，確保容器重啟後資料不遺失（FR-025）
+- [X] T005 [P] 建立環境變數範本（.env.example），含 DATABASE_URL、NEXTAUTH_URL、NEXTAUTH_SECRET、GOOGLE_CLIENT_ID、GOOGLE_CLIENT_SECRET、QR_SECRET、ADMIN_EMAILS、`TZ=Asia/Taipei`（TC-007 UTC+8 固定時區）
+- [X] T006 [P] 建立共用型別定義（src/types/index.ts），含 UserRole、CourseStatus、SessionStatus、AttendanceStatus、AuditEventType（值：`export_attendance | manual_attendance_override | leave_record_add | void_session | role_change | delete_student_data | session_opened`）及所有 API 回應型別（L1、L5）
+- [X] T007 [P] 配置 Vitest 測試框架（vitest.config.ts），設定 supertest 整合測試環境與測試目錄結構（tests/unit/、tests/integration/、tests/contract/）
 
 ---
 
@@ -36,21 +36,21 @@
 
 **⚠️ CRITICAL**: 此 Phase 完成前，任何 User Story 均不得開始實作
 
-- [ ] T008 依照 data-model.md 定義完整 Prisma Schema（prisma/schema.prisma），含 User（`role` 欄位**預設值設為 `student`**，FR-005c）、Account、Session、VerificationToken（NextAuth 所需）、Student、Course、CourseEnrollment、AttendanceSession、AttendanceRecord、LeaveRecord、AuditLog 及所有 Enum；DateTime 欄位統一以 **UTC 儲存**，顯示層負責轉換 UTC+8（TC-007）
-- [ ] T009 執行初始 Prisma Migration 建立所有資料庫資料表與索引（prisma/migrations/），包含 `(course_id, status)` 複合索引、`(session_id, student_id)` 唯一索引等
-- [ ] T010 [P] 實作 Prisma Client 單例，防止開發模式熱重載產生多餘連線（src/lib/prisma.ts）
-- [ ] T010a [P] 撰寫 HMAC Token 單元測試骨架（tests/unit/lib/hmac.test.ts）：涵蓋 generateToken 結構驗證、verifyToken 正確 Token、過期 Token、竄改 Token、寬限期邊界（gracePeriodSeconds）；此時實作不存在，確認所有測試紅燈後再進行 T011/T012
-- [ ] T011 [P] 實作 HMAC Token 簽發工具：`generateToken(sessionId)` 產生 base64url 簽名 Token（payload = `${sessionId}:${slot}`，slot = Math.floor(Date.now()/15000)）（src/lib/hmac.ts）
-- [ ] T012 [P] 實作 HMAC Token 驗簽工具：`verifyToken(token, gracePeriodSeconds)` 使用 crypto.timingSafeEqual 比對，驗證時間槽與寬限期（src/lib/hmac.ts，與 T011 同檔）
-- [ ] T013 [P] 實作 Winston 結構化 JSON 日誌，含 DailyRotateFile（90 天保留，單檔 100MB 上限）（src/lib/logger.ts）
-- [ ] T014a [P] 撰寫 NextAuth signIn callback 單元測試（tests/unit/lib/auth.test.ts），涵蓋：(1) Email 命中 `ADMIN_EMAILS` 白名單 → `role=admin`；(2) Email 未命中、首次登入 → `role=student`；(3) 既有使用者再次登入 → 不覆寫現有 role（驗證 admin/student 各自情境）；(4) `ADMIN_EMAILS` 為空字串或未設定 → 所有新使用者皆為 `student`；(5) Email 比對大小寫不敏感；確認紅燈後再進行 T014（FR-005b/c，CG3）
-- [ ] T014 實作 NextAuth.js 設定：Google OAuth Provider、Prisma Adapter、Database Session 策略；signIn callback 邏輯（FR-005b/c）：(1) email 在 ADMIN_EMAILS → 設定 `role=admin`；(2) **新使用者不在白名單 → 明確設定 `role=student`**（User.role schema 預設值為 `student`，此處確保 callback 覆寫邏輯正確，避免 null role 導致學生無法路由）；(3) 既有使用者保留現有 role 不覆寫；session/jwt callback 傳遞 role 欄位至前端（src/lib/auth.ts）
-- [ ] T015 [P] 建立 NextAuth Route Handler（src/app/api/auth/[...nextauth]/route.ts）
-- [ ] T016 [P] 實作稽核日誌雙軌寫入工具 `writeAuditLog(event)`：同時寫入 AuditLog 資料庫表與 JSON 日誌檔案（src/lib/audit.ts）
-- [ ] T017 建立 Root Layout，含 SessionProvider（src/app/layout.tsx）
-- [ ] T018 建立共用登入頁面，含 Google OAuth 登入按鈕，登入後依 role 自動導向（src/app/login/page.tsx）
-- [ ] T019 [P] 建立管理員 Layout，含 role=admin 授權檢查，未授權重導向 /login（src/app/(admin)/layout.tsx）
-- [ ] T020 [P] 建立學生 Layout，含 role=student 授權檢查，未授權重導向 /login（src/app/(student)/layout.tsx）
+- [X] T008 依照 data-model.md 定義完整 Prisma Schema（prisma/schema.prisma），含 User（`role` 欄位**預設值設為 `student`**，FR-005c）、Account、Session、VerificationToken（NextAuth 所需）、Student、Course、CourseEnrollment、AttendanceSession、AttendanceRecord、LeaveRecord、AuditLog 及所有 Enum；DateTime 欄位統一以 **UTC 儲存**，顯示層負責轉換 UTC+8（TC-007）
+- [X] T009 執行初始 Prisma Migration 建立所有資料庫資料表與索引（prisma/migrations/），包含 `(course_id, status)` 複合索引、`(session_id, student_id)` 唯一索引等
+- [X] T010 [P] 實作 Prisma Client 單例，防止開發模式熱重載產生多餘連線（src/lib/prisma.ts）
+- [X] T010a [P] 撰寫 HMAC Token 單元測試骨架（tests/unit/lib/hmac.test.ts）：涵蓋 generateToken 結構驗證、verifyToken 正確 Token、過期 Token、竄改 Token、寬限期邊界（gracePeriodSeconds）；此時實作不存在，確認所有測試紅燈後再進行 T011/T012
+- [X] T011 [P] 實作 HMAC Token 簽發工具：`generateToken(sessionId)` 產生 base64url 簽名 Token（payload = `${sessionId}:${slot}`，slot = Math.floor(Date.now()/15000)）（src/lib/hmac.ts）
+- [X] T012 [P] 實作 HMAC Token 驗簽工具：`verifyToken(token, gracePeriodSeconds)` 使用 crypto.timingSafeEqual 比對，驗證時間槽與寬限期（src/lib/hmac.ts，與 T011 同檔）
+- [X] T013 [P] 實作 Winston 結構化 JSON 日誌，含 DailyRotateFile（90 天保留，單檔 100MB 上限）（src/lib/logger.ts）
+- [X] T014a [P] 撰寫 NextAuth signIn callback 單元測試（tests/unit/lib/auth.test.ts），涵蓋：(1) Email 命中 `ADMIN_EMAILS` 白名單 → `role=admin`；(2) Email 未命中、首次登入 → `role=student`；(3) 既有使用者再次登入 → 不覆寫現有 role（驗證 admin/student 各自情境）；(4) `ADMIN_EMAILS` 為空字串或未設定 → 所有新使用者皆為 `student`；(5) Email 比對大小寫不敏感；確認紅燈後再進行 T014（FR-005b/c，CG3）
+- [X] T014 實作 NextAuth.js 設定：Google OAuth Provider、Prisma Adapter、Database Session 策略；signIn callback 邏輯（FR-005b/c）：(1) email 在 ADMIN_EMAILS → 設定 `role=admin`；(2) **新使用者不在白名單 → 明確設定 `role=student`**（User.role schema 預設值為 `student`，此處確保 callback 覆寫邏輯正確，避免 null role 導致學生無法路由）；(3) 既有使用者保留現有 role 不覆寫；session/jwt callback 傳遞 role 欄位至前端（src/lib/auth.ts）
+- [X] T015 [P] 建立 NextAuth Route Handler（src/app/api/auth/[...nextauth]/route.ts）
+- [X] T016 [P] 實作稽核日誌雙軌寫入工具 `writeAuditLog(event)`：同時寫入 AuditLog 資料庫表與 JSON 日誌檔案（src/lib/audit.ts）
+- [X] T017 建立 Root Layout，含 SessionProvider（src/app/layout.tsx）
+- [X] T018 建立共用登入頁面，含 Google OAuth 登入按鈕，登入後依 role 自動導向（src/app/login/page.tsx）
+- [X] T019 [P] 建立管理員 Layout，含 role=admin 授權檢查，未授權重導向 /login（src/app/(admin)/layout.tsx）
+- [X] T020 [P] 建立學生 Layout，含 role=student 授權檢查，未授權重導向 /login（src/app/(student)/layout.tsx）
 
 **Checkpoint**: 基礎設施就緒 — 可在各 User Story 之間平行展開實作
 
@@ -71,22 +71,22 @@
 
 ### US1 實作任務
 
-- [ ] T023 [P] [US1] 實作 GET /api/courses（僅回傳 active 課程，含 enrolledCount）與 POST /api/courses（Zod 驗證：name 必填、dayOfWeek 0-6、startTime/endTime HH:MM 且 end>start、lateThresholdMinutes≥0）在 src/app/api/courses/route.ts
-- [ ] T024 [P] [US1] 實作 GET /api/courses/archived（封存課程列表）在 src/app/api/courses/archived/route.ts
-- [ ] T025 [P] [US1] 實作 GET（archived 課程亦回傳完整資料，FR-002）、PUT（lateThresholdMinutes 修改時回應附帶 `lateThresholdChanged: true` 旗標，供前端顯示警示 Banner，spec.md EC2）、DELETE（軟刪除 status→archived）/api/courses/[id] 在 src/app/api/courses/[id]/route.ts
-- [ ] T026 [US1] 實作 GET /api/courses/[courseId]/students 與 POST（建立 CourseEnrollment，防重複學號 409）在 src/app/api/courses/[id]/students/route.ts
-- [ ] T027 [P] [US1] 實作 DELETE /api/courses/[courseId]/students/[studentId]（移出課程）在 src/app/api/courses/[id]/students/[studentId]/route.ts
-- [ ] T028 [P] [US1] 實作 POST /api/students（手動逐筆新增，驗證 studentCode 唯一、googleEmail 唯一）在 src/app/api/students/route.ts
-- [ ] T029 [US1] 實作 POST /api/students/import（CSV 批次匯入，multipart/form-data，部分匯入策略，回傳 successCount/skipCount/errors[]）在 src/app/api/students/import/route.ts
-- [ ] T030 [P] [US1] 實作 PUT /api/users/[id]/role（角色變更，不可修改自身，寫入 AuditLog role_change 事件）在 src/app/api/users/[id]/role/route.ts
-- [ ] T031 [P] [US1] 建立共用 DataTable 元件（支援排序、篩選）與 ConfirmDialog 元件（src/components/shared/DataTable.tsx、src/components/shared/ConfirmDialog.tsx）
-- [ ] T032 [P] [US1] 建立 CourseForm 元件（新增/編輯課程表單，含 dayOfWeek 下拉、startTime/endTime 時間輸入、lateThresholdMinutes 設定）（src/components/admin/CourseForm.tsx）
-- [ ] T033 [P] [US1] 建立 StudentImportDialog 元件（CSV 上傳 dialog，顯示匯入結果摘要含錯誤列表）（src/components/admin/StudentImportDialog.tsx）
-- [ ] T034 [US1] 建立管理後台首頁（顯示課程概覽與快速操作入口）（src/app/(admin)/dashboard/page.tsx）
-- [ ] T035 [US1] 建立課程列表頁面（含新增課程按鈕、搜尋、進入課程詳情）（src/app/(admin)/courses/page.tsx）
-- [ ] T036 [US1] 建立課程詳情頁面（含學生名單管理、手動新增、CSV 匯入、移除學生）；偵測 PUT /api/courses/[id] 回應中的 `lateThresholdChanged: true` 旗標，顯示提示 Banner「此修改僅對後續點名生效，已記錄點名狀態不受影響」（spec.md EC2）；archived 課程以**唯讀模式**呈現歷史 AttendanceSession 列表與出席記錄，隱藏所有編輯操作按鈕（FR-002）；個資刪除按鈕位置預留 `{/* DELETE_BUTTON_PLACEHOLDER: T064b */}` 佔位符（T064b 在 Phase 6 替換，降低合併衝突面積）（src/app/(admin)/courses/[id]/page.tsx）
-- [ ] T037 [P] [US1] 建立封存課程列表頁面（顯示 archived 課程歷史資料）（src/app/(admin)/courses/archived/page.tsx）
-- [ ] T037a [P] [US1] 建立使用者角色管理頁面（顯示已登入過的 Google 帳號清單、角色切換下拉選單，呼叫 PUT /api/users/[id]/role；不可修改自身帳號角色）（src/app/(admin)/users/page.tsx）
+- [X] T023 [P] [US1] 實作 GET /api/courses（僅回傳 active 課程，含 enrolledCount）與 POST /api/courses（Zod 驗證：name 必填、dayOfWeek 0-6、startTime/endTime HH:MM 且 end>start、lateThresholdMinutes≥0）在 src/app/api/courses/route.ts
+- [X] T024 [P] [US1] 實作 GET /api/courses/archived（封存課程列表）在 src/app/api/courses/archived/route.ts
+- [X] T025 [P] [US1] 實作 GET（archived 課程亦回傳完整資料，FR-002）、PUT（lateThresholdMinutes 修改時回應附帶 `lateThresholdChanged: true` 旗標，供前端顯示警示 Banner，spec.md EC2）、DELETE（軟刪除 status→archived）/api/courses/[id] 在 src/app/api/courses/[id]/route.ts
+- [X] T026 [US1] 實作 GET /api/courses/[courseId]/students 與 POST（建立 CourseEnrollment，防重複學號 409）在 src/app/api/courses/[id]/students/route.ts
+- [X] T027 [P] [US1] 實作 DELETE /api/courses/[courseId]/students/[studentId]（移出課程）在 src/app/api/courses/[id]/students/[studentId]/route.ts
+- [X] T028 [P] [US1] 實作 POST /api/students（手動逐筆新增，驗證 studentCode 唯一、googleEmail 唯一）在 src/app/api/students/route.ts
+- [X] T029 [US1] 實作 POST /api/students/import（CSV 批次匯入，multipart/form-data，部分匯入策略，回傳 successCount/skipCount/errors[]）在 src/app/api/students/import/route.ts
+- [X] T030 [P] [US1] 實作 PUT /api/users/[id]/role（角色變更，不可修改自身，寫入 AuditLog role_change 事件）在 src/app/api/users/[id]/role/route.ts
+- [X] T031 [P] [US1] 建立共用 DataTable 元件（支援排序、篩選）與 ConfirmDialog 元件（src/components/shared/DataTable.tsx、src/components/shared/ConfirmDialog.tsx）
+- [X] T032 [P] [US1] 建立 CourseForm 元件（新增/編輯課程表單，含 dayOfWeek 下拉、startTime/endTime 時間輸入、lateThresholdMinutes 設定）（src/components/admin/CourseForm.tsx）
+- [X] T033 [P] [US1] 建立 StudentImportDialog 元件（CSV 上傳 dialog，顯示匯入結果摘要含錯誤列表）（src/components/admin/StudentImportDialog.tsx）
+- [X] T034 [US1] 建立管理後台首頁（顯示課程概覽與快速操作入口）（src/app/(admin)/dashboard/page.tsx）
+- [X] T035 [US1] 建立課程列表頁面（含新增課程按鈕、搜尋、進入課程詳情）（src/app/(admin)/courses/page.tsx）
+- [X] T036 [US1] 建立課程詳情頁面（含學生名單管理、手動新增、CSV 匯入、移除學生）；偵測 PUT /api/courses/[id] 回應中的 `lateThresholdChanged: true` 旗標，顯示提示 Banner「此修改僅對後續點名生效，已記錄點名狀態不受影響」（spec.md EC2）；archived 課程以**唯讀模式**呈現歷史 AttendanceSession 列表與出席記錄，隱藏所有編輯操作按鈕（FR-002）；個資刪除按鈕位置預留 `{/* DELETE_BUTTON_PLACEHOLDER: T064b */}` 佔位符（T064b 在 Phase 6 替換，降低合併衝突面積）（src/app/(admin)/courses/[id]/page.tsx）
+- [X] T037 [P] [US1] 建立封存課程列表頁面（顯示 archived 課程歷史資料）（src/app/(admin)/courses/archived/page.tsx）
+- [X] T037a [P] [US1] 建立使用者角色管理頁面（顯示已登入過的 Google 帳號清單、角色切換下拉選單，呼叫 PUT /api/users/[id]/role；不可修改自身帳號角色）（src/app/(admin)/users/page.tsx）
 
 **Checkpoint**: US1 完成 — 管理員可獨立建立課程與學生名單，驗證資料正確儲存
 
@@ -104,21 +104,21 @@
 - [ ] T039 [P] [US2] 撰寫 Session 管理 API 整合測試：開啟 Session、防重複 active Session、手動關閉、作廢（含稽核日誌）（tests/integration/api/sessions.test.ts）
 - [ ] T040 [P] [US2] 撰寫點名提交 API 整合測試：有效 Token 點名成功、過期 Token 拒絕、寬限期內允許、重複點名 409、找不到學生 404（tests/integration/api/attendance.test.ts）
 - [ ] T047a [P] [US2] 撰寫 Session 懶惰逾時 REST 路徑整合測試（tests/integration/api/sessions-lazy-expire.test.ts），涵蓋：(1) Session `createdAt + autoExpireMinutes < now` 且狀態仍為 `active`、無任何 SSE 訂閱者時，GET /api/sessions/[id] 回應前自動將狀態更新為 `expired` 並回傳 `status: "expired"`；(2) POST /api/attendance 對逾時 Session 的請求應拒絕（即使尚未經 SSE 觸發過懶惰檢查）；(3) 未逾時 Session 不變更狀態；(4) 已 `closed` 或 `voided` 的 Session 不被誤改為 `expired`；(5) 懶惰檢查觸發時寫入適當記錄供稽核（FR-007b，補 spec.md EC「Session 自動逾時」缺口）
-- [ ] T047b [P] [US2] 撰寫 `parseTokenSlot(token)` 單元測試（tests/unit/lib/token-slot.test.ts），涵蓋：(1) 合法 base64url Token 正確解出 `sessionId` 與 `slot`；(2) 計算 `expiresAt = (slot + 1) * 15000` 正確；(3) 格式錯誤（缺 `.`、payload 非 `sessionId:slot` 結構）回傳 null 不拋例外；(4) 解析結果 **不需** 驗證簽名（前端僅做倒數提示，最終驗證由伺服器 `verifyToken` 負責，避免暴露 `QR_SECRET`）（FR-009 學生端倒數的純前端基礎，analyze-01.md A1 修復配套）
+- [X] T047b [P] [US2] 撰寫 `parseTokenSlot(token)` 單元測試（tests/unit/lib/token-slot.test.ts），涵蓋：(1) 合法 base64url Token 正確解出 `sessionId` 與 `slot`；(2) 計算 `expiresAt = (slot + 1) * 15000` 正確；(3) 格式錯誤（缺 `.`、payload 非 `sessionId:slot` 結構）回傳 null 不拋例外；(4) 解析結果 **不需** 驗證簽名（前端僅做倒數提示，最終驗證由伺服器 `verifyToken` 負責，避免暴露 `QR_SECRET`）（FR-009 學生端倒數的純前端基礎，analyze-01.md A1 修復配套）
 
 ### US2 實作任務
 
-- [ ] T041 [P] [US2] 實作 QR Code 圖片生成工具 `generateQRCodeDataURL(url)`，使用 qrcode 套件產生 base64 PNG（src/lib/qrcode.ts）
-- [ ] T042 [US2] 實作 GET /api/courses/[courseId]/sessions（Session 列表）與 POST（開啟新 Session，驗證無 active Session 衝突 409，officialStartTime 必填（API 層必填；前端 UI 預填 Course.startTime，使用者可覆寫），gracePeriodSeconds 預設 60，**寫入 AuditLog `session_opened` 事件**含 courseId、officialStartTime、gracePeriodSeconds，FR-007/L5）在 src/app/api/courses/[id]/sessions/route.ts
-- [ ] T043 [P] [US2] 實作 GET /api/sessions/[id]（Session 詳情含點名人數）在 src/app/api/sessions/[id]/route.ts；回應前須執行懶惰逾時檢查：若 Session 超過 autoExpireMinutes 則更新 status→expired 後再回應，確保 REST API 與 SSE 讀取路徑狀態一致
-- [ ] T044 [P] [US2] 實作 POST /api/sessions/[id]/close（status→closed）在 src/app/api/sessions/[id]/close/route.ts
-- [ ] T045 [P] [US2] 實作 POST /api/sessions/[id]/void（status→voided，reason 必填，寫入 AuditLog void_session 事件，注意 active Session 需先 close 後才能 void）在 src/app/api/sessions/[id]/void/route.ts
-- [ ] T046 [P] [US2] 實作 GET /api/sessions/[id]/qrcode（回傳當前 token、qrcodeDataUrl、expiresAt、remainingSeconds）在 src/app/api/sessions/[id]/qrcode/route.ts
-- [ ] T047 [US2] 實作 SSE 端點 GET /api/sessions/[id]/stream：每 15 秒推送 qrcode_update 前，**先執行懶惰檢查**：若 Session 已超過 autoExpireMinutes 則更新 status→expired 並推送 `session_status_changed` 事件（此為 FR-007b 自動逾時的實作位置，取代不可靠的背景定時器，M1）；有學生點名時推送 attendance_count 事件；連線終止時清除 interval（src/app/api/sessions/[id]/stream/route.ts）（含 FR-007b 逾時懶惰檢查；T072 整合於此，無需另行實作）
-- [ ] T048 [US2] 實作 POST /api/attendance：驗證 HMAC Token 簽名 → 驗證時間有效性（含 gracePeriodSeconds 寬限）→ 驗證 Session active → 查找 Google Email 對應 Student → 確認已選課 → 防重複點名 → 計算遲到狀態 → 寫入 AttendanceRecord（記錄 attendedAt、ipAddress、userAgent）（src/app/api/attendance/route.ts）
-- [ ] T049 [P] [US2] 建立 QRCodeDisplay 元件：顯示 QR Code 圖片、倒數計時器（每秒更新）、透過 EventSource 訂閱 /stream 自動更新 QR Code，Session 狀態變更時顯示對應提示（src/components/admin/QRCodeDisplay.tsx）
-- [ ] T050 [US2] 建立管理員 AttendanceSession（點名 Session）頁面：含 QRCodeDisplay、即時點名人數統計、開啟/關閉/作廢 Session 按鈕；「開啟 Session」對話框 MUST 提供 `officialStartTime`（預設帶入 Course 排定時間，可覆寫）、`autoExpireMinutes`、`gracePeriodSeconds`（預設 60，FR-007d，U4）三項輸入欄，輸入值送往 POST /api/courses/[id]/sessions（src/app/(admin)/sessions/[id]/page.tsx）
-- [ ] T051 [US2] 建立學生點名頁面：掃描 QR Code 後跳轉，顯示 Google 登入按鈕，登入後自動提交點名（含 token 和 sessionId query param），顯示成功/失敗/已點名訊息；**頁面 MUST 顯示 Token 剩餘有效秒數倒數提示（FR-009 學生端對應、analyze-01.md A1 修復）**：前端從 URL `token` query param 解析 base64url payload（格式 `${sessionId}:${slot}`，無需簽名驗證；解析邏輯放在 `src/lib/token-slot.ts` 的 `parseTokenSlot(token)` 純函式中以利 T047b 單元測試，**該檔不得 import `QR_SECRET` 或任何伺服器密鑰**），計算 `expiresAt = (slot + 1) * 15000`，每秒刷新顯示「QR Code 將於 X 秒後更新」；當 `expiresAt - now ≤ 0` 時改顯示「QR Code 已失效，請等待管理員顯示新 QR Code 後重新掃描」並停用登入／提交按鈕（不阻擋 OAuth 流程中已開始的回呼，仍依寬限期由伺服器最終裁定）；POST /api/attendance 失敗（網路中斷或逾時）時顯示「網路異常，請重新掃描 QR Code」提示，不重試避免重複點名（EC4）（src/app/checkin/page.tsx）
+- [X] T041 [P] [US2] 實作 QR Code 圖片生成工具 `generateQRCodeDataURL(url)`，使用 qrcode 套件產生 base64 PNG（src/lib/qrcode.ts）
+- [X] T042 [US2] 實作 GET /api/courses/[courseId]/sessions（Session 列表）與 POST（開啟新 Session，驗證無 active Session 衝突 409，officialStartTime 必填（API 層必填；前端 UI 預填 Course.startTime，使用者可覆寫），gracePeriodSeconds 預設 60，**寫入 AuditLog `session_opened` 事件**含 courseId、officialStartTime、gracePeriodSeconds，FR-007/L5）在 src/app/api/courses/[id]/sessions/route.ts
+- [X] T043 [P] [US2] 實作 GET /api/sessions/[id]（Session 詳情含點名人數）在 src/app/api/sessions/[id]/route.ts；回應前須執行懶惰逾時檢查：若 Session 超過 autoExpireMinutes 則更新 status→expired 後再回應，確保 REST API 與 SSE 讀取路徑狀態一致
+- [X] T044 [P] [US2] 實作 POST /api/sessions/[id]/close（status→closed）在 src/app/api/sessions/[id]/close/route.ts
+- [X] T045 [P] [US2] 實作 POST /api/sessions/[id]/void（status→voided，reason 必填，寫入 AuditLog void_session 事件，注意 active Session 需先 close 後才能 void）在 src/app/api/sessions/[id]/void/route.ts
+- [X] T046 [P] [US2] 實作 GET /api/sessions/[id]/qrcode（回傳當前 token、qrcodeDataUrl、expiresAt、remainingSeconds）在 src/app/api/sessions/[id]/qrcode/route.ts
+- [X] T047 [US2] 實作 SSE 端點 GET /api/sessions/[id]/stream：每 15 秒推送 qrcode_update 前，**先執行懶惰檢查**：若 Session 已超過 autoExpireMinutes 則更新 status→expired 並推送 `session_status_changed` 事件（此為 FR-007b 自動逾時的實作位置，取代不可靠的背景定時器，M1）；有學生點名時推送 attendance_count 事件；連線終止時清除 interval（src/app/api/sessions/[id]/stream/route.ts）（含 FR-007b 逾時懶惰檢查；T072 整合於此，無需另行實作）
+- [X] T048 [US2] 實作 POST /api/attendance：驗證 HMAC Token 簽名 → 驗證時間有效性（含 gracePeriodSeconds 寬限）→ 驗證 Session active → 查找 Google Email 對應 Student → 確認已選課 → 防重複點名 → 計算遲到狀態 → 寫入 AttendanceRecord（記錄 attendedAt、ipAddress、userAgent）（src/app/api/attendance/route.ts）
+- [X] T049 [P] [US2] 建立 QRCodeDisplay 元件：顯示 QR Code 圖片、倒數計時器（每秒更新）、透過 EventSource 訂閱 /stream 自動更新 QR Code，Session 狀態變更時顯示對應提示（src/components/admin/QRCodeDisplay.tsx）
+- [X] T050 [US2] 建立管理員 AttendanceSession（點名 Session）頁面：含 QRCodeDisplay、即時點名人數統計、開啟/關閉/作廢 Session 按鈕；「開啟 Session」對話框 MUST 提供 `officialStartTime`（預設帶入 Course 排定時間，可覆寫）、`autoExpireMinutes`、`gracePeriodSeconds`（預設 60，FR-007d，U4）三項輸入欄，輸入值送往 POST /api/courses/[id]/sessions（src/app/(admin)/sessions/[id]/page.tsx）
+- [X] T051 [US2] 建立學生點名頁面：掃描 QR Code 後跳轉，顯示 Google 登入按鈕，登入後自動提交點名（含 token 和 sessionId query param），顯示成功/失敗/已點名訊息；**頁面 MUST 顯示 Token 剩餘有效秒數倒數提示（FR-009 學生端對應、analyze-01.md A1 修復）**：前端從 URL `token` query param 解析 base64url payload（格式 `${sessionId}:${slot}`，無需簽名驗證；解析邏輯放在 `src/lib/token-slot.ts` 的 `parseTokenSlot(token)` 純函式中以利 T047b 單元測試，**該檔不得 import `QR_SECRET` 或任何伺服器密鑰**），計算 `expiresAt = (slot + 1) * 15000`，每秒刷新顯示「QR Code 將於 X 秒後更新」；當 `expiresAt - now ≤ 0` 時改顯示「QR Code 已失效，請等待管理員顯示新 QR Code 後重新掃描」並停用登入／提交按鈕（不阻擋 OAuth 流程中已開始的回呼，仍依寬限期由伺服器最終裁定）；POST /api/attendance 失敗（網路中斷或逾時）時顯示「網路異常，請重新掃描 QR Code」提示，不重試避免重複點名（EC4）（src/app/checkin/page.tsx）
 
 **Checkpoint**: US2 完成 — QR Code 點名流程端到端可用，含 SSE 即時更新
 
@@ -132,14 +132,14 @@
 
 ### US3 測試任務（測試先行）
 
-- [ ] T052 [P] [US3] 撰寫出席率計算單元測試（tests/unit/lib/attendance-stats.test.ts），涵蓋：(1) 各狀態計數（準時／遲到／請假／缺席）；(2) 應出席課次計算（排除 voided Session）；(3) 出席率百分比；(4) **跨日邊界處理（FR-019）**：模擬 AttendanceSession.createdAt = `2026-05-19T23:30:00+08:00`、學生 attendedAt = `2026-05-20T00:15:00+08:00`，斷言該 Session 僅計入「開啟日」（2026-05-19）的分母，不分割亦不重複計入後一日；同時驗證該學生 attendedAt 落在午夜後仍計為該 Session 的有效點名（status 依官方開始時間 + 遲到門檻判定，而非以日期切分）；(5) 多筆跨日 Session 在同一學生的統計聚合下不雙重計算
+- [X] T052 [P] [US3] 撰寫出席率計算單元測試（tests/unit/lib/attendance-stats.test.ts），涵蓋：(1) 各狀態計數（準時／遲到／請假／缺席）；(2) 應出席課次計算（排除 voided Session）；(3) 出席率百分比；(4) **跨日邊界處理（FR-019）**：模擬 AttendanceSession.createdAt = `2026-05-19T23:30:00+08:00`、學生 attendedAt = `2026-05-20T00:15:00+08:00`，斷言該 Session 僅計入「開啟日」（2026-05-19）的分母，不分割亦不重複計入後一日；同時驗證該學生 attendedAt 落在午夜後仍計為該 Session 的有效點名（status 依官方開始時間 + 遲到門檻判定，而非以日期切分）；(5) 多筆跨日 Session 在同一學生的統計聚合下不雙重計算
 
 ### US3 實作任務
 
-- [ ] T053 [P] [US3] 實作出席率計算邏輯：`calculateStats(sessions, records)` 回傳各生 onTimeCount/lateCount/leaveCount/absentCount/attendanceRate（分母排除 voided Session）（src/lib/attendance-stats.ts）
-- [ ] T054 [US3] 實作 POST /api/leave：建立 LeaveRecord → 將對應 AttendanceRecord status 更新為 leave（若無則建立，isManual=true）→ 寫入 AuditLog **`leave_record_add`** 事件（與 T055 的 `manual_attendance_override` 事件區分，便於稽核日誌精確篩選，L1）（src/app/api/leave/route.ts）
-- [ ] T055 [US3] 實作 PUT /api/attendance/[id]：管理員手動補登或覆寫出席狀態（isManual=true），寫入 AuditLog manual_attendance_override 事件（含 oldValue、newValue、reason 必填）（src/app/api/attendance/[id]/route.ts）
-- [ ] T056 [P] [US3] 建立 AttendanceTable 元件：顯示點名記錄（狀態、時間、IP、UA），含手動補登按鈕、新增請假按鈕、狀態 Badge 顯示（src/components/admin/AttendanceTable.tsx）
+- [X] T053 [P] [US3] 實作出席率計算邏輯：`calculateStats(sessions, records)` 回傳各生 onTimeCount/lateCount/leaveCount/absentCount/attendanceRate（分母排除 voided Session）（src/lib/attendance-stats.ts）
+- [X] T054 [US3] 實作 POST /api/leave：建立 LeaveRecord → 將對應 AttendanceRecord status 更新為 leave（若無則建立，isManual=true）→ 寫入 AuditLog **`leave_record_add`** 事件（與 T055 的 `manual_attendance_override` 事件區分，便於稽核日誌精確篩選，L1）（src/app/api/leave/route.ts）
+- [X] T055 [US3] 實作 PUT /api/attendance/[id]：管理員手動補登或覆寫出席狀態（isManual=true），寫入 AuditLog manual_attendance_override 事件（含 oldValue、newValue、reason 必填）（src/app/api/attendance/[id]/route.ts）
+- [X] T056 [P] [US3] 建立 AttendanceTable 元件：顯示點名記錄（狀態、時間、IP、UA），含手動補登按鈕、新增請假按鈕、狀態 Badge 顯示（src/components/admin/AttendanceTable.tsx）
 
 **Checkpoint**: US3 完成 — 遲到判定與請假管理功能獨立可用
 
@@ -153,18 +153,18 @@
 
 ### US4 測試任務（測試先行）
 
-- [ ] T057 [P] [US4] 撰寫 CSV 匯出工具單元測試：測試 UTC+8 時間格式化、欄位映射、串流輸出（tests/unit/lib/csv.test.ts）
+- [X] T057 [P] [US4] 撰寫 CSV 匯出工具單元測試：測試 UTC+8 時間格式化、欄位映射、串流輸出（tests/unit/lib/csv.test.ts）
 - [ ] T058 [P] [US4] 撰寫匯出 API 整合測試：30,000 筆上限、confirmed=true 參數、稽核日誌寫入、CSV 格式正確性（tests/integration/api/export.test.ts）
 
 ### US4 實作任務
 
-- [ ] T059 [P] [US4] 實作 CSV 匯出工具：使用 csv-stringify 串流模式，cursor-based pagination（每批 1,000 筆），時間戳記轉 UTC+8 格式，ReadableStream 串流回傳（src/lib/csv.ts）
-- [ ] T060 [US4] 實作 GET /api/courses/[courseId]/statistics：查詢出席統計（支援 startDate/endDate 篩選），使用 attendance-stats.ts 計算各生數據（src/app/api/courses/[id]/statistics/route.ts）
-- [ ] T061 [US4] 實作 SSE 統計即時串流 GET /api/courses/[courseId]/statistics/stream：當有新 AttendanceRecord 寫入時推送 statistics_update 事件（實作輪詢機制，每 2 秒檢查更新，確保 SC-005「5 秒內反映」最差延遲 ≤ 4 秒）（src/app/api/courses/[id]/statistics/stream/route.ts）
-- [ ] T062 [US4] 實作 GET /api/courses/[courseId]/export：驗證日期範圍 → 計算總筆數（>30,000 回 400）→ 驗證 confirmed=true → 串流回傳 CSV → 寫入 AuditLog export_attendance 事件（src/app/api/courses/[id]/export/route.ts）
-- [ ] T063 [P] [US4] 實作 DELETE /api/students/[id]/data：驗證 confirmed=true → 刪除 User/Account/Session → 匿名化 Student（清除 googleEmail/userId/name）→ 清除 AttendanceRecord.ipAddress 與 userAgent → 寫入 AuditLog delete_student_data 事件（src/app/api/students/[id]/data/route.ts）
-- [ ] T064 [US4] 建立課程出席統計頁面：顯示學生出席率表格（含各狀態計數）、日期篩選、匯出按鈕（含 PII 警告 dialog）、透過 EventSource 訂閱 /statistics/stream 即時更新（src/app/(admin)/statistics/[courseId]/page.tsx）
-- [ ] T064b [US4] 在課程詳情頁面（src/app/(admin)/courses/[id]/page.tsx）或學生列表中加入「刪除個人資料」功能按鈕（含 ConfirmDialog 二次確認與 PII 警告說明），呼叫 DELETE /api/students/[id]/data，刪除成功後重新整理學生列表（FR-021c；修改既有 T036 建立的頁面，實作前確認 T036 已合併，避免 PR 衝突）
+- [X] T059 [P] [US4] 實作 CSV 匯出工具：使用 csv-stringify 串流模式，cursor-based pagination（每批 1,000 筆），時間戳記轉 UTC+8 格式，ReadableStream 串流回傳（src/lib/csv.ts）
+- [X] T060 [US4] 實作 GET /api/courses/[courseId]/statistics：查詢出席統計（支援 startDate/endDate 篩選），使用 attendance-stats.ts 計算各生數據（src/app/api/courses/[id]/statistics/route.ts）
+- [X] T061 [US4] 實作 SSE 統計即時串流 GET /api/courses/[courseId]/statistics/stream：當有新 AttendanceRecord 寫入時推送 statistics_update 事件（實作輪詢機制，每 2 秒檢查更新，確保 SC-005「5 秒內反映」最差延遲 ≤ 4 秒）（src/app/api/courses/[id]/statistics/stream/route.ts）
+- [X] T062 [US4] 實作 GET /api/courses/[courseId]/export：驗證日期範圍 → 計算總筆數（>30,000 回 400）→ 驗證 confirmed=true → 串流回傳 CSV → 寫入 AuditLog export_attendance 事件（src/app/api/courses/[id]/export/route.ts）
+- [X] T063 [P] [US4] 實作 DELETE /api/students/[id]/data：驗證 confirmed=true → 刪除 User/Account/Session → 匿名化 Student（清除 googleEmail/userId/name）→ 清除 AttendanceRecord.ipAddress 與 userAgent → 寫入 AuditLog delete_student_data 事件（src/app/api/students/[id]/data/route.ts）
+- [X] T064 [US4] 建立課程出席統計頁面：顯示學生出席率表格（含各狀態計數）、日期篩選、匯出按鈕（含 PII 警告 dialog）、透過 EventSource 訂閱 /statistics/stream 即時更新（src/app/(admin)/statistics/[courseId]/page.tsx）
+- [X] T064b [US4] 在課程詳情頁面（src/app/(admin)/courses/[id]/page.tsx）或學生列表中加入「刪除個人資料」功能按鈕（含 ConfirmDialog 二次確認與 PII 警告說明），呼叫 DELETE /api/students/[id]/data，刪除成功後重新整理學生列表（FR-021c；修改既有 T036 建立的頁面，實作前確認 T036 已合併，避免 PR 衝突）
 
 **Checkpoint**: US4 完成 — 統計與 CSV 匯出獨立可用，PII 警告與稽核日誌正確寫入
 
@@ -182,9 +182,9 @@
 
 ### US5 實作任務
 
-- [ ] T065 [US5] 實作 GET /api/students/me/attendance：依登入 Google Email 查找 Student，回傳所有已選課的出席統計（onTimeCount/lateCount/leaveCount/absentCount/attendanceRate），未綁定學生回傳空陣列（src/app/api/students/me/attendance/route.ts）
-- [ ] T066 [P] [US5] 建立 MyAttendanceTable 元件：顯示各課程出席記錄表格，含課程名稱、各狀態次數、出席率 Badge（src/components/student/MyAttendanceTable.tsx）
-- [ ] T067 [US5] 建立學生個人出席頁面：顯示所有已選課程出席統計，無課程時顯示「尚未加入任何課程」提示（src/app/(student)/my-attendance/page.tsx）
+- [X] T065 [US5] 實作 GET /api/students/me/attendance：依登入 Google Email 查找 Student，回傳所有已選課的出席統計（onTimeCount/lateCount/leaveCount/absentCount/attendanceRate），未綁定學生回傳空陣列（src/app/api/students/me/attendance/route.ts）
+- [X] T066 [P] [US5] 建立 MyAttendanceTable 元件：顯示各課程出席記錄表格，含課程名稱、各狀態次數、出席率 Badge（src/components/student/MyAttendanceTable.tsx）
+- [X] T067 [US5] 建立學生個人出席頁面：顯示所有已選課程出席統計，無課程時顯示「尚未加入任何課程」提示（src/app/(student)/my-attendance/page.tsx）
 
 **Checkpoint**: US5 完成 — 學生可獨立查看個人出席記錄，資料隔離已驗證
 
@@ -195,19 +195,19 @@
 **Purpose**: 稽核日誌 UI、效能驗證、全域錯誤處理與最終整合測試
 
 - [ ] T068a [P] 撰寫稽核日誌查詢 API 整合測試：(1) GET /api/audit-logs 事件類型篩選、操作者篩選、日期範圍篩選、分頁功能；(2) 非 admin 帳號存取回傳 403；(3) **稽核日誌不可變動性驗證**（FR-024）：對 `/api/audit-logs/[id]` 發出 PUT、PATCH、DELETE 請求 MUST 回傳 405 Method Not Allowed 或 404（API 層不暴露變更端點），且資料庫中對應 AuditLog 紀錄保持不變；(4) 嘗試以一般使用者透過任意端點觸發 AuditLog row 變更（如重複呼叫 PUT /api/users/[id]/role 後驗證原 AuditLog 紀錄欄位完整保留，僅新增一筆 row 而非覆寫舊 row）（tests/integration/api/audit-logs.test.ts）
-- [ ] T068 [P] 實作稽核日誌查詢 API：GET /api/audit-logs（支援 eventType、actorEmail、startDate/endDate 篩選、分頁），權限限 admin（src/app/api/audit-logs/route.ts）
+- [X] T068 [P] 實作稽核日誌查詢 API：GET /api/audit-logs（支援 eventType、actorEmail、startDate/endDate 篩選、分頁），權限限 admin（src/app/api/audit-logs/route.ts）
 - [ ] T068b [P] 撰寫 AuditLogTable 元件渲染測試：事件類型 Badge 顯示、操作者欄位、時間格式（UTC+8）；確認測試紅燈後再進行 T069（tests/unit/components/AuditLogTable.test.tsx）
-- [ ] T069 [P] 建立 AuditLogTable 元件：顯示稽核記錄表格，含事件類型 Badge、操作者、時間（src/components/admin/AuditLogTable.tsx）
+- [X] T069 [P] 建立 AuditLogTable 元件：顯示稽核記錄表格，含事件類型 Badge、操作者、時間（src/components/admin/AuditLogTable.tsx）
 - [ ] T070a [P] 撰寫稽核日誌頁面整合測試（tests/integration/pages/audit-logs.test.tsx），涵蓋：(1) 預設載入顯示最近 N 筆稽核記錄；(2) 事件類型下拉切換重新查詢並更新表格；(3) 日期範圍篩選送出後 URL 查詢字串正確帶入；(4) 操作者 Email 輸入框防抖後觸發查詢；(5) 非 admin 訪問被 Layout 重導向至 /login；確認紅燈後再進行 T070（CON1，憲法原則 III）
-- [ ] T070 建立管理後台稽核日誌頁面：含事件類型/操作者/日期範圍篩選（src/app/(admin)/audit-logs/page.tsx）
-- [ ] T071 [P] 實作全域 API 錯誤處理：統一 `{ "error": "..." }` 格式回應，所有 500 錯誤寫入 logger，加入 Zod 驗證中間件工具（src/lib/）
+- [X] T070 建立管理後台稽核日誌頁面：含事件類型/操作者/日期範圍篩選（src/app/(admin)/audit-logs/page.tsx）
+- [X] T071 [P] 實作全域 API 錯誤處理：統一 `{ "error": "..." }` 格式回應，所有 500 錯誤寫入 logger，加入 Zod 驗證中間件工具（src/lib/）
 > **~~T072~~（已併入 T047，無須單獨追蹤；ST1 移除任務編號）**：FR-007b 自動逾時 Session 機制已整合至 T047 SSE stream handler 的懶惰檢查邏輯；GET /api/sessions/[id] 等 REST 路徑亦在回應前執行相同檢查（見 T043 描述）。本註記僅保留可追溯性，不計入任務總數。
 - [ ] T073 依照 quickstart.md 執行完整驗收場景：新增課程 → CSV 匯入學生 → 開啟 Session → 學生掃描點名 → 查看統計 → 匯出 CSV → 查看個人出席記錄，驗證所有 Success Criteria（SC-001 到 SC-009）
 - [ ] T073a [P] 使用 autocannon 或 k6 執行並發點名負載測試：模擬 100 位學生在 15 秒內同時提交有效點名請求（含合法 HMAC Token），驗證所有請求無錯誤回應且點名記錄無漏記（SC-004）（tests/load/concurrent-checkin.test.ts）
 - [ ] T073b [P] 量測 SSE QR Code 更新延遲：使用 Node.js EventSource 客戶端訂閱 /api/sessions/[id]/stream，記錄從 15 秒輪換時間點到接收 qrcode_update 事件的實際延遲，驗證延遲 ≤ 1 秒（SC-003）（tests/load/sse-latency.test.ts）
 - [ ] T073c [P] 量測統計 SSE 更新延遲：使用 Node.js EventSource 客戶端訂閱 /api/courses/[courseId]/statistics/stream，提交一筆有效 POST /api/attendance 後，量測從請求完成到接收 statistics_update 事件的實際延遲，驗證最差延遲 ≤ 5 秒（SC-005）（tests/load/sse-statistics-latency.test.ts）
 - [ ] T073d [P] 量測學生點名端到端 wall-clock：以 Playwright 或自訂 Node.js 腳本模擬學生掃描 QR Code（取得 token + sessionId）→ Google OAuth 模擬登入（或注入測試 session cookie）→ POST /api/attendance，量測自掃描起至點名成功回應的總耗時，斷言 ≤ 30 秒（SC-002，U2）（tests/load/checkin-end-to-end-latency.test.ts）
-- [ ] T074 [P] 實作應用健康檢查端點 `GET /api/health`：回傳應用狀態與資料庫連線狀態（200 OK 含 `{ status: "ok", db: "connected" }` / 503 Service Unavailable），供 Docker healthcheck 與 Zeabur 平台健康探針使用（SC-009 可用性支撐，L3）（src/app/api/health/route.ts）
+- [X] T074 [P] 實作應用健康檢查端點 `GET /api/health`：回傳應用狀態與資料庫連線狀態（200 OK 含 `{ status: "ok", db: "connected" }` / 503 Service Unavailable），供 Docker healthcheck 與 Zeabur 平台健康探針使用（SC-009 可用性支撐，L3）（src/app/api/health/route.ts）
 - [ ] T075 [P] 建立生產部署配置文件（docs/deployment.md 或 quickstart.md 補充）：涵蓋 Google OAuth Callback URL 設定步驟（正式域名）、Zeabur 環境變數清單（含 TZ、ADMIN_EMAILS、QR_SECRET）、PostgreSQL 托管服務配置、docker-compose 生產模式說明、**備份策略說明**（如 `pg_dump` cron 排程指令、平台托管備份設定、Volume 掛載驗證操作指引，支援 FR-025 兩學年資料保留要求）；新增「保留期限驗證 SOP」章節（CG1），含手動執行步驟：(1) 每學期末以 `SELECT MIN(created_at), MAX(created_at) FROM "AttendanceRecord"` 確認最舊記錄距今未滿兩學年即保留；(2) 跨越兩學年界線者由管理員人工裁定是否封存或匯出歸檔；(3) 備份檔保存位置與還原驗證流程；本系統 V1 不提供自動清理腳本（YAGNI，憲法原則 V）（TC-003）
 
 ---
@@ -314,3 +314,4 @@ US1 + US2 完成後：
 - 可在任何 Checkpoint 停下驗收 Story，無需等待整個系統完成
 - **UTC+8 時間**：所有 DateTime 存取與 CSV 匯出均轉換為 UTC+8（`Asia/Taipei`）
 - **Prisma Migration**：每次 Schema 變更需建立新 migration，勿直接修改 schema 而跳過 migrate
+

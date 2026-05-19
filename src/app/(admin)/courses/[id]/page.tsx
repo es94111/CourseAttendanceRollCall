@@ -1,0 +1,73 @@
+import Link from "next/link"
+import { notFound } from "next/navigation"
+import { prisma } from "@/lib/prisma"
+import { CourseForm } from "@/components/admin/CourseForm"
+import { StudentImportDialog } from "@/components/admin/StudentImportDialog"
+import { DataTable } from "@/components/shared/DataTable"
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog"
+
+export default async function CourseDetailPage({ params }: any) {
+  const course = await prisma.course.findUnique({
+    where: { id: params.id },
+    include: {
+      enrollments: { include: { student: true } },
+      sessions: { orderBy: { createdAt: "desc" } }
+    }
+  })
+  if (!course) notFound()
+  const readonly = course.status === "archived"
+  return (
+    <main className="shell">
+      <div className="toolbar">
+        <h1>{course.name}</h1>
+        <Link className="btn" href={`/statistics/${course.id}`}>
+          出席統計
+        </Link>
+      </div>
+      {!readonly ? (
+        <>
+          <CourseForm course={course} />
+          <StudentImportDialog />
+        </>
+      ) : (
+        <p className="panel">封存課程為唯讀模式。</p>
+      )}
+      <section className="panel">
+        <h2>學生名單</h2>
+        <DataTable
+          rows={course.enrollments.map((item) => item.student)}
+          columns={[
+            { key: "code", header: "學號", render: (row) => row.studentCode },
+            { key: "name", header: "姓名", render: (row) => row.name },
+            { key: "email", header: "Google Email", render: (row) => row.googleEmail ?? "-" },
+            {
+              key: "delete",
+              header: "個資",
+              render: (row) =>
+                readonly ? null : (
+                  <ConfirmDialog
+                    title="刪除個人資料"
+                    message="此操作會匿名化學生姓名與登入資料，並清除點名 IP 與裝置資訊。"
+                    confirmText="刪除個資"
+                    onConfirm={() => fetch(`/api/students/${row.id}/data?confirmed=true`, { method: "DELETE" }).then(() => location.reload())}
+                  />
+                )
+            }
+          ]}
+        />
+      </section>
+      <section className="panel">
+        <h2>歷史 Session</h2>
+        <DataTable
+          rows={course.sessions}
+          columns={[
+            { key: "id", header: "Session", render: (row) => <Link href={`/sessions/${row.id}`}>{row.id}</Link> },
+            { key: "status", header: "狀態", render: (row) => <span className="badge">{row.status}</span> },
+            { key: "createdAt", header: "建立時間", render: (row) => row.createdAt.toLocaleString("zh-TW", { timeZone: "Asia/Taipei" }) }
+          ]}
+        />
+      </section>
+      {/* DELETE_BUTTON_PLACEHOLDER: T064b */}
+    </main>
+  )
+}
