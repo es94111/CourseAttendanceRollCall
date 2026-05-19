@@ -21,6 +21,7 @@ export async function POST(request: Request) {
   try {
     const form = await request.formData()
     const file = form.get("file")
+    const courseId = form.get("courseId")
     if (!(file instanceof File)) return error("請上傳 CSV 檔案", 400)
     const rows = parseCsv(await file.text())
     const seenCodes = new Set<string>()
@@ -44,11 +45,18 @@ export async function POST(request: Request) {
       seenCodes.add(row.studentCode)
       if (row.googleEmail) seenEmails.add(row.googleEmail)
       try {
-        await prisma.student.create({
-          data: {
-            studentCode: row.studentCode,
-            name: row.name,
-            googleEmail: row.googleEmail || null
+        await prisma.$transaction(async (tx) => {
+          const student = await tx.student.create({
+            data: {
+              studentCode: row.studentCode,
+              name: row.name,
+              googleEmail: row.googleEmail || null
+            }
+          })
+          if (typeof courseId === "string" && courseId) {
+            await tx.courseEnrollment.create({
+              data: { courseId, studentId: student.id }
+            })
           }
         })
         successCount += 1

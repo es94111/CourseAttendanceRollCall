@@ -5,6 +5,9 @@ import { CourseForm } from "@/components/admin/CourseForm"
 import { StudentImportDialog } from "@/components/admin/StudentImportDialog"
 import { DataTable } from "@/components/shared/DataTable"
 import { DeleteStudentDataButton } from "@/components/admin/DeleteStudentDataButton"
+import { StudentManager } from "@/components/admin/StudentManager"
+import { OpenSessionForm } from "@/components/admin/OpenSessionForm"
+import { RemoveStudentFromCourseButton } from "@/components/admin/RemoveStudentFromCourseButton"
 
 export default async function CourseDetailPage({ params }: any) {
   const course = await prisma.course.findUnique({
@@ -36,7 +39,9 @@ export default async function CourseDetailPage({ params }: any) {
               lateThresholdMinutes: course.lateThresholdMinutes
             }}
           />
-          <StudentImportDialog />
+          <OpenSessionForm courseId={course.id} defaultStartTime={course.startTime} />
+          <StudentManager courseId={course.id} />
+          <StudentImportDialog courseId={course.id} />
         </>
       ) : (
         <p className="panel">封存課程為唯讀模式。</p>
@@ -49,6 +54,12 @@ export default async function CourseDetailPage({ params }: any) {
             { key: "code", header: "學號", render: (row) => row.studentCode },
             { key: "name", header: "姓名", render: (row) => row.name },
             { key: "email", header: "Google Email", render: (row) => row.googleEmail ?? "-" },
+            {
+              key: "remove",
+              header: "課程",
+              render: (row) =>
+                readonly ? null : <RemoveStudentFromCourseButton courseId={course.id} studentId={row.id} />
+            },
             {
               key: "delete",
               header: "個資",
