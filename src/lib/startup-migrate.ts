@@ -37,14 +37,24 @@ async function execute(): Promise<void> {
     process.execPath,
     [prismaBin, "migrate", "deploy", `--schema=${schemaPath}`],
     {
-      stdio: "inherit",
+      encoding: "utf8",
       env: process.env
     }
   )
 
+  if (result.stdout) process.stdout.write(result.stdout)
+  if (result.stderr) process.stderr.write(result.stderr)
+
+  if (result.error) {
+    throw new Error(`[startup-migrate] failed to start prisma migrate deploy: ${result.error.message}`)
+  }
+
   if (result.status !== 0) {
+    const details = [result.stderr?.trim(), result.stdout?.trim()].filter(Boolean).join("\n")
     throw new Error(
-      `[startup-migrate] prisma migrate deploy failed with exit code ${result.status}`
+      `[startup-migrate] prisma migrate deploy failed with exit code ${result.status}${
+        details ? `\n${details}` : ""
+      }`
     )
   }
   console.log("[startup-migrate] prisma migrate deploy completed")
