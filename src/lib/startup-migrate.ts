@@ -31,7 +31,7 @@ async function execute(): Promise<void> {
   }
 
   const schemaPath = path.join(process.cwd(), "prisma", "schema.prisma")
-  console.log(`[startup-migrate] Running prisma migrate deploy (schema=${schemaPath})...`)
+  console.log(`[startup-migrate] Running prisma migrate deploy (cli=${prismaBin}, schema=${schemaPath})...`)
 
   const result = spawnSync(
     process.execPath,
@@ -62,8 +62,8 @@ async function execute(): Promise<void> {
 
 function resolvePrismaBinary(): string | null {
   const candidates = [
-    path.join(process.cwd(), "node_modules", "prisma", "build", "index.js"),
-    path.join(process.cwd(), ".prisma-cli", "node_modules", "prisma", "build", "index.js")
+    path.join(process.cwd(), ".prisma-cli", "node_modules", "prisma", "build", "index.js"),
+    path.join(process.cwd(), "node_modules", "prisma", "build", "index.js")
   ]
   for (const candidate of candidates) {
     if (existsSync(candidate)) return candidate
