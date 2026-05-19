@@ -104,6 +104,7 @@
 - [ ] T039 [P] [US2] 撰寫 Session 管理 API 整合測試：開啟 Session、防重複 active Session、手動關閉、作廢（含稽核日誌）（tests/integration/api/sessions.test.ts）
 - [ ] T040 [P] [US2] 撰寫點名提交 API 整合測試：有效 Token 點名成功、過期 Token 拒絕、寬限期內允許、重複點名 409、找不到學生 404（tests/integration/api/attendance.test.ts）
 - [ ] T047a [P] [US2] 撰寫 Session 懶惰逾時 REST 路徑整合測試（tests/integration/api/sessions-lazy-expire.test.ts），涵蓋：(1) Session `createdAt + autoExpireMinutes < now` 且狀態仍為 `active`、無任何 SSE 訂閱者時，GET /api/sessions/[id] 回應前自動將狀態更新為 `expired` 並回傳 `status: "expired"`；(2) POST /api/attendance 對逾時 Session 的請求應拒絕（即使尚未經 SSE 觸發過懶惰檢查）；(3) 未逾時 Session 不變更狀態；(4) 已 `closed` 或 `voided` 的 Session 不被誤改為 `expired`；(5) 懶惰檢查觸發時寫入適當記錄供稽核（FR-007b，補 spec.md EC「Session 自動逾時」缺口）
+- [ ] T047b [P] [US2] 撰寫 `parseTokenSlot(token)` 單元測試（tests/unit/lib/token-slot.test.ts），涵蓋：(1) 合法 base64url Token 正確解出 `sessionId` 與 `slot`；(2) 計算 `expiresAt = (slot + 1) * 15000` 正確；(3) 格式錯誤（缺 `.`、payload 非 `sessionId:slot` 結構）回傳 null 不拋例外；(4) 解析結果 **不需** 驗證簽名（前端僅做倒數提示，最終驗證由伺服器 `verifyToken` 負責，避免暴露 `QR_SECRET`）（FR-009 學生端倒數的純前端基礎，analyze-01.md A1 修復配套）
 
 ### US2 實作任務
 
@@ -117,7 +118,7 @@
 - [ ] T048 [US2] 實作 POST /api/attendance：驗證 HMAC Token 簽名 → 驗證時間有效性（含 gracePeriodSeconds 寬限）→ 驗證 Session active → 查找 Google Email 對應 Student → 確認已選課 → 防重複點名 → 計算遲到狀態 → 寫入 AttendanceRecord（記錄 attendedAt、ipAddress、userAgent）（src/app/api/attendance/route.ts）
 - [ ] T049 [P] [US2] 建立 QRCodeDisplay 元件：顯示 QR Code 圖片、倒數計時器（每秒更新）、透過 EventSource 訂閱 /stream 自動更新 QR Code，Session 狀態變更時顯示對應提示（src/components/admin/QRCodeDisplay.tsx）
 - [ ] T050 [US2] 建立管理員 AttendanceSession（點名 Session）頁面：含 QRCodeDisplay、即時點名人數統計、開啟/關閉/作廢 Session 按鈕；「開啟 Session」對話框 MUST 提供 `officialStartTime`（預設帶入 Course 排定時間，可覆寫）、`autoExpireMinutes`、`gracePeriodSeconds`（預設 60，FR-007d，U4）三項輸入欄，輸入值送往 POST /api/courses/[id]/sessions（src/app/(admin)/sessions/[id]/page.tsx）
-- [ ] T051 [US2] 建立學生點名頁面：掃描 QR Code 後跳轉，顯示 Google 登入按鈕，登入後自動提交點名（含 token 和 sessionId query param），顯示成功/失敗/已點名訊息；POST /api/attendance 失敗（網路中斷或逾時）時顯示「網路異常，請重新掃描 QR Code」提示，不重試避免重複點名（EC4）（src/app/checkin/page.tsx）
+- [ ] T051 [US2] 建立學生點名頁面：掃描 QR Code 後跳轉，顯示 Google 登入按鈕，登入後自動提交點名（含 token 和 sessionId query param），顯示成功/失敗/已點名訊息；**頁面 MUST 顯示 Token 剩餘有效秒數倒數提示（FR-009 學生端對應、analyze-01.md A1 修復）**：前端從 URL `token` query param 解析 base64url payload（格式 `${sessionId}:${slot}`，無需簽名驗證；解析邏輯放在 `src/lib/token-slot.ts` 的 `parseTokenSlot(token)` 純函式中以利 T047b 單元測試，**該檔不得 import `QR_SECRET` 或任何伺服器密鑰**），計算 `expiresAt = (slot + 1) * 15000`，每秒刷新顯示「QR Code 將於 X 秒後更新」；當 `expiresAt - now ≤ 0` 時改顯示「QR Code 已失效，請等待管理員顯示新 QR Code 後重新掃描」並停用登入／提交按鈕（不阻擋 OAuth 流程中已開始的回呼，仍依寬限期由伺服器最終裁定）；POST /api/attendance 失敗（網路中斷或逾時）時顯示「網路異常，請重新掃描 QR Code」提示，不重試避免重複點名（EC4）（src/app/checkin/page.tsx）
 
 **Checkpoint**: US2 完成 — QR Code 點名流程端到端可用，含 SSE 即時更新
 

@@ -13,8 +13,8 @@
 | ~~I1~~ | ~~Inconsistency~~ | ~~HIGH~~ | spec.md TC-007 / FR-019、data-model.md、research.md §6 | **✅ 已修復（2026-05-19 確認）**：spec.md TC-007 已改寫為「邏輯時區 UTC+8 / 儲存採 UTC（`timestamptz`）/ 顯示邊界統一 UTC+8」；FR-019 跨日邊界改為「以 `createdAt` 轉換為 UTC+8 後的日期為計日基準」；data-model.md 對 `officialStartTime`、`attendedAt` 兩處 DateTime 註解明確標註「儲存採 UTC、語意為 UTC+8」；research.md §6（時間儲存與時區策略）已重寫對齊 TC-007；tasks.md T008 表述（UTC 儲存 + UTC+8 顯示）為唯一一致來源。 | — |
 | C1 | Coverage Gap | MEDIUM | spec.md SC-001 / SC-006 / SC-008 ↔ tasks.md T073 | SC-002 / SC-003 / SC-004 / SC-005 各有專屬效能測試任務（T073d / T073b / T073a / T073c），但 SC-001（30 位學生 CSV 匯入 ≤ 120 s）、SC-006（30,000 筆 CSV 匯出 ≤ 30 s / 100 人 20 課次 ≤ 10 s）、SC-008（統計頁面 ≤ 60 s）僅靠 T073（quickstart 手動驗收）涵蓋，缺乏可重複的自動化量測任務。 | 於 Phase 8 新增三項 [P] 量測任務（建議命名 T073e / T073f / T073g）：(a) CSV 匯入端到端計時（SC-001）、(b) 串流 CSV 匯出 30,000 筆計時（SC-006）、(c) Playwright 量測「Dashboard → Statistics → 篩選 → 請假詳情」往返耗時（SC-008）。每項斷言對應 SC 門檻。 |
 | U1 | Underspecification | MEDIUM | spec.md US5 描述 ↔ tasks.md T065 / contracts | US5 文敘述「可查看自己在所有課程中的個人出席記錄，包含**各課次的點名狀態（準時/遲到/請假/缺席）**」（per-session 粒度），但 T065 與 AS2 僅描述聚合統計（各狀態次數、出席率）。是否提供 per-session 列表未明確。 | 釐清 FR-023 是否包含 per-session detail rows；若是，擴充 T065 端點回應結構（如 `attendanceBySession: []`）並於 T066 表格中呈現；若否，修正 spec.md US5 文敘述移除「各課次」措辭。 |
-| A1 | Ambiguity | MEDIUM | spec.md FR-009 ↔ plan.md / tasks.md T049, T051 | FR-009「在 QR Code 旁顯示倒數計時，告知**管理員和學生**距離下次更新的秒數」；但 tasks.md 僅 T049（管理員端 QRCodeDisplay）含倒數計時，T051（學生 `/checkin` 頁）未述及。學生掃描後實際不會反覆看到 QR Code，「告知學生」語義不通。 | 修訂 FR-009 為「於管理員 QR Code 顯示頁旁同步顯示倒數計時，協助管理員與學生即時掌握有效時段」；或刪除「和學生」措辭以對齊實作。 |
-| CON1 | Constitution Alignment | MEDIUM | constitution.md 原則 IV ↔ spec.md FR-005a | 憲法 IV「明確區分角色：**管理員、教師、學生**」列出三個角色；spec.md 採二角色（admin / student）並於開頭以「管理員即教師」等同處理。功能上一致但憲法措辭仍可能造成審查歧義。 | 兩擇一：(a) 下次 `/speckit-constitution` PATCH 將原則 IV 改為「管理員（教師）、學生」；或 (b) 在 spec.md 開頭等同說明處同時引用憲法 IV 文字以消除誤解。本次 analyze 不要求立即修正。 |
+| ~~A1~~ | ~~Ambiguity~~ | ~~MEDIUM~~ | spec.md FR-009 ↔ tasks.md T049, T051 | **✅ 已修復（2026-05-19）**：tasks.md T051 已補學生端倒數實作（透過 `src/lib/token-slot.ts` 的 `parseTokenSlot(token)` 解析 base64url payload，每秒刷新顯示「QR Code 將於 X 秒後更新」，剩餘 ≤ 0 時停用提交按鈕）；新增 T047b 單元測試（驗證 `parseTokenSlot` 解析正確性與安全邊界）。FR-009 學生端語義從此有對應任務承接，無需修改 spec 措辭。 | — |
+| ~~CON1~~ | ~~Constitution Alignment~~ | ~~MEDIUM~~ | constitution.md 原則 IV ↔ spec.md FR-005a | **✅ 已修復（2026-05-19，PATCH 1.0.0 → 1.0.1）**：constitution.md 原則 IV 角色列舉已改為「**管理員（教師）**、**學生**」，並補註「本系統採二角色制，管理員與教師為同義詞互用」；同步影響報告與 Last Amended 已更新。 | — |
 | L1 | Coverage Gap | LOW | spec.md FR-017 ↔ tasks.md T054 | T054 描述「將對應 AttendanceRecord status 更新為 leave（若無則建立，isManual=true）」隱含請假需綁定既有 AttendanceSession；若該課次尚未開啟 Session（例如預先請整週假）則無 Session 可掛載，spec 與 plan 皆未說明此情境。 | 釐清是否允許「預先請假（Session 未開）」；若允許，定義 LeaveRecord 可獨立於 AttendanceSession 存在的資料路徑；若不允許，於 FR-017 明確說明「請假僅能對已開啟 Session 之課次建立」。 |
 | I2 | Inconsistency | LOW | spec.md US4 AS2 ↔ FR-021 | FR-021 匯出欄位含「**課次日期**」，但 US4 AS2「包含學生姓名、學號、點名狀態、點名時間、IP 位址、裝置資訊」未列出「課次日期」。 | 補入 US4 AS2 欄位列表以對齊 FR-021，或於 FR-021 補註「課次日期由點名時間衍生」。 |
 | U2 | Underspecification | LOW | spec.md FR-006a ↔ contracts/ | FR-006a 規定 CSV 必填欄位（學號、姓名、Google Email），但未說明標題列字串、欄位順序、編碼（UTF-8 with BOM？）。匯入解析端可能解讀分歧。 | 於 `contracts/api-routes.md` 中明列 CSV header 規範（如 `studentCode,name,googleEmail`、UTF-8 with BOM、必含 header row），並於 T029 / T029a 引用。 |
@@ -46,7 +46,7 @@
 | FR-007c 單一 active | ✅ | T042 | |
 | FR-007d 寬限期 | ✅ | T042, T048, T050 | |
 | FR-008 HMAC QR | ✅ | T010a, T011, T012, T038, T041, T046, T047 | |
-| FR-009 倒數計時 | ⚠️ | T049 | 學生端缺對應實作（A1） |
+| FR-009 倒數計時 | ✅ | T047b, T049, T051 | ~~學生端缺對應實作（A1）~~ 已於 2026-05-19 補 T051 學生端倒數 + T047b 單元測試 |
 | FR-010 ~ FR-014 點名流程 | ✅ | T040, T048, T051 | L2：未綁定 / 未選課錯誤格式可再細化 |
 | FR-015 遲到判定 | ✅ | T025, T032, T042, T050 | |
 | FR-016 自動標記 | ✅ | T048 | |
@@ -79,7 +79,7 @@
 
 ## Constitution Alignment Issues
 
-- **CON1（MEDIUM）**：`constitution.md` 原則 IV 列出三角色「管理員、教師、學生」，spec.md 採二角色（admin / student）並聲明「管理員即教師」。功能行為一致但措辭可被審查者誤判。屬可後續以憲法 PATCH 修正項目，**不阻擋實作**。
+- ~~**CON1（MEDIUM）**：`constitution.md` 原則 IV 列出三角色「管理員、教師、學生」⋯⋯~~ **✅ 已於 2026-05-19 修復**：憲法 PATCH 1.0.0 → 1.0.1，原則 IV 角色列舉改為「**管理員（教師）**、**學生**」並補註同義詞說明；spec.md 與憲法措辭一致。
 - 其餘原則（I 文件語言、II 使用者優先、III TDD、IV 資料安全、V YAGNI）皆通過：
   - **I**：所有 spec / plan / tasks 為繁體中文 ✅
   - **II**：5 個 User Story 含管理員與學生視角 ✅
@@ -106,18 +106,18 @@
 | Total Functional Requirements（FR-###，含子項 a/b/c/d/e） | 35 |
 | Total Success Criteria（SC-###） | 9 |
 | Total Technical Constraints（TC-###） | 7 |
-| Total Tasks（含子任務，扣除 T072 註記） | 75 |
+| Total Tasks（含子任務，扣除 T072 註記，計入 T047b） | 76 |
 | Requirements with ≥1 mapped task | 35 / 35 = **100 %** |
 | SC with automated benchmark task | 5 / 9 = **56 %**（C1 缺口） |
-| Ambiguity Findings | 1 |
+| Ambiguity Findings | 1（A1 已修復） |
 | Duplication Findings | 0 |
 | Coverage Gap Findings | 3 |
-| Inconsistency Findings | 3（I1 已修復，剩 I2 / D1 / —） |
+| Inconsistency Findings | 3（I1 已修復，剩 I2 / D1） |
 | Underspecification Findings | 2 |
-| Constitution Alignment Findings | 1 |
+| Constitution Alignment Findings | 1（CON1 已修復） |
 | **CRITICAL** | 0 |
 | **HIGH** | 0（I1 已修復） |
-| **MEDIUM** | 4 |
+| **MEDIUM** | 2（C1 / U1；A1、CON1 已修復） |
 | **LOW** | 7 |
 
 ---
@@ -130,8 +130,8 @@
 2. **建議（MEDIUM）**：
    - **C1**：於 Phase 8 補三項自動效能量測任務（建議命名 T073e / T073f / T073g），覆蓋 SC-001 / SC-006 / SC-008。
    - **U1**：於 `/speckit-clarify` 或直接編輯 spec.md US5 明確 per-session vs 聚合粒度，必要時擴充 T065 回應結構。
-   - **A1**：修正 FR-009 措辭，或於 T051 補上倒數提示。
-   - **CON1**：列入下一次 `/speckit-constitution` PATCH，無需阻擋本期實作。
+   - ~~**A1**：修正 FR-009 措辭，或於 T051 補上倒數提示。~~ **已完成**（2026-05-19）— tasks.md T051 已補學生端倒數實作 + T047b 單元測試。
+   - ~~**CON1**：列入下一次 `/speckit-constitution` PATCH⋯⋯~~ **已完成**（2026-05-19）— 憲法 PATCH 1.0.0 → 1.0.1，原則 IV 角色措辭改為「管理員（教師）、學生」。
 3. **可後修（LOW）**：L1 / I2 / U2 / L2 / D1 / L3 / L4 可在 tasks.md / contracts/ 直接修文，或於對應 PR 中處理，不阻擋 MVP。
 
 **建議命令序列**：
