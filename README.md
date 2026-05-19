@@ -215,6 +215,37 @@ docker run -d \
 需在 GitHub Repo Settings → Secrets 設定（選填）：
 - `DOCKERHUB_USERNAME` / `DOCKERHUB_TOKEN`：若要推送至 Docker Hub
 
+### 資料持久化
+
+本專案有**兩種需要持久化的資料**，部署時務必確認都有正確掛載，否則容器重啟即遺失。
+
+#### 1. PostgreSQL 資料庫（主要資料）
+
+存放：使用者、課程、學生名單、點名 Session、出席記錄、請假、稽核日誌等所有業務資料。應用容器本身不存業務資料，只透過 `DATABASE_URL` 連 DB；即使 app pod 整個重建，資料仍在 DB 端。
+
+| 部署方式 | 持久化路徑 |
+|---------|-----------|
+| 本地 `docker-compose.yml` | named volume `postgres_data` → 容器內 `/var/lib/postgresql/data` |
+| Zeabur 內建 PostgreSQL 服務 | 由 Zeabur 自動掛載 PVC，無需手動設定 |
+| 自管 VPS | 自行掛載 host 目錄，例如 `-v /data/rollcall-pg:/var/lib/postgresql/data` |
+| 外部 DB（Supabase／Neon／RDS 等） | 依該服務的備份／持久化機制 |
+
+#### 2. 應用程式日誌檔（稽核雙軌之一）
+
+`src/lib/logger.ts` 透過 winston-daily-rotate-file 寫入 **容器內 `/app/logs/`**：
+
+- 檔名：`logs/app-YYYY-MM-DD.log`
+- 每日輪轉、單檔上限 100MB、保留 90 天
+- 同樣內容也寫入資料庫 `AuditLog` 表，但檔案軌跡為「應用程式無法刪除」的可驗證來源，建議保留
+
+| 部署方式 | 設定方式 |
+|---------|---------|
+| 本地 `docker-compose.yml` | 已 bind mount `../logs:/app/logs`（專案根目錄的 `logs/`） |
+| Zeabur | Dashboard → Service → **Volumes** → Add Volume，Mount path 填 `/app/logs`，大小建議 ≥ 1 GB |
+| 自管 VPS | `docker run -v /var/log/rollcall:/app/logs ...` |
+
+> ⚠️ **Zeabur 注意**：容器檔案系統是 ephemeral，未掛 Volume 時每次 redeploy 都會清空 `/app/logs/`，雖然 `AuditLog` 表仍保留資料，但失去檔案軌跡。建議部署時就把 `/app/logs` Volume 加上。
+
 ### 常見問題
 
 | 錯誤訊息 | 原因 | 解法 |
@@ -224,6 +255,7 @@ docker run -d \
 | `The table public.accounts does not exist` | 資料庫從未跑過 migration | 確認容器使用最新 image（已內建啟動時 migrate）；或手動執行 `DATABASE_URL=... npx prisma migrate deploy` |
 | `Server error: There is a problem with the server configuration` | NextAuth 必填環境變數缺失（最常見 `NEXTAUTH_SECRET`） | 檢查所有必填變數，重啟容器 |
 | 容器啟動後立即退出，log 顯示 `P1001` | runner 無法連線 `DATABASE_URL` | 檢查 DB host／port／防火牆／DB 是否 healthy |
+| 重新部署後稽核日誌檔案不見 | `/app/logs` 未掛 Volume | 依上方「資料持久化 §2」加掛 Volume |
 
 ## 授權
 
