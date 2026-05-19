@@ -26,6 +26,17 @@ COPY . .
 RUN npx prisma generate
 RUN npm run build
 
+# Isolated install: only prisma CLI + its transitive deps.
+# Avoids missing modules (e.g. `effect`) when cherry-picking from the main node_modules.
+FROM node:20-alpine AS prisma-cli
+WORKDIR /prisma-cli
+RUN apk add --no-cache jq
+COPY package.json ./
+RUN PRISMA_VERSION=$(jq -r '.devDependencies.prisma // .dependencies.prisma' package.json) \
+ && echo "Installing prisma@${PRISMA_VERSION}" \
+ && echo '{"name":"prisma-cli-isolated","version":"0.0.0","private":true}' > package.json \
+ && npm install --no-package-lock --no-fund --no-audit prisma@${PRISMA_VERSION}
+
 FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
@@ -35,9 +46,8 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
-RUN printf '#!/bin/sh\nset -e\necho "[entrypoint] Running prisma migrate deploy..."\nnode ./node_modules/prisma/build/index.js migrate deploy --schema=prisma/schema.prisma\necho "[entrypoint] Starting: $*"\nexec "$@"\n' > /usr/local/bin/entrypoint.sh \
+COPY --from=prisma-cli /prisma-cli/node_modules /app/.prisma-cli/node_modules
+RUN printf '#!/bin/sh\nset -e\necho "[entrypoint] Running prisma migrate deploy..."\nnode /app/.prisma-cli/node_modules/prisma/build/index.js migrate deploy --schema=/app/prisma/schema.prisma\necho "[entrypoint] Starting: $*"\nexec "$@"\n' > /usr/local/bin/entrypoint.sh \
  && chmod +x /usr/local/bin/entrypoint.sh \
  && mkdir -p logs
 EXPOSE 3000
