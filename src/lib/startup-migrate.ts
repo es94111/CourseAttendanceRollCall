@@ -33,13 +33,19 @@ async function execute(): Promise<void> {
   const schemaPath = path.join(process.cwd(), "prisma", "schema.prisma")
   console.log(`[startup-migrate] Running prisma migrate deploy (schema=${schemaPath})...`)
 
-  const result = spawnSync(process.execPath, [prismaBin, "migrate", "deploy", `--schema=${schemaPath}`], {
-    stdio: "inherit",
-    env: process.env
-  })
+  const result = spawnSync(
+    process.execPath,
+    [prismaBin, "migrate", "deploy", `--schema=${schemaPath}`],
+    {
+      stdio: "inherit",
+      env: process.env
+    }
+  )
 
   if (result.status !== 0) {
-    throw new Error(`[startup-migrate] prisma migrate deploy failed with exit code ${result.status}`)
+    throw new Error(
+      `[startup-migrate] prisma migrate deploy failed with exit code ${result.status}`
+    )
   }
   console.log("[startup-migrate] prisma migrate deploy completed")
 }

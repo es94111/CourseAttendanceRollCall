@@ -47,9 +47,8 @@ COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
 COPY --from=prisma-cli /prisma-cli/node_modules /app/.prisma-cli/node_modules
-RUN printf '#!/bin/sh\nset -e\necho "[entrypoint] Running prisma migrate deploy..."\nnode /app/.prisma-cli/node_modules/prisma/build/index.js migrate deploy --schema=/app/prisma/schema.prisma\necho "[entrypoint] Starting: $*"\nexec "$@"\n' > /usr/local/bin/entrypoint.sh \
- && chmod +x /usr/local/bin/entrypoint.sh \
- && mkdir -p logs
+RUN mkdir -p logs
 EXPOSE 3000
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+# Migrations now run automatically via Next.js instrumentation hook (src/instrumentation.ts)
+# on server boot, so no entrypoint shim is needed.
 CMD ["node", "server.js"]
