@@ -197,6 +197,26 @@ public/                              # 靜態資源
 
 **結構決策**：採用 Next.js App Router 單專案架構（Option 2 變形）。前後端合一，管理員路由群組與學生路由群組分別以 Layout 做授權隔離，API Routes 放在 `src/app/api/` 下，無需獨立的 backend 資料夾。
 
+### 頁面渲染策略（TC-004 補充）
+
+每頁的 SSR / CSR 邊界依互動性與資料依賴決定，原則如下：
+
+| 路由                                       | 渲染策略           | 理由                                                                                                |
+| ------------------------------------------ | ------------------ | --------------------------------------------------------------------------------------------------- |
+| `/login`                                   | SSR（Server）      | 無互動狀態，依 NextAuth Provider 配置直出，避免 client hydration 閃爍                                  |
+| `/(admin)/dashboard`                       | SSR + 部分 CSR     | Layout 授權檢查於 Server；課程概覽資料以 Server Component 取得，操作按鈕為 Client Component             |
+| `/(admin)/courses`                         | SSR + 部分 CSR     | 列表 SSR；新增/編輯 Dialog 與搜尋過濾為 Client                                                       |
+| `/(admin)/courses/[id]`                    | SSR + 部分 CSR     | 課程基本資料 SSR；學生名單操作（CSV 匯入、個資刪除）為 Client                                         |
+| `/(admin)/courses/archived`                | SSR                | 唯讀歷史資料，無互動                                                                                  |
+| `/(admin)/sessions/[id]`                   | **CSR 為主**       | QRCodeDisplay 須訂閱 SSE 並每秒倒數，本質為 Client；初始 Session 資料以 RSC 取得後 hand-off            |
+| `/(admin)/statistics/[courseId]`           | SSR + Client SSE   | 初始統計 SSR；訂閱 statistics/stream 部分為 Client                                                   |
+| `/(admin)/users`                           | SSR + 部分 CSR     | 使用者清單 SSR；角色切換 Dropdown 為 Client                                                          |
+| `/(admin)/audit-logs`                      | SSR + 部分 CSR     | 表格 SSR；篩選器為 Client                                                                            |
+| `/(student)/my-attendance`                 | SSR                | 唯讀統計，無 SSE 訂閱需求                                                                             |
+| `/checkin`                                 | **CSR 為主**       | 須讀取 URL query（token、sessionId）並執行 Google OAuth 跳轉與 POST，本質為 Client                    |
+
+**SSG 不適用**：本系統所有頁面皆依登入態與資料庫狀態渲染，無靜態化效益。
+
 ---
 
 ## 複雜度追蹤

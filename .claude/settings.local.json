@@ -14,7 +14,10 @@
       "Bash(powershell -Command 'Select-String -Path '\\\\''specs\\\\001-course-attendance-rollcall\\\\plan.md'\\\\'' -Pattern '\\\\''statistics|students.*data'\\\\'' | ForEach-Object { Write-Host $_.LineNumber'\\\\'': '\\\\''$_.Line.Trim\\(\\) }')",
       "PowerShell(& \"D:\\\\SynologyDrive\\\\web\\\\CourseAttendanceRollCall\\\\.specify\\\\scripts\\\\powershell\\\\check-prerequisites.ps1\" -Json -RequireTasks -IncludeTasks 2>&1)",
       "Bash(Test-Path \"D:\\\\SynologyDrive\\\\web\\\\CourseAttendanceRollCall\\\\.specify\\\\memory\\\\constitution.md\")",
-      "Bash(Test-Path \"D:\\\\SynologyDrive\\\\web\\\\CourseAttendanceRollCall\\\\.specify\\\\extensions.yml\")"
+      "Bash(Test-Path \"D:\\\\SynologyDrive\\\\web\\\\CourseAttendanceRollCall\\\\.specify\\\\extensions.yml\")",
+      "Bash(powershell *)",
+      "Bash(pwsh *)",
+      "PowerShell(.\\\\.specify\\\\scripts\\\\powershell\\\\check-prerequisites.ps1 -Json -RequireTasks -IncludeTasks)"
     ]
   }
 }

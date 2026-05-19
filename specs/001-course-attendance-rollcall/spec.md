@@ -126,9 +126,9 @@
 **身份驗證與角色管理**
 
 - **FR-005a**: 系統 MUST 使用 **NextAuth.js** 作為統一認證框架，管理員與學生共用同一 `User` 資料表，以 `role` 欄位區分角色（`admin` / `student`）。
-- **FR-005b**: 管理員 MUST 透過 Google OAuth 登入，系統依 `role` 欄位授予管理後台存取權限；初始管理員帳號透過環境變數 `ADMIN_EMAILS`（逗號分隔，如 `a@school.edu,b@school.edu`）設定白名單，應用啟動時讀取；白名單中的 Email 首次以 Google OAuth 登入時，系統自動將其 `role` 設為 `admin`。
-- **FR-005d**: 已登入的管理員 MUST 能在後台管理介面中將任意已登入過的 Google 帳號提升為管理員（`role: admin`）或降回學生（`role: student`）；此操作 MUST 記錄稽核日誌（操作者、目標帳號、時間）。
+- **FR-005b**: 管理員 MUST 透過 Google OAuth 登入，系統依 `role` 欄位授予管理後台存取權限；初始管理員帳號透過環境變數 `ADMIN_EMAILS`（逗號分隔，如 `a@school.edu,b@school.edu`）設定白名單，應用啟動時讀取；白名單中的 Email 首次以 Google OAuth 登入時，系統自動將其 `role` 設為 `admin`。Email 比對 MUST 採小寫正規化（lowercase normalization），大小寫不敏感（例如 `Admin@School.edu` 與 `admin@school.edu` 視為相同帳號）。
 - **FR-005c**: 學生首次以 Google 帳號掃描 QR Code 登入時，系統自動建立 `User` 記錄並將 `role` 設為 `student`。
+- **FR-005d**: 已登入的管理員 MUST 能在後台管理介面中將任意已登入過的 Google 帳號提升為管理員（`role: admin`）或降回學生（`role: student`）；管理員 MUST NOT 修改自身帳號的角色（API 層需拒絕並回傳 400，避免管理員誤將自己降級導致無人可管理）；此操作 MUST 記錄稽核日誌（操作者、目標帳號、原始角色、新角色、操作時間）。
 
 **Google 帳號綁定**
 
@@ -141,14 +141,14 @@
 - **FR-007**: 系統 MUST 允許管理員為特定課程開啟一次點名 Session；Session 具有四種狀態：`active`（進行中）、`closed`（手動關閉）、`expired`（自動逾時）、`voided`（作廢）。管理員 MUST 能將任意非 `active` 狀態的 Session 標記為 `voided`；`voided` Session 不計入出席率分母，其下所有點名記錄仍保留但不計入統計；此操作 MUST 記錄稽核日誌（操作者、Session ID、操作時間、作廢原因）。
 - **FR-007a**: 管理員 MUST 能隨時手動關閉進行中的點名 Session。
 - **FR-007b**: 管理員 MUST 能在開啟 Session 時設定自動逾時時間（單位：分鐘）；時間到後系統自動將 Session 標記為 `expired`，QR Code 立即失效。
-- **FR-007d**: 管理員 MUST 能在開啟 Session 時設定 **QR Code 掃描寬限期**（單位：秒，預設 60 秒）；寬限期定義為：學生掃描 QR Code 取得 Token 後，允許 Token 在 OAuth 流程完成前過期的容忍時間。系統驗證點名請求時，若 `token_issued_at + grace_period_seconds ≥ now` 且 Session 仍為 `active`，則視為有效點名。
 - **FR-007c**: 同一課程在同一時間 MUST 只能有一個 `active` 的點名 Session。
+- **FR-007d**: 管理員 MUST 能在開啟 Session 時設定 **QR Code 掃描寬限期**（單位：秒，預設 60 秒）；寬限期定義為：學生掃描 QR Code 取得 Token 後，允許 Token 在 OAuth 流程完成前過期的容忍時間。系統驗證點名請求時，若 `token_issued_at + grace_period_seconds ≥ now` 且 Session 仍為 `active`，則視為有效點名。
 - **FR-008**: 系統 MUST 產生動態 QR Code，QR Code 每 15 秒自動更新為新的有效碼，舊碼立即失效。Token 採 **HMAC 簽名**機制（以 Session ID + 時間戳 + 伺服器密鑰產生），伺服器驗簽時不需額外儲存當前 Token，可直接驗證真實性與有效期；任何竄改或過期的 Token 均被拒絕。
 - **FR-009**: 系統 MUST 在 QR Code 旁顯示倒數計時，告知管理員和學生距離下次更新的秒數。
 - **FR-010**: 學生掃描 QR Code 後，MUST 跳轉至點名頁面並透過 Google OAuth 登入。
 - **FR-011**: 系統 MUST 在 Google 登入成功後，自動比對 Google 帳號與已綁定的學號，完成點名記錄。
 - **FR-012**: 系統 MUST 記錄每次點名的時間戳記、學生 IP 位址、使用裝置的 User-Agent 資訊。
-- **FR-013**: 系統 MUST 拒絕同一學生在同一課次重複點名，並向學生顯示已完成點名的提示。
+- **FR-013**: 系統 MUST 拒絕同一學生在同一課次重複點名（即拒絕學生自助 POST /api/attendance 二次提交），並向學生顯示已完成點名的提示。例外：FR-017a 的管理員手動補登／覆寫（PUT /api/attendance/[id]）不受此限制，覆寫既有 AttendanceRecord 為合法操作且 MUST 記錄稽核日誌。
 - **FR-014**: 系統 MUST 拒絕使用過期 QR Code 的點名請求，並提示重新掃描；例外：若 Token 在掃描寬限期（FR-007d）內，且 Session 仍為 `active`，則允許完成點名。
 
 **遲到管理**
@@ -164,7 +164,7 @@
 
 **出席統計**
 
-- **FR-019**: 系統 MUST 自動計算每位學生的出席率（出席次數 / 應出席課次），並分別顯示準時、遲到、請假、缺席的次數。「應出席課次」定義為管理員實際開啟過且狀態**非** `voided` 的 AttendanceSession 總數；未開啟 Session 的排定週次及 `voided` Session 均不計入分母。
+- **FR-019**: 系統 MUST 自動計算每位學生的出席率（出席次數 / 應出席課次），並分別顯示準時、遲到、請假、缺席的次數。「應出席課次」定義為管理員實際開啟過且狀態**非** `voided` 的 AttendanceSession 總數；未開啟 Session 的排定週次及 `voided` Session 均不計入分母。Session 跨日邊界處理：以 AttendanceSession.createdAt（UTC+8）為計日基準，跨越午夜的 Session 一律計入「開啟日」當日，不分割亦不重複計入後一日。
 - **FR-020**: 管理員 MUST 能查看課程的整體出席統計總覽。
 
 **匯出功能**
@@ -177,7 +177,7 @@
 
 **稽核日誌**
 
-- **FR-024**: 系統 MUST 將所有稽核事件（開啟 Session（session_opened）、匯出操作、手動補登、作廢 Session、角色變更、個資刪除）同時寫入結構化 JSON 日誌檔案（符合 TC-006）並持久化至資料庫專屬稽核表（`AuditLog`）。管理後台 MUST 提供專屬「稽核日誌」頁面，管理員可依事件類型、操作者、日期範圍篩選並查看所有稽核記錄；稽核記錄僅限管理員查看，不可刪除或修改。
+- **FR-024**: 系統 MUST 將所有稽核事件（開啟 Session（`session_opened`）、匯出操作（`export_attendance`）、手動補登／覆寫（`manual_attendance_override`）、新增請假記錄（`leave_record_add`）、作廢 Session（`void_session`）、角色變更（`role_change`）、個資刪除（`delete_student_data`））同時寫入結構化 JSON 日誌檔案（符合 TC-006）並持久化至資料庫專屬稽核表（`AuditLog`）。管理後台 MUST 提供專屬「稽核日誌」頁面，管理員可依事件類型、操作者、日期範圍篩選並查看所有稽核記錄；稽核記錄僅限管理員查看，不可刪除或修改。
 - **FR-025**: 系統 MUST 依學校規定保留至少兩學年的點名記錄；資料保留機制應在 Docker Volume 或雲端儲存層確保持久化，避免資料於容器重啟或平台遷移後遺失。
 
 **學生自助查詢**
@@ -190,9 +190,9 @@
 - **使用者（User）**: NextAuth.js 管理的認證記錄，包含 email、name、role（`admin` / `student`）；由 Google OAuth 首次登入時自動建立。
 - **學生（Student）**: 學籍檔案，包含姓名、學號、綁定的 Google Email（可為 null，首次掃描 QR Code 後自動關聯至 User FK）；由管理員預先建立（CSV 批次或手動逐筆）。
 - **選課記錄（CourseEnrollment）**: 多對多關聯表，記錄哪位 Student 選修哪門 Course；同一學生可同時修多門課（student_id + course_id 為複合唯一鍵）。
-- **點名Session（Attendance Session）**: 代表單次課堂的點名活動，包含 Session 建立時間、**官方課程開始時間**（管理員開啟時設定，預設帶入排定時間，為遲到判定基準）、所屬課程、狀態（`active` / `closed` / `expired` / `voided`）、自動逾時設定（分鐘數）、**QR Code 掃描寬限期**（秒數，預設 60，管理員開啟 Session 時可調整）。`voided` 狀態代表管理員誤開後主動作廢，不計入出席率分母。QR Code Token 以 HMAC 簽名動態產生（Session ID + 時間戳 + 密鑰），不需在資料庫中持久化當前 Token 值。
-- **點名記錄（Attendance Record）**: 代表學生在某次Session的出席紀錄，包含狀態（準時/遲到/請假/缺席）、點名時間、IP 位址、裝置資訊。
-- **請假記錄（Leave Record）**: 代表學生的請假申請，包含所屬課次、原因、建立者（管理員）。
+- **AttendanceSession（點名 Session）**: 代表單次課堂的點名活動，包含 Session 建立時間、**官方課程開始時間**（管理員開啟時設定，預設帶入排定時間，為遲到判定基準）、所屬課程、狀態（`active` / `closed` / `expired` / `voided`）、自動逾時設定（分鐘數）、**QR Code 掃描寬限期**（秒數，預設 60，管理員開啟 Session 時可調整）。`voided` 狀態代表管理員誤開後主動作廢，不計入出席率分母。QR Code Token 以 HMAC 簽名動態產生（Session ID + 時間戳 + 密鑰），不需在資料庫中持久化當前 Token 值。本文件後續一律以「AttendanceSession」或「點名 Session」互稱，視為同一實體。
+- **AttendanceRecord（點名記錄）**: 代表學生在某次 AttendanceSession 的出席紀錄，包含狀態（準時/遲到/請假/缺席）、點名時間、IP 位址、裝置資訊。
+- **LeaveRecord（請假記錄）**: 代表學生的請假申請，包含所屬課次、原因、建立者（管理員）。
 
 ---
 
@@ -200,14 +200,14 @@
 
 ### Measurable Outcomes
 
-- **SC-001**: 管理員可在 2 分鐘內完成新增一門課程（含課程時間設定）並加入 30 位以上學生。
+- **SC-001**: 在標準桌面 Chrome 瀏覽器（無快取、典型網路延遲 ≤ 50ms）環境下，管理員從打開「新增課程」頁面起算，至課程儲存成功並完成 30 位學生 CSV 批次匯入，端到端 wall-clock 時間 ≤ 120 秒；量測程序記錄於 quickstart.md 驗收步驟。
 - **SC-002**: 學生從掃描 QR Code 到點名完成（包含 Google 登入），全程在 30 秒內完成。
 - **SC-003**: QR Code 更新延遲不超過 1 秒（即實際顯示的新碼在計時器歸零後 1 秒內切換）。
 - **SC-004**: 系統能同時支援同一課程 100 位學生在 15 秒內完成點名，不出現錯誤或漏記。
 - **SC-005**: 出席統計資料在最後一筆點名完成後立即（5 秒內）反映於統計頁面，無需手動刷新。
 - **SC-006**: 100 位學生、20 次課程的完整點名記錄可在 10 秒內完成 CSV 匯出；最大規模（30,000 筆上限）的同步匯出目標回應時間 ≤ 30 秒。
 - **SC-007**: 過期 QR Code 的點名請求 100% 被系統拒絕，不產生任何有效記錄。
-- **SC-008**: 管理員可在 1 分鐘內找到並查看任意學生的個別出席統計與請假記錄。
+- **SC-008**: 在標準桌面 Chrome 瀏覽器（無快取）環境下，管理員從管理後台首頁進入特定課程出席統計頁、套用學生姓名／學號篩選並開啟該生請假記錄詳情，端到端 wall-clock 時間 ≤ 60 秒（前提：課程已含 ≤ 200 位學生、≤ 20 次點名 Session）；量測程序記錄於 quickstart.md 驗收步驟。
 - **SC-009**: 系統正式環境可用性目標為 99.5%（每月容忍停機 ≤ 3.6 小時）；系統故障期間管理員可透過手動補登功能維持出席記錄完整性。
 
 ---
@@ -233,7 +233,7 @@
 - 管理員的螢幕（或投影設備）用於顯示 QR Code，學生使用個人手機掃描。
 - 系統支援桌面瀏覽器（管理員端）和手機瀏覽器（學生端），不需要原生 App。
 - 請假記錄的核實（如附件證明）不在本系統範疇內，僅做文字記錄。
-- 每週定期課程的點名Session需要管理員手動開啟，系統不自動開啟點名。
+- 每週定期課程的 AttendanceSession（點名 Session）需要管理員手動開啟，系統不自動開啟點名。
 - 資料保留策略依學校規定，預設保留至少兩學年的點名記錄。
 - 個資法合規責任由學校作為資料控制者承擔；系統層面僅需確保：（1）存取控制（僅管理員可存取完整點名記錄）、（2）匯出稽核日誌、（3）管理員可手動刪除學生個人資料，不需提供學生自助申請刪除的入口。
 
