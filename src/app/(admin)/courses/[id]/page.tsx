@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma"
 import { CourseForm } from "@/components/admin/CourseForm"
 import { StudentImportDialog } from "@/components/admin/StudentImportDialog"
 import { DataTable } from "@/components/shared/DataTable"
-import { ConfirmDialog } from "@/components/shared/ConfirmDialog"
+import { DeleteStudentDataButton } from "@/components/admin/DeleteStudentDataButton"
 
 export default async function CourseDetailPage({ params }: any) {
   const course = await prisma.course.findUnique({
@@ -26,7 +26,16 @@ export default async function CourseDetailPage({ params }: any) {
       </div>
       {!readonly ? (
         <>
-          <CourseForm course={course} />
+          <CourseForm
+            course={{
+              id: course.id,
+              name: course.name,
+              dayOfWeek: course.dayOfWeek,
+              startTime: course.startTime,
+              endTime: course.endTime,
+              lateThresholdMinutes: course.lateThresholdMinutes
+            }}
+          />
           <StudentImportDialog />
         </>
       ) : (
@@ -45,12 +54,7 @@ export default async function CourseDetailPage({ params }: any) {
               header: "個資",
               render: (row) =>
                 readonly ? null : (
-                  <ConfirmDialog
-                    title="刪除個人資料"
-                    message="此操作會匿名化學生姓名與登入資料，並清除點名 IP 與裝置資訊。"
-                    confirmText="刪除個資"
-                    onConfirm={() => fetch(`/api/students/${row.id}/data?confirmed=true`, { method: "DELETE" }).then(() => location.reload())}
-                  />
+                  <DeleteStudentDataButton studentId={row.id} />
                 )
             }
           ]}
