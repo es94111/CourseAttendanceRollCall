@@ -179,7 +179,7 @@ model CourseEnrollment {
 model AttendanceSession {
   id                 String        @id @default(cuid())
   courseId           String
-  officialStartTime  DateTime                           // 官方開始時間（遲到判定基準，UTC+8）
+  officialStartTime  DateTime                           // 官方開始時間（遲到判定基準）；儲存採 UTC（timestamptz），語意以 UTC+8 解讀
   autoExpireMinutes  Int?                               // 自動逾時分鐘數（null = 不自動逾時）
   gracePeriodSeconds Int           @default(60)         // QR Code 掃描寬限期（秒）
   status             SessionStatus @default(active)
@@ -209,7 +209,7 @@ model AttendanceRecord {
   sessionId   String
   studentId   String
   status      AttendanceStatus
-  attendedAt  DateTime?                               // 實際點名時間（UTC+8）
+  attendedAt  DateTime?                               // 實際點名時間；儲存採 UTC（timestamptz），對使用者顯示與 CSV 匯出統一以 UTC+8 呈現
   ipAddress   String?
   userAgent   String?          @db.Text
   isManual    Boolean          @default(false)       // true = 管理員手動補登／覆寫

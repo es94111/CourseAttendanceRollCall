@@ -164,7 +164,7 @@
 
 **出席統計**
 
-- **FR-019**: 系統 MUST 自動計算每位學生的出席率（出席次數 / 應出席課次），並分別顯示準時、遲到、請假、缺席的次數。「應出席課次」定義為管理員實際開啟過且狀態**非** `voided` 的 AttendanceSession 總數；未開啟 Session 的排定週次及 `voided` Session 均不計入分母。Session 跨日邊界處理：以 AttendanceSession.createdAt（UTC+8）為計日基準，跨越午夜的 Session 一律計入「開啟日」當日，不分割亦不重複計入後一日。
+- **FR-019**: 系統 MUST 自動計算每位學生的出席率（出席次數 / 應出席課次），並分別顯示準時、遲到、請假、缺席的次數。「應出席課次」定義為管理員實際開啟過且狀態**非** `voided` 的 AttendanceSession 總數；未開啟 Session 的排定週次及 `voided` Session 均不計入分母。Session 跨日邊界處理：以 AttendanceSession.createdAt **轉換為 UTC+8 後的日期** 為計日基準（儲存值雖為 UTC，但分組／統計／顯示一律以 UTC+8 解讀），跨越午夜的 Session 一律計入「開啟日」當日，不分割亦不重複計入後一日。
 - **FR-020**: 管理員 MUST 能查看課程的整體出席統計總覽。
 
 **匯出功能**
@@ -215,7 +215,7 @@
 ## Technical Constraints
 
 - **TC-001**: 後端使用 **Next.js（最新版本）** 全端框架（App Router），同時負責前端 UI 與 API Routes。
-- **TC-007**: 系統時區固定為 **UTC+8（台灣時區）**，不支援多時區；所有時間戳記（點名時間、Session 建立時間、遲到判定基準等）均以 UTC+8 儲存與顯示；CSV 匯出欄位亦以 UTC+8 輸出，不做時區轉換。
+- **TC-007**: 系統邏輯時區固定為 **UTC+8（台灣時區）**，不支援多時區。儲存層：所有時間戳記（點名時間、Session 建立時間、遲到判定基準等）於資料庫以 **UTC** 儲存（PostgreSQL `timestamptz`，符合 Prisma `DateTime` 預設行為）。呈現層：應用層所有對使用者顯示之時間、CSV 匯出欄位、SSE 推送負載、稽核日誌時間欄位 MUST 統一以 UTC+8 格式輸出；任何跨日／遲到／統計判斷亦以 UTC+8 為唯一語意基準。應用程式 MUST 設定 `TZ=Asia/Taipei` 環境變數以確保 Node.js 進程預設時區一致。
 - **TC-002**: 資料庫使用 **PostgreSQL（最新版本）**，透過 Prisma ORM 進行資料存取。
 - **TC-003**: 整個應用以 **Docker** 容器化部署，提供 `docker-compose.yml` 以便本地開發；正式環境部署至 **Zeabur 或雲端 VPS**（如 GCP、AWS、Hetzner），PostgreSQL 使用平台托管服務或獨立 VPS 上的容器實例。Google OAuth Callback URL 需於部署後設定為正式域名。
 - **TC-004**: 前端採用 Next.js 內建的 SSR／SSG 能力，管理員介面以桌面瀏覽器為主，學生點名頁以手機瀏覽器為主。

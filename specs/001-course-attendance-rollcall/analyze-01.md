@@ -10,7 +10,7 @@
 
 | ID | Category | Severity | Location(s) | Summary | Recommendation |
 |----|----------|----------|-------------|---------|----------------|
-| I1 | Inconsistency | HIGH | spec.md TC-007 / FR-019 ↔ plan.md / tasks.md T008 | spec.md TC-007 與 FR-019 規定「所有時間戳記均以 **UTC+8 儲存**」、「AttendanceSession.createdAt（UTC+8）為計日基準」；但 plan.md / tasks.md T008 改為「DateTime 欄位統一以 **UTC 儲存**，顯示層負責轉換 UTC+8」。儲存表示法直接衝突。 | 統一表述：建議將 spec.md TC-007 改為「邏輯時區固定 UTC+8（儲存採 UTC，所有對外顯示／CSV 匯出均以 UTC+8 呈現）」；或反向修正 plan.md T008 / data-model.md 改為 timestamptz 並以 UTC+8 儲存。同時更新 FR-019 跨日邊界描述對應實作層。 |
+| ~~I1~~ | ~~Inconsistency~~ | ~~HIGH~~ | spec.md TC-007 / FR-019、data-model.md、research.md §6 | **✅ 已於 2026-05-19 修復**：spec.md TC-007 改寫為「邏輯時區 UTC+8 / 儲存採 UTC / 應用層輸出邊界統一以 UTC+8 呈現」；FR-019 跨日邊界改為「以 createdAt 轉換為 UTC+8 後的日期為計日基準」；data-model.md 兩處 DateTime 註解明確標註「儲存採 UTC、語意為 UTC+8」；research.md §6 重寫「時間儲存與時區策略」段落並對齊 TC-007；tasks.md T008 表述（UTC 儲存 + UTC+8 顯示）已成為唯一一致來源。 | — |
 | C1 | Coverage Gap | MEDIUM | spec.md SC-001 / SC-006 / SC-008 ↔ tasks.md T073 | SC-002/003/004/005 各有專屬效能測試任務（T073d/T073b/T073a/T073c），但 SC-001（30 位學生 CSV 匯入 ≤ 120s）、SC-006（30,000 筆 CSV 匯出 ≤ 30s / 10s）、SC-008（統計頁面 ≤ 60s）僅靠 T073（quickstart 手動驗收）涵蓋，缺乏可重複的自動化量測任務。 | 新增三項 [P] 量測任務於 Phase 8：(a) CSV 匯入端到端計時（SC-001），(b) 串流 CSV 匯出 30,000 筆計時（SC-006），(c) Playwright 量測「Dashboard→Statistics→篩選→請假詳情」往返耗時（SC-008）。每項斷言對應 SC 門檻。 |
 | U1 | Underspecification | MEDIUM | spec.md US5 描述 ↔ tasks.md T065 / contracts | US5 文敘述「可查看自己在所有課程中的個人出席記錄，包含**各課次的點名狀態（準時/遲到/請假/缺席）**」（per-session 粒度），但 T065 與 AS2 僅描述聚合統計（各狀態次數、出席率）。是否提供 per-session 列表未明確。 | 釐清 FR-023 是否包含 per-session detail rows；若是，擴充 T065 端點回應結構（如 `attendanceBySession: []`）並於 T066 表格中呈現；若否，修正 spec.md US5 文敘述移除「各課次」措辭。 |
 | A1 | Ambiguity | MEDIUM | spec.md FR-009 ↔ plan.md / tasks.md T049, T051 | FR-009「在 QR Code 旁顯示倒數計時，告知**管理員和學生**距離下次更新的秒數」；但 tasks.md 僅 T049（管理員端 QRCodeDisplay）含倒數計時，T051（學生 /checkin 頁）未述及。學生掃描後實際不會反覆看到 QR Code，「告知學生」語義不通。 | 修訂 FR-009 為「於管理員 QR Code 顯示頁旁同步顯示倒數計時，協助管理員與學生即時掌握有效時段」；或刪除「和學生」措辭以對齊實作。 |
@@ -53,7 +53,7 @@
 | FR-017 請假記錄 | ✅ | T054 | Session 未開情境未涵蓋（L1） |
 | FR-017a 手動補登／覆寫 | ✅ | T055, T056 | |
 | FR-018 請假與缺席分開 | ✅ | T052, T053 | |
-| FR-019 出席率（含跨日） | ✅ | T052, T053, T060 | UTC 儲存衝突（I1） |
+| FR-019 出席率（含跨日） | ✅ | T052, T053, T060 | ~~UTC 儲存衝突（I1）~~ — 已修復 2026-05-19 |
 | FR-020 統計總覽 | ✅ | T060, T064 | |
 | FR-021 CSV 匯出 | ✅ | T057, T058, T059, T062 | US4 AS2 欄位不一致（I2） |
 | FR-021a PII 警告 | ✅ | T062, T064 | |
@@ -112,11 +112,11 @@
 | Ambiguity Findings | 1 |
 | Duplication Findings | 0 |
 | Coverage Gap Findings | 3 |
-| Inconsistency Findings | 3 |
+| Inconsistency Findings | 3（其中 I1 已修復，剩餘 2） |
 | Underspecification Findings | 2 |
 | Constitution Alignment Findings | 1 |
 | **CRITICAL** | 0 |
-| **HIGH** | 1 |
+| **HIGH** | ~~1~~ → **0**（I1 已修復） |
 | **MEDIUM** | 4 |
 | **LOW** | 7 |
 
@@ -124,10 +124,9 @@
 
 ## Next Actions
 
-**沒有 CRITICAL 問題阻擋實作**，惟下列為實作前建議處理：
+**沒有 CRITICAL 或 HIGH 問題阻擋實作**（I1 已於 2026-05-19 修復），下列為實作前建議處理：
 
-1. **必要（HIGH）**：解決 I1（UTC 儲存表示衝突）。建議於 plan.md / data-model.md 統一儲存策略並修訂 spec.md TC-007 / FR-019 措辭。
-   - 行動：手動編輯 spec.md 或 plan.md / data-model.md；不需要重跑 `/speckit-plan`，編輯後重新執行 `/speckit-analyze` 驗證。
+1. ~~**必要（HIGH）**：解決 I1（UTC 儲存表示衝突）。~~ **已完成** — spec.md TC-007 / FR-019、data-model.md、research.md §6 已統一表述為「儲存採 UTC、語意／顯示／匯出採 UTC+8」。
 2. **建議（MEDIUM）**：
    - **C1**：於 Phase 8 補三項自動效能量測任務（建議命名 T073e / T073f / T073g），覆蓋 SC-001 / SC-006 / SC-008。
    - **U1**：於 `/speckit-clarify` 或直接編輯 spec.md US5 明確 per-session vs 聚合粒度，必要時擴充 T065 回應結構。

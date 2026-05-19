@@ -160,10 +160,11 @@ volumes:
 - `AuditLog(event_type, created_at)` — 稽核日誌查詢
 - `AttendanceRecord(session_id, attended_at)` — CSV 匯出排序
 
-**UTC+8 儲存策略**：
-- PostgreSQL 欄位型別使用 `TIMESTAMP WITH TIME ZONE`（Prisma `DateTime`）。
-- 應用層在寫入前統一轉換為 UTC+8 偏移的 ISO 8601 字串；讀取後同樣轉換顯示。
-- 或透過 `SET timezone = 'Asia/Taipei'` 設定 DB 連線時區。
+**時間儲存與時區策略（對齊 TC-007）**：
+- PostgreSQL 欄位型別使用 `TIMESTAMP WITH TIME ZONE`（Prisma `DateTime`），內部一律以 **UTC** 儲存。
+- 應用層 Node.js 進程設定 `TZ=Asia/Taipei`，並使用 `Intl.DateTimeFormat` 或 `date-fns-tz` 在輸出邊界（UI、CSV、SSE、稽核日誌）統一轉換為 UTC+8 呈現。
+- 跨日／遲到／統計判斷一律先轉成 UTC+8 後再進行日期比較，避免直接以 UTC `getUTCDate()` 切日造成跨午夜誤判。
+- 不需要 `SET timezone = 'Asia/Taipei'` 改動 DB 連線時區；保留 UTC 儲存可避免後續資料遷移時的時區歧義。
 
 ---
 
