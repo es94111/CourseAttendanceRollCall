@@ -32,6 +32,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return session
     }
   },
+  events: {
+    async createUser({ user }) {
+      if (!user.id || !user.email) return
+      const role = resolveSignInRole(user.email, null, process.env.ADMIN_EMAILS)
+      if (role !== user.role) {
+        await prisma.user.update({ where: { id: user.id }, data: { role } })
+      }
+    }
+  },
   pages: {
     signIn: "/login"
   }
