@@ -1,8 +1,9 @@
 # 規格分析報告：課程點名系統（Course Attendance Roll Call）
 
 **功能分支**：`001-course-attendance-rollcall`
-**分析日期**：2026-05-18
+**分析日期**：2026-05-19
 **分析範圍**：spec.md、plan.md、tasks.md、constitution.md（v1.0.0）
+**分析工具版本**：speckit-analyze（本次報告為覆蓋舊版 analyze-01.md）
 
 ---
 
@@ -10,17 +11,15 @@
 
 | ID | 類別 | 嚴重程度 | 位置 | 摘要 | 建議 |
 |----|------|----------|------|------|------|
-| C1 | Constitution | **CRITICAL** | tasks.md Phase 8（T068–T070） | T068（GET /api/audit-logs）、T069（AuditLogTable）、T070（稽核日誌頁面）**完全沒有前置測試任務**，直接違反憲法原則 III（測試 MUST 先於實作） | 在 T068 之前新增整合測試任務（tests/integration/api/audit-logs.test.ts）；在 T069/T070 之前新增元件測試任務 |
-| I1 | Inconsistency | **HIGH** | spec.md FR-007b / tasks.md T047、T072 | FR-007b MUST 在逾時時自動標記 Session 為 expired；T047 採「懶惰檢查」策略，僅在 SSE 連線有效時觸發。若管理員未連線 SSE（如關閉瀏覽器分頁），Session 永遠不會自動過期，與規格 MUST 語義衝突 | 在 spec.md Edge Cases 中明確說明此架構限制，**或**在 GET /api/sessions/[id] 回應前加入逾時檢查（T072 Notes 中已提及但未落地為獨立任務） |
-| D1 | Duplication | **HIGH** | tasks.md T072 | T072 是「影子任務」：任務描述說「已整合至 T047，T047 完成後自動完成」，意即此 checkbox 永遠不會有獨立實作，造成任務清單追蹤混淆 | 將 T072 從獨立任務移除，改在 T047 描述末尾加注「（含 FR-007b 懶惰逾時檢查，T072 整合於此）」；保持可追溯性同時消除虛假任務 |
-| U1 | Inconsistency | **MEDIUM** | tasks.md Phase 6/Phase 7 | T064a（US5 測試，Phase 7）的任務編號夾在 T064（US4）與 T064b（US4）之間，跨 Phase 跳號，使依賴追蹤與執行順序讀取困難 | 將 T064a 改編號為 T064c（置於 Phase 6 尾端）或整理至 Phase 7 開頭並明確重新編號 |
-| C2 | Constitution | **MEDIUM** | spec.md Assumptions 區段 | 資料保留政策（「至少兩學年」）僅記錄於 Assumptions，未以正式 FR-### 格式列入 Requirements；憲法原則 IV MUST 要求保留政策「在規格中明確定義」 | 在 Requirements 區段新增 FR-025（資料保留）：「系統 MUST 依學校規定保留至少兩學年的點名記錄；資料保留機制應在 Docker Volume 或雲端儲存層確保持久化」 |
-| U2 | Underspecification | **MEDIUM** | spec.md SC-001、SC-002、SC-008 / tasks.md T073 | SC-001（2 分鐘建課）、SC-002（30 秒點名完成）、SC-008（1 分鐘找到學生統計）僅由 T073 手動驗收場景涵蓋，無自動化量測機制 | SC-001/SC-008 屬 UX 操作指標，接受手動驗收；SC-002 建議在 checkin 流程中加入計時追蹤（記錄掃描 → 點名完成的時間戳），提供可量測依據 |
-| U3 | Underspecification | **MEDIUM** | spec.md SC-005 / tasks.md T061 | 統計 SSE（T061）有 SC-005「5 秒內反映」的目標，但無對應測試任務量測此延遲；僅 T073b 測試 QR Code SSE 延遲，統計 SSE 延遲無自動化測試 | 仿 T073b 新增任務 T073c：以 Node.js EventSource 客戶端訂閱 /statistics/stream，量測從 POST /api/attendance 成功到收到 statistics_update 事件的延遲，驗證 ≤ 5 秒（SC-005） |
-| A1 | Ambiguity | **MEDIUM** | spec.md FR-015 / tasks.md T042 | FR-015 說明 officialStartTime 預設帶入排定時間（隱含可不填）；T042 將其設為「必填（required）」欄位。API 層必填、UX 層預填的衝突可能誤導 API 消費者（如測試程式、第三方整合） | 在 T042 任務描述中明確標注「officialStartTime 從 API 語義為必填；前端 UI 一律預填 Course.start_time 作為預設值，使用者可覆寫」，或考慮讓 API 接受 null 並在伺服器端套用預設值 |
-| I2 | Inconsistency | **LOW** | spec.md FR-007 / tasks.md T006、T042 | `session_opened` 稽核事件在 T006（AuditEventType enum）和 T042（POST sessions 寫入 AuditLog）中定義；但 FR-007 稽核要求僅明確提及 void_session 操作，未含 session_opened——屬規格外的謹慎添加 | 在 spec.md FR-007 或 FR-024 補充說明：「開啟 Session（session_opened）亦記錄稽核日誌」，使規格與實作一致 |
-| I3 | Inconsistency | **LOW** | spec.md FR-011 / tasks.md T048 | FR-011 描述「比對 Google 帳號與學號完成點名」；T048 加入「確認已選課」驗證。規格接受場景 5 僅提及「找不到對應學生」，未明確說明「有 Student 記錄但未選課」應被拒絕 | 在 spec.md Edge Cases 新增：「學生 Google Email 已綁定學號但未選修該課程，嘗試點名時系統應拒絕並顯示「未選修此課程」提示，不計入點名」 |
-| D2 | Duplication | **LOW** | tasks.md T036、T064b | T036（建立課程詳情頁面）與 T064b（新增刪除個人資料按鈕）均指向同一檔案 src/app/(admin)/courses/[id]/page.tsx，可能造成 PR 衝突或功能重疊 | 在 T036 結尾標注「個資刪除按鈕實作由 T064b 完成（Phase 6）」；在 T064b 說明「修改既有 T036 建立的頁面，追加 FR-021c 功能」，明確分工邊界 |
+| C1 | Constitution | **CRITICAL** | tasks.md T011/T012（Phase 2）vs T038（Phase 4） | HMAC Token 實作（T011 `generateToken`、T012 `verifyToken`）位於 Phase 2 Foundational，測試（T038 HMAC 單元測試）位於 Phase 4 US2。Phase 2 標記為「完成前封鎖所有 User Story」，意即 HMAC 必先實作後才寫測試，**紅燈無法成立**，直接違反憲法原則 III：「撰寫測試 → 確認測試失敗（紅燈）→ 實作功能 → 測試通過（綠燈）→ 重構」 | 在 Phase 2 內，T011/T012 **之前**新增測試任務（例如 T010a `撰寫 HMAC Token 單元測試骨架：generateToken 結構、verifyToken 正確/過期/竄改/寬限期，先確認失敗`）；實作 T011/T012 後確認測試通過；T038 任務可改為「補強 HMAC 整合測試（含 Session 實際流程）」而非重複單元測試 |
+| M1 | Constitution | **MEDIUM** | tasks.md T069、T070（Phase 8） | T069（AuditLogTable 元件）與 T070（稽核日誌頁面）均無前置 UI 測試任務。T068a 覆蓋 API 整合測試，但 UI 元件層測試缺席，構成部分憲法原則 III 違規 | 在 T069 前新增 `T068b [P] 撰寫 AuditLogTable 元件渲染測試（事件類型 Badge 顯示、操作者、時間格式）（tests/unit/components/AuditLogTable.test.tsx）` |
+| M2 | Inconsistency | **MEDIUM** | tasks.md T043、T047 | T047（SSE stream）含 FR-007b 懶惰逾時檢查；T047 Notes 提及「GET /api/sessions/[id] 等 REST API 路徑亦應在回應前執行逾時檢查」，但 T043（GET /api/sessions/[id]）未明確包含此邏輯，造成 REST API 與 SSE 之間狀態不一致風險：若無 SSE 訂閱者直接查詢 GET /api/sessions/[id]，可能回傳仍顯示 `active` 的已逾時 Session | 在 T043 任務描述末尾明確加入：「回應前須執行懶惰逾時檢查：若 Session 超過 autoExpireMinutes 則更新 status→expired 後再回應」，確保所有讀取路徑一致 |
+| M3 | Underspecification | **MEDIUM** | spec.md FR-025、tasks.md T004 | FR-025 要求保留至少兩學年的點名記錄，由 Docker Volume 掛載（T004）與部署文件（T075）支撐。但無任何任務涵蓋：備份驗證流程、Volume 掛載測試、或資料保留監控策略；若 Volume 未正確掛載，容器重啟後資料靜默遺失 | 在 T004 說明中加入「docker-compose.yml 需包含 Volume 掛載的 health 驗證設定」，並在 T075 部署文件任務中明確包含備份策略說明（如 pg_dump cron）或 README 操作指引 |
+| L1 | Duplication | **LOW** | tasks.md T072（Phase 8） | T072 為「影子任務」：描述明確標注「已整合於 T047，非獨立任務」且「不需另行實作」，但仍以 checkbox 形式存在，造成進度追蹤混淆（此 checkbox 永遠不會被獨立勾選完成） | 將 T072 從獨立任務移除，改在 T047 描述末尾加注可追溯性說明即可；或將 T072 改為純文字備注段落（無 checkbox） |
+| L2 | Inconsistency | **LOW** | tasks.md T036、T064b | T036 與 T064b 均指向同一檔案 `src/app/(admin)/courses/[id]/page.tsx`；兩個任務均已明確標注此衝突與執行順序，但若以 Git branch 並行開發，PR 合併衝突仍有實際風險 | 考慮在 T036 中為刪除個資按鈕預留 `{/* DELETE_BUTTON_PLACEHOLDER: T064b */}` 佔位符，T064b 替換佔位符即可，降低合併衝突面積 |
+| L3 | Inconsistency | **LOW** | tasks.md T065a | 整合測試檔案命名不一致：T065a 使用 `tests/integration/api/student-attendance.test.ts`，而其他任務均用 `{resource}.test.ts` 格式（courses、sessions、attendance、export、audit-logs）；`student-attendance` 混用資源與動詞 | 建議重命名為 `students-me.test.ts` 或 `my-attendance.test.ts` 以符合路由結構 `/api/students/me/attendance` |
+| L4 | Ambiguity | **LOW** | tasks.md T042 | T042 任務描述末尾有 `A1` 自參照標記：「officialStartTime 必填（前端 UI 一律預填 Course 排定時間作為預設值，使用者可覆寫，**A1**）」，此 `A1` 指舊版 analyze-01.md 的問題 ID，在新版報告中將失去意義，影響任務自解釋性 | 移除 `A1` 標記，改以明確說明替代：「officialStartTime API 層必填；前端 UI 預填 Course.startTime，使用者可覆寫」 |
+| L5 | Terminology | **LOW** | constitution.md 原則 II vs spec.md 全文 | 憲法原則 II 使用「教師視角」，spec.md 全文使用「管理員」，兩者為同義詞但無明確映射說明，可能混淆新貢獻者 | 在 spec.md 開頭或術語表中加入一行說明：「本規格中『管理員』即憲法所稱『教師』，為同義詞互用」 |
 
 ---
 
@@ -28,34 +27,34 @@
 
 | 需求 Key | 有任務？ | 任務 IDs | 備註 |
 |----------|----------|----------|------|
-| FR-001 | ✅ | T023 | |
+| FR-001 | ✅ | T023, T032, T035 | |
 | FR-002 | ✅ | T024, T025, T036, T037 | |
-| FR-003 | ✅ | T026, T027 | |
-| FR-004 | ✅ | T026 | |
-| FR-005a | ✅ | T008, T014 | |
-| FR-005b | ✅ | T014 | |
+| FR-003 | ✅ | T026, T027, T036 | |
+| FR-004 | ✅ | T026, T028 | |
+| FR-005a | ✅ | T008, T014, T015 | |
+| FR-005b | ✅ | T005, T014, T018 | |
 | FR-005c | ✅ | T014 | |
 | FR-005d | ✅ | T030, T037a | |
-| FR-005e | ✅ | T028, T029 | |
-| FR-006a | ✅ | T029 | |
-| FR-006b | ✅ | T028 | |
-| FR-007 | ✅ | T042, T045 | |
+| FR-005e | ✅ | T008, T028, T029 | |
+| FR-006a | ✅ | T029, T033 | |
+| FR-006b | ✅ | T028, T033 | |
+| FR-007 | ✅ | T042, T045, T039 | |
 | FR-007a | ✅ | T044 | |
-| FR-007b | ⚠️ 部分 | T047, T072 | SSE 懶惰檢查；SSE 未連線時不觸發（見 I1） |
+| FR-007b | ⚠️ 部分 | T047 | SSE 懶惰檢查，REST API (T043) 未明確含逾時邏輯（見 M2） |
 | FR-007c | ✅ | T042 | |
-| FR-007d | ✅ | T042, T048 | |
+| FR-007d | ✅ | T042, T012, T048 | |
 | FR-008 | ✅ | T011, T012, T041, T046, T047 | |
 | FR-009 | ✅ | T049 | |
 | FR-010 | ✅ | T051 | |
-| FR-011 | ✅ | T048 | 選課驗證需補入規格（見 I3） |
+| FR-011 | ✅ | T048 | |
 | FR-012 | ✅ | T048 | |
 | FR-013 | ✅ | T048 | |
-| FR-014 | ✅ | T048 | |
-| FR-015 | ✅ | T023, T025, T032, T042 | officialStartTime 必填歧義（見 A1） |
+| FR-014 | ✅ | T012, T048 | |
+| FR-015 | ✅ | T025, T032, T042 | |
 | FR-016 | ✅ | T048 | |
 | FR-017 | ✅ | T054 | |
 | FR-017a | ✅ | T055 | |
-| FR-018 | ✅ | T053, T060 | |
+| FR-018 | ✅ | T053, T054, T060 | |
 | FR-019 | ✅ | T053, T060 | |
 | FR-020 | ✅ | T060, T064 | |
 | FR-021 | ✅ | T059, T062 | |
@@ -63,14 +62,15 @@
 | FR-021b | ✅ | T062 | |
 | FR-021c | ✅ | T063, T064b | |
 | FR-022 | ✅ | T062 | |
-| FR-023 | ✅ | T065, T066, T067 | |
-| FR-024 | ⚠️ 部分 | T016, T068-T070 | T068–T070 缺前置測試（見 C1） |
-| SC-003 | ✅ | T073b | |
-| SC-004 | ✅ | T073a | |
-| SC-005 | ⚠️ 部分 | T061 | 無 SSE 延遲自動化測試（見 U3） |
-| SC-006 | ✅ | T057, T058, T059 | |
-| SC-007 | ✅ | T038, T040 | |
-| SC-009 | ✅ | T074 | |
+| FR-023 | ✅ | T065a, T065, T066, T067 | |
+| FR-024 | ⚠️ 部分 | T016, T068a, T068, T069, T070 | T069/T070 UI 元件缺前置測試（見 M1） |
+| FR-025 | ⚠️ 部分 | T004, T075 | 無備份驗證任務（見 M3） |
+| SC-003 | ✅ | T073b | SSE QR Code 延遲自動測試 |
+| SC-004 | ✅ | T073a | 並發點名負載測試 |
+| SC-005 | ✅ | T061, T073c | 統計 SSE 延遲自動測試 |
+| SC-006 | ✅ | T057, T058, T059 | CSV 匯出效能測試 |
+| SC-007 | ✅ | T012, T038, T040 | 過期 QR Code 拒絕測試 |
+| SC-009 | ✅ | T074 | 健康檢查端點 |
 
 ---
 
@@ -78,11 +78,11 @@
 
 | 原則 | 狀態 | 說明 |
 |------|------|------|
-| I. 文件語言（繁體中文） | ✅ 通過 | spec.md / plan.md / tasks.md 均以繁體中文撰寫 |
-| II. 使用者優先設計 | ✅ 通過 | 5 個 User Story 涵蓋管理員與學生視角，每項功能有真實情境 |
-| III. 測試驅動開發 | ❌ **CRITICAL 違規** | T068–T070（稽核日誌 API + UI）無前置測試任務，違反「測試 MUST 先於實作」 |
-| IV. 資料安全與隱私保護 | ⚠️ 部分 | RBAC、稽核日誌、PII 保護均實作；但資料保留政策未以正式 FR 列入 Requirements（見 C2） |
-| V. 簡潔性（YAGNI） | ✅ 通過 | V1 暫緩功能有明確記錄；複雜度追蹤表說明所有例外 |
+| I. 文件語言（繁體中文） | ✅ 通過 | spec.md / plan.md / tasks.md 均以繁體中文撰寫；程式碼識別字使用英文 |
+| II. 使用者優先設計 | ✅ 通過 | 5 個 User Story 涵蓋管理員與學生視角；每項功能附有真實使用情境與 Acceptance Scenarios |
+| III. 測試驅動開發 | ❌ **CRITICAL 違規** | T011/T012（Phase 2 HMAC 實作）早於 T038（Phase 4 HMAC 測試），紅燈無法成立；T069/T070 UI 元件無前置測試（MEDIUM） |
+| IV. 資料安全與隱私保護 | ⚠️ 部分 | RBAC、稽核日誌、PII 保護均實作；FR-025 資料保留缺備份驗證任務（M3） |
+| V. 簡潔性（YAGNI） | ✅ 通過 | V1 暫緩功能明確記錄；複雜度追蹤表說明所有例外（SSE 取代 WebSocket、雙軌稽核日誌） |
 
 ---
 
@@ -91,10 +91,11 @@
 | 任務 ID | 描述 | 說明 |
 |---------|------|------|
 | T002 | TypeScript/ESLint/Prettier 配置 | TC-001 隱含要求，無對應 FR |
-| T003 | Tailwind + shadcn/ui 配置 | TC-004 隱含要求，無對應 FR |
+| T003 | Tailwind CSS + shadcn/ui 配置 | TC-004 隱含要求，無對應 FR |
 | T007 | Vitest 測試框架配置 | 憲法原則 III 要求，無對應 FR |
-| T031 | DataTable + ConfirmDialog 共用元件 | US1/US4 UI 支撐任務，非獨立需求 |
+| T031 | DataTable + ConfirmDialog 共用元件 | US1/US4 UI 支撐任務，屬實作細節 |
 | T071 | 全域 API 錯誤處理 | TC-006（日誌）隱含最佳實踐，無明確 FR |
+| T072 | （影子任務，已整合 T047） | 見 L1：建議移除 |
 | T075 | 生產部署配置文件 | TC-003 隱含需求，屬維運文件 |
 
 ---
@@ -103,54 +104,61 @@
 
 | 項目 | 數值 |
 |------|------|
-| 總需求數（FR + 需建置的 SC） | 44（38 FR + 6 SC） |
-| 總任務數 | 80 |
-| 需求覆蓋率（≥1 任務） | 42 / 44 = **95.5%**（FR-007b、SC-005 部分覆蓋） |
-| 歧義數量 | 1（A1） |
-| 重複數量 | 2（D1、D2） |
+| 總功能需求數（FR） | 38（含子項 FR-005a–e、FR-006a–b、FR-007a–d、FR-017a、FR-021a–c） |
+| 需建置的成功標準數（SC） | 6（SC-003、SC-004、SC-005、SC-006、SC-007、SC-009） |
+| 總需求數 | **44** |
+| 總任務數 | **82**（T001–T075 + T037a、T064b、T065a、T068a、T073a、T073b、T073c） |
+| 完整覆蓋率（≥1 任務） | 41 / 44 = **93.2%** |
+| 部分覆蓋（需補強） | 3（FR-007b、FR-024、FR-025） |
+| 零覆蓋需求 | **0** |
 | CRITICAL 問題數 | **1**（C1） |
-| HIGH 問題數 | 2（I1、D1） |
-| MEDIUM 問題數 | 5（U1、C2、U2、U3、A1） |
-| LOW 問題數 | 3（I2、I3、D2） |
+| MEDIUM 問題數 | **3**（M1、M2、M3） |
+| HIGH 問題數 | **0** |
+| LOW 問題數 | **5**（L1–L5） |
+| 重複數量 | 1（L1 T072 影子任務） |
+| 歧義數量 | 1（L4 T042 自參照標記） |
 
 ---
 
 ## 後續行動（Next Actions）
 
-### ⛔ 在執行 `/speckit-implement` 之前，必須先解決以下 CRITICAL 問題：
+### ⛔ 必須在 `/speckit-implement` 之前解決的 CRITICAL 問題
 
-**C1（最高優先）**：在 tasks.md Phase 8 的 T068 之前，新增稽核日誌 API 整合測試任務：
+**C1（最高優先）**：在 tasks.md Phase 2 的 T011/T012 之前，新增 HMAC 測試骨架任務：
 
+```markdown
+- [ ] T010a [P] 撰寫 HMAC Token 單元測試骨架（tests/unit/lib/hmac.test.ts）：
+      涵蓋 generateToken 結構驗證、verifyToken 正確 Token、過期 Token、
+      竄改 Token、寬限期邊界（gracePeriodSeconds）；
+      此時實作不存在，確認所有測試紅燈後再進行 T011/T012
 ```
-- [ ] T068a [P] 撰寫稽核日誌查詢 API 整合測試：GET /api/audit-logs
-      事件類型篩選、操作者篩選、日期範圍篩選、分頁、權限（非 admin 回傳 403）
-      （tests/integration/api/audit-logs.test.ts）
-```
 
-### ⚠️ 建議在實作前解決的 HIGH 問題：
+並將 T038（Phase 4）的任務描述修改為「補強 HMAC 與 Session 整合測試（含 active Session 流程、寬限期實際驗證）」，避免與 T010a 完全重複。
 
-**I1**：在 spec.md Edge Cases 新增一條說明 FR-007b 的架構限制：
-> 「Session 自動逾時依賴 SSE 連線的懶惰檢查；管理員關閉瀏覽器後，Session 狀態不會立即更新，直到下一次有人存取。V1 接受此限制。」
+### ⚠️ 建議在實作前修正的 MEDIUM 問題
 
-**D1**：將 T072 從獨立任務移除，改在 T047 最後加注：
-> `（含 FR-007b 逾時懶惰檢查；T072 整合於此，無需另行實作）`
+**M1**：在 T069 前新增元件測試任務（T068b），確保 AuditLogTable UI 測試先行。
 
-### ℹ️ 可在實作進行中逐步修正的 MEDIUM/LOW 問題：
+**M2**：在 T043 描述中明確加入逾時懶惰檢查邏輯，避免 REST API 與 SSE 狀態不一致。
+
+**M3**：在 T004 或 T075 補充 PostgreSQL 備份策略說明（如 `pg_dump` cron 或平台備份設定）。
+
+### ℹ️ 可在實作期間逐步修正的 LOW 問題
 
 | 問題 | 建議行動 | 執行時機 |
 |------|----------|----------|
-| U1（任務編號跳序） | 重新命名 T064a→T064c | 修改 tasks.md 時 |
-| C2（資料保留未入 FR） | 執行 `/speckit-specify` 新增 FR-025 | 下次規格更新時 |
-| U3（SC-005 無自動測試） | 新增 T073c SSE 延遲測試 | Phase 8 任務新增時 |
-| A1（officialStartTime 歧義） | 在 T042 描述中補充說明 | 撰寫 T042 任務時 |
-| I2、I3（規格未記載實作細節） | 執行 `/speckit-specify` 補充 | 規格下次迭代時 |
+| L1（T072 影子任務） | 移除 T072 checkbox，改為 T047 描述末尾加注 | 修改 tasks.md 時 |
+| L2（T036/T064b 衝突風險） | T036 加入佔位符 comment | 實作 T036 時 |
+| L3（測試檔名不一致） | T065a 重命名為 `students-me.test.ts` | 建立測試檔前 |
+| L4（T042 A1 自參照） | 移除 `A1` 標記，改為明確說明 | 任務執行前 |
+| L5（管理員/教師術語） | spec.md 開頭加術語說明 | 下次規格更新時 |
 
-### 建議指令：
+### 建議指令
 
-1. **立即**：手動編輯 `tasks.md` 新增 T068a 測試任務（不需要重新執行 `/speckit-tasks`）
-2. **選擇性**：執行 `/speckit-specify` 補充 FR-025（資料保留）與 Edge Cases（FR-007b 限制、未選課學生點名拒絕）
-3. **確認後**：可進行 `/speckit-implement`（在 C1 解決後）
+1. **立即**：手動編輯 `tasks.md`，在 Phase 2 的 T011 之前新增 T010a 測試骨架任務（解決 C1）
+2. **選擇性**：手動在 Phase 8 新增 T068b AuditLogTable 元件測試任務（解決 M1）
+3. **確認後**：C1 解決後即可執行 `/speckit-implement`
 
 ---
 
-*分析由 speckit-analyze 自動生成 | 2026-05-18*
+*分析由 speckit-analyze 自動生成 | 2026-05-19 | 覆蓋舊版 analyze-01.md（2026-05-18）*
