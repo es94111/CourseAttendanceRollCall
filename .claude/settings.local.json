@@ -20,7 +20,10 @@
       "PowerShell(.\\\\.specify\\\\scripts\\\\powershell\\\\check-prerequisites.ps1 -Json -RequireTasks -IncludeTasks)",
       "PowerShell(.specify/scripts/powershell/check-prerequisites.ps1 -Json -RequireTasks -IncludeTasks)",
       "Bash(node -e \"require\\('./changelog.json'\\)\")",
-      "Bash(node *)"
+      "Bash(node *)",
+      "Bash(gh run *)",
+      "Bash(Select-String -Pattern \"\\(docker.io|Docker Hub|DOCKERHUB|push|Login|skipping\\)\")",
+      "Bash(Select-Object -First 30)"
     ]
   }
 }
