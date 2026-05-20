@@ -69,8 +69,9 @@ export function AllowedEmailDomainsManager({
           其他 Email 在 OAuth 完成後會被伺服器拒絕。
         </p>
         <p className="text-muted">
-          若僅允許單一 Workspace 網域，建議同時在 Google Cloud Console 設定 OAuth Consent Screen
-          以加強體驗，但本系統的強制是在 signIn 伺服器端完成。
+          清單恰好 1 個網域時，登入會自動帶入 Google 的 <code>hd</code> 參數， 帳號選擇器只顯示該
+          Workspace 網域的帳號並預填 @{previewDomains[0]?.domain ?? "domain"}； 多網域時不帶{" "}
+          <code>hd</code>（避免把其他合法網域也擋掉），但伺服器端仍會強制驗證。
         </p>
         {error && <p style={{ color: "#b42318" }}>{error}</p>}
       </section>

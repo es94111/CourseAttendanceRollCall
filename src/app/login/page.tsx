@@ -33,7 +33,9 @@ export default async function LoginPage({
         redirect("/login?error=turnstile-failed")
       }
     }
-    await signIn("google", { redirectTo: "/dashboard" })
+    const domains = await prisma.allowedEmailDomain.findMany({ select: { domain: true } })
+    const authorizationParams = domains.length === 1 ? { hd: domains[0].domain } : undefined
+    await signIn("google", { redirectTo: "/dashboard" }, authorizationParams)
   }
 
   return (
