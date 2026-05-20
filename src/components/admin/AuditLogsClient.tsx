@@ -12,6 +12,43 @@ interface AuditLogRow {
   createdAt: string
 }
 
+const eventLabels: Record<string, string> = {
+  export_attendance: "匯出點名資料",
+  manual_attendance_override: "手動補登點名",
+  leave_record_add: "新增請假記錄",
+  void_session: "作廢點名 Session",
+  role_change: "變更使用者角色",
+  delete_student_data: "刪除學生個資",
+  session_opened: "開啟點名",
+  session_settings_update: "更新點名設定"
+}
+
+const targetLabels: Record<string, string> = {
+  userId: "使用者 ID",
+  courseId: "課程 ID",
+  sessionId: "點名 Session ID",
+  studentId: "學生 ID",
+  studentCode: "學號",
+  attendanceId: "點名記錄 ID",
+  recordId: "點名記錄 ID"
+}
+
+function eventLabel(eventType: string) {
+  return eventLabels[eventType] ?? eventType
+}
+
+function formatTarget(target: unknown) {
+  if (!target || typeof target !== "object" || Array.isArray(target)) return String(target ?? "-")
+  return Object.entries(target)
+    .map(([key, value]) => `${targetLabels[key] ?? key}：${String(value)}`)
+    .join("，")
+}
+
+function targetEntries(target: unknown) {
+  if (!target || typeof target !== "object" || Array.isArray(target)) return [["目標", String(target ?? "-")]]
+  return Object.entries(target).map(([key, value]) => [targetLabels[key] ?? key, String(value)])
+}
+
 export function AuditLogsClient({ initialLogs, initialTotal }: { initialLogs: AuditLogRow[]; initialTotal: number }) {
   const [logs, setLogs] = useState(initialLogs)
   const [total, setTotal] = useState(initialTotal)
@@ -92,10 +129,10 @@ export function AuditLogsClient({ initialLogs, initialTotal }: { initialLogs: Au
           {logs.map((log) => (
             <tr key={log.id}>
               <td>
-                <span className="badge">{log.eventType}</span>
+                <span className="badge">{eventLabel(log.eventType)}</span>
               </td>
               <td>{log.actorEmail}</td>
-              <td>{JSON.stringify(log.target)}</td>
+              <td>{formatTarget(log.target)}</td>
               <td>{log.reason ?? "-"}</td>
               <td>{log.createdAt}</td>
               <td>
@@ -128,7 +165,7 @@ export function AuditLogsClient({ initialLogs, initialTotal }: { initialLogs: Au
           <div className="detail-grid">
             <div>
               <span>事件</span>
-              <strong>{selectedLog.eventType}</strong>
+              <strong>{eventLabel(selectedLog.eventType)}</strong>
             </div>
             <div>
               <span>操作者</span>
@@ -144,7 +181,16 @@ export function AuditLogsClient({ initialLogs, initialTotal }: { initialLogs: Au
             </div>
             <div className="detail-wide">
               <span>目標資料</span>
-              <pre>{JSON.stringify(selectedLog.target, null, 2)}</pre>
+              <table>
+                <tbody>
+                  {targetEntries(selectedLog.target).map(([label, value]) => (
+                    <tr key={label}>
+                      <th>{label}</th>
+                      <td>{value}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         )}
