@@ -17,6 +17,8 @@ export default async function AuditLogsPage() {
           eventType: log.eventType,
           actorEmail: log.actorEmail,
           target: log.target,
+          oldValue: log.oldValue,
+          newValue: log.newValue,
           reason: log.reason,
           createdAt: toTaipeiIso(log.createdAt) ?? ""
         }))}

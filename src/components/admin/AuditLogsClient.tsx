@@ -8,6 +8,8 @@ interface AuditLogRow {
   eventType: string
   actorEmail: string
   target: unknown
+  oldValue?: unknown
+  newValue?: unknown
   reason: string | null
   createdAt: string
 }
@@ -30,23 +32,83 @@ const targetLabels: Record<string, string> = {
   studentId: "學生 ID",
   studentCode: "學號",
   attendanceId: "點名記錄 ID",
-  recordId: "點名記錄 ID"
+  attendanceRecordId: "點名記錄 ID",
+  recordId: "點名記錄 ID",
+  leaveRecordId: "請假記錄 ID",
+  startDate: "開始日期",
+  endDate: "結束日期",
+  total: "筆數"
 }
 
 function eventLabel(eventType: string) {
   return eventLabels[eventType] ?? eventType
 }
 
-function formatTarget(target: unknown) {
+function targetObject(target: unknown) {
   if (!target || typeof target !== "object" || Array.isArray(target)) return String(target ?? "-")
-  return Object.entries(target)
-    .map(([key, value]) => `${targetLabels[key] ?? key}：${String(value)}`)
-    .join("，")
+  return target as Record<string, unknown>
+}
+
+function valueObject(value: unknown) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {}
+  return value as Record<string, unknown>
+}
+
+function formatTarget(log: AuditLogRow) {
+  const target = targetObject(log.target)
+  if (typeof target === "string") return target
+
+  switch (log.eventType) {
+    case "session_opened":
+      return "開啟此課程的點名 Session"
+    case "session_settings_update":
+      return "更新此點名 Session 的設定"
+    case "manual_attendance_override":
+      return "手動調整一筆點名記錄"
+    case "delete_student_data":
+      return target.studentCode ? `刪除學號 ${target.studentCode} 的學生個資` : "刪除學生個資"
+    case "export_attendance":
+      return `匯出 ${target.startDate ?? "-"} 至 ${target.endDate ?? "-"} 的點名資料，共 ${target.total ?? "-"} 筆`
+    case "leave_record_add":
+      return "新增請假記錄並更新點名狀態"
+    case "role_change":
+      return "變更一位使用者的角色"
+    case "void_session":
+      return "作廢一個點名 Session"
+    default:
+      return Object.entries(target)
+        .map(([key, value]) => `${targetLabels[key] ?? key}：${String(value)}`)
+        .join("，")
+  }
+}
+
+function formatDescription(log: AuditLogRow) {
+  if (log.eventType === "session_settings_update") {
+    const oldValue = valueObject(log.oldValue)
+    const newValue = valueObject(log.newValue)
+    if ("qrCodeValiditySeconds" in oldValue || "qrCodeValiditySeconds" in newValue) {
+      return `將 QR Code 有效秒數由 ${oldValue.qrCodeValiditySeconds ?? "-"} 秒更新為 ${newValue.qrCodeValiditySeconds ?? "-"} 秒`
+    }
+  }
+  return formatTarget(log)
 }
 
 function targetEntries(target: unknown) {
   if (!target || typeof target !== "object" || Array.isArray(target)) return [["目標", String(target ?? "-")]]
   return Object.entries(target).map(([key, value]) => [targetLabels[key] ?? key, String(value)])
+}
+
+const valueLabels: Record<string, string> = {
+  qrCodeValiditySeconds: "QR Code 有效秒數",
+  gracePeriodSeconds: "OAuth 寬限秒數",
+  officialStartTime: "官方開始時間",
+  role: "角色",
+  status: "點名狀態"
+}
+
+function valueEntries(value: unknown) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return []
+  return Object.entries(value).map(([key, item]) => [valueLabels[key] ?? key, String(item)])
 }
 
 export function AuditLogsClient({ initialLogs, initialTotal }: { initialLogs: AuditLogRow[]; initialTotal: number }) {
@@ -132,8 +194,8 @@ export function AuditLogsClient({ initialLogs, initialTotal }: { initialLogs: Au
                 <span className="badge">{eventLabel(log.eventType)}</span>
               </td>
               <td>{log.actorEmail}</td>
-              <td>{formatTarget(log.target)}</td>
-              <td>{log.reason ?? "-"}</td>
+              <td>{formatDescription(log)}</td>
+              <td>{log.reason ?? "未填寫原因"}</td>
               <td>{log.createdAt}</td>
               <td>
                 <button className="btn secondary" type="button" onClick={() => setSelectedLog(log)}>
@@ -177,7 +239,11 @@ export function AuditLogsClient({ initialLogs, initialTotal }: { initialLogs: Au
             </div>
             <div>
               <span>原因</span>
-              <strong>{selectedLog.reason ?? "-"}</strong>
+              <strong>{selectedLog.reason ?? "未填寫原因"}</strong>
+            </div>
+            <div className="detail-wide">
+              <span>說明</span>
+              <strong>{formatDescription(selectedLog)}</strong>
             </div>
             <div className="detail-wide">
               <span>目標資料</span>
@@ -192,6 +258,38 @@ export function AuditLogsClient({ initialLogs, initialTotal }: { initialLogs: Au
                 </tbody>
               </table>
             </div>
+            {(valueEntries(selectedLog.oldValue).length > 0 || valueEntries(selectedLog.newValue).length > 0) && (
+              <div className="detail-wide">
+                <span>變更內容</span>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>欄位</th>
+                      <th>原本</th>
+                      <th>更新後</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Array.from(
+                      new Set([
+                        ...valueEntries(selectedLog.oldValue).map(([label]) => label),
+                        ...valueEntries(selectedLog.newValue).map(([label]) => label)
+                      ])
+                    ).map((label) => {
+                      const oldValue = valueEntries(selectedLog.oldValue).find(([item]) => item === label)?.[1] ?? "-"
+                      const newValue = valueEntries(selectedLog.newValue).find(([item]) => item === label)?.[1] ?? "-"
+                      return (
+                        <tr key={label}>
+                          <th>{label}</th>
+                          <td>{oldValue}</td>
+                          <td>{newValue}</td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
       </Dialog>
