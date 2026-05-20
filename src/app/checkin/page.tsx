@@ -19,7 +19,7 @@ function CheckinContent() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [autoSubmitted, setAutoSubmitted] = useState(false)
   const expired = remaining <= 0
-  const canAttemptCheckin = Boolean(token && sessionId && acceptedRemaining > 0)
+  const hasCheckinParams = Boolean(token && sessionId)
 
   useEffect(() => {
     const tick = () => {
@@ -35,6 +35,10 @@ function CheckinContent() {
   }, [gracePeriodSeconds, slot])
 
   async function submit() {
+    if (!hasCheckinParams) {
+      setResult({ kind: "error", title: "QR Code 資料不完整", detail: "請重新掃描管理員顯示的 QR Code。" })
+      return
+    }
     setIsSubmitting(true)
     setResult(null)
     try {
@@ -46,6 +50,7 @@ function CheckinContent() {
       const body = await response.json()
       if (response.status === 401) {
         setResult({ kind: "info", title: "需要登入", detail: "請先使用 Google 帳號登入，再提交點名。" })
+        login()
         return
       }
       setResult(
@@ -61,7 +66,7 @@ function CheckinContent() {
   }
 
   useEffect(() => {
-    if (!canAttemptCheckin || autoSubmitted) return
+    if (!hasCheckinParams || autoSubmitted) return
     let cancelled = false
     void getSession().then((session) => {
       if (cancelled || !session) return
@@ -72,7 +77,7 @@ function CheckinContent() {
       cancelled = true
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoSubmitted, canAttemptCheckin, sessionId, token])
+  }, [autoSubmitted, hasCheckinParams, sessionId, token])
 
   function login() {
     void signIn("google", { callbackUrl: window.location.href })
@@ -82,18 +87,20 @@ function CheckinContent() {
     <main className="shell" style={{ maxWidth: 560 }}>
       <h1>課程點名</h1>
       <section className="panel">
-        {!canAttemptCheckin ? (
-          <p>QR Code 已失效，請等待管理員顯示新 QR Code 後重新掃描</p>
+        {!hasCheckinParams ? (
+          <p>QR Code 資料不完整，請重新掃描管理員顯示的 QR Code</p>
+        ) : expired && acceptedRemaining <= 0 ? (
+          <p>QR Code 可能已超過建議完成時間，仍可嘗試登入並由系統確認是否可點名</p>
         ) : expired ? (
           <p>QR Code 已更新，仍可在 {acceptedRemaining} 秒內完成登入點名</p>
         ) : (
           <p>QR Code 將於 {remaining} 秒後更新</p>
         )}
         <div className="toolbar">
-          <button className="btn secondary" type="button" disabled={!canAttemptCheckin} onClick={login}>
+          <button className="btn secondary" type="button" disabled={!hasCheckinParams} onClick={login}>
             使用 Google 登入
           </button>
-          <button className="btn" type="button" disabled={!canAttemptCheckin || isSubmitting} onClick={submit}>
+          <button className="btn" type="button" disabled={!hasCheckinParams || isSubmitting} onClick={submit}>
             {isSubmitting ? "提交中" : "提交點名"}
           </button>
         </div>
