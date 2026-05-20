@@ -2,8 +2,24 @@ import { describe, expect, it } from "vitest"
 import {
   extractEmailDomain,
   isEmailDomainAllowed,
+  normalizeEmailDomain,
   parseAllowedEmailDomains
 } from "@/lib/auth-domain"
+
+describe("normalizeEmailDomain", () => {
+  it("strips @ and lowercases valid domains", () => {
+    expect(normalizeEmailDomain(" @School.EDU ")).toBe("school.edu")
+    expect(normalizeEmailDomain("alumni.school.edu")).toBe("alumni.school.edu")
+  })
+
+  it("rejects malformed input", () => {
+    expect(normalizeEmailDomain("")).toBeNull()
+    expect(normalizeEmailDomain(null)).toBeNull()
+    expect(normalizeEmailDomain("noTLD")).toBeNull()
+    expect(normalizeEmailDomain("space domain.com")).toBeNull()
+    expect(normalizeEmailDomain("-leadinghyphen.com")).toBeNull()
+  })
+})
 
 describe("parseAllowedEmailDomains", () => {
   it("splits, trims, lowercases and drops leading @", () => {

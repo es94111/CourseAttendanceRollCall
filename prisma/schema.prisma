@@ -43,6 +43,7 @@ enum AuditEventType {
   session_settings_update
   connection_access_update
   connection_access_block
+  allowed_email_domains_update
 }
 
 model User {
@@ -226,6 +227,16 @@ model AuditLog {
   @@index([eventType, createdAt])
   @@index([actorEmail, createdAt])
   @@map("audit_logs")
+}
+
+model AllowedEmailDomain {
+  id        String   @id @default(cuid())
+  domain    String   @unique
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("allowed_email_domains")
 }
 
 model ConnectionAccessRule {

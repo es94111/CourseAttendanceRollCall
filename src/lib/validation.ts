@@ -54,6 +54,15 @@ export const manualAttendanceSchema = z.object({
   reason: z.string().trim().min(1)
 })
 
+export const allowedEmailDomainsSchema = z.object({
+  domains: z.array(
+    z.object({
+      domain: z.string().trim().min(1),
+      note: z.string().trim().optional().nullable()
+    })
+  )
+})
+
 export const connectionAccessRulesSchema = z.object({
   rules: z.array(
     z.object({

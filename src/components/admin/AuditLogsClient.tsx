@@ -25,7 +25,8 @@ const eventLabels: Record<string, string> = {
   session_opened: "開啟點名",
   session_settings_update: "更新點名設定",
   connection_access_update: "更新連線限制",
-  connection_access_block: "封鎖連線"
+  connection_access_block: "封鎖連線",
+  allowed_email_domains_update: "更新 Google 登入網域"
 }
 
 const targetLabels: Record<string, string> = {
@@ -103,6 +104,8 @@ function formatTarget(log: AuditLogRow) {
       return `課程「${courseName}」作廢${sessionLabel}`
     case "connection_access_update":
       return `更新連線限制規則，共 ${target.total ?? "-"} 筆`
+    case "allowed_email_domains_update":
+      return `更新 Google 登入網域，共 ${target.total ?? "-"} 個`
     case "connection_access_block": {
       const ip = target.ipAddress ?? "未知 IP"
       const country = target.ipCountry ? `（${target.ipCountry}）` : ""
@@ -232,6 +235,7 @@ export function AuditLogsClient({
           <option value="export_attendance">匯出</option>
           <option value="connection_access_update">連線限制</option>
           <option value="connection_access_block">封鎖連線</option>
+          <option value="allowed_email_domains_update">登入網域</option>
           <option value="manual_attendance_override">手動補登</option>
           <option value="leave_record_add">請假</option>
           <option value="void_session">作廢</option>

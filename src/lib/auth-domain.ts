@@ -1,8 +1,17 @@
+const DOMAIN_PATTERN =
+  /^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)(?:\.(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?))+$/
+
+export function normalizeEmailDomain(value: string | null | undefined): string | null {
+  const trimmed = value?.trim().toLowerCase().replace(/^@/, "")
+  if (!trimmed) return null
+  return DOMAIN_PATTERN.test(trimmed) ? trimmed : null
+}
+
 export function parseAllowedEmailDomains(value: string | null | undefined): string[] {
   return (value ?? "")
     .split(",")
-    .map((item) => item.trim().toLowerCase().replace(/^@/, ""))
-    .filter(Boolean)
+    .map((item) => normalizeEmailDomain(item))
+    .filter((domain): domain is string => domain !== null)
 }
 
 export function extractEmailDomain(email: string | null | undefined): string | null {

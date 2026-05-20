@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { href: "/students", label: "學生" },
   { href: "/courses/archived", label: "封存" },
   { href: "/connection-access", label: "連線限制" },
+  { href: "/allowed-email-domains", label: "登入網域" },
   { href: "/users", label: "使用者" },
   { href: "/audit-logs", label: "稽核" }
 ]

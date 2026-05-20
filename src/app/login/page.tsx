@@ -2,7 +2,7 @@ import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 import { signIn } from "@/lib/auth"
 import { TurnstileWidget } from "@/components/shared/TurnstileWidget"
-import { parseAllowedEmailDomains } from "@/lib/auth-domain"
+import { prisma } from "@/lib/prisma"
 import { getClientIpMetadata } from "@/lib/request-ip"
 import { getTurnstileSiteKey, isTurnstileEnabled, verifyTurnstileToken } from "@/lib/turnstile"
 
@@ -15,7 +15,12 @@ export default async function LoginPage({
   const error = params?.error
   const turnstileEnabled = isTurnstileEnabled()
   const turnstileSiteKey = getTurnstileSiteKey()
-  const allowedDomains = parseAllowedEmailDomains(process.env.ALLOWED_EMAIL_DOMAINS)
+  const allowedDomains =
+    error === "domain-not-allowed"
+      ? (await prisma.allowedEmailDomain.findMany({ orderBy: { domain: "asc" } })).map(
+          (row) => row.domain
+        )
+      : []
 
   async function loginAction(formData: FormData) {
     "use server"

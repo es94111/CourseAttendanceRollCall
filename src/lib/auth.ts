@@ -2,17 +2,13 @@ import NextAuth from "next-auth"
 import Google from "next-auth/providers/google"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import { resolveSignInRole } from "@/lib/auth-role"
-import { isEmailDomainAllowed, parseAllowedEmailDomains } from "@/lib/auth-domain"
+import { extractEmailDomain } from "@/lib/auth-domain"
 import { prisma } from "@/lib/prisma"
 import { normalizeEmail } from "@/lib/email"
 
-const allowedEmailDomains = parseAllowedEmailDomains(process.env.ALLOWED_EMAIL_DOMAINS)
-const googleAuthorizationParams: Record<string, string> = {
-  prompt: "select_account",
-  max_age: "0"
-}
-if (allowedEmailDomains.length === 1) {
-  googleAuthorizationParams.hd = allowedEmailDomains[0]
+async function loadAllowedEmailDomains(): Promise<string[]> {
+  const rows = await prisma.allowedEmailDomain.findMany({ select: { domain: true } })
+  return rows.map((row) => row.domain.toLowerCase())
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -35,7 +31,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       clientId: process.env.GOOGLE_CLIENT_ID ?? "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
       allowDangerousEmailAccountLinking: true,
-      authorization: { params: googleAuthorizationParams }
+      authorization: {
+        params: {
+          prompt: "select_account",
+          max_age: "0"
+        }
+      }
     })
   ],
   callbacks: {
@@ -52,16 +53,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         })
         return "/login?error=account-mismatch"
       }
-      if (!isEmailDomainAllowed(userEmail, allowedEmailDomains)) {
-        if (account?.provider) {
-          await prisma.account.deleteMany({
-            where: {
-              provider: account.provider,
-              providerAccountId: account.providerAccountId
-            }
-          })
+      const allowedDomains = await loadAllowedEmailDomains()
+      if (allowedDomains.length > 0) {
+        const domain = extractEmailDomain(userEmail)
+        if (!domain || !allowedDomains.includes(domain)) {
+          if (account?.provider) {
+            await prisma.account.deleteMany({
+              where: {
+                provider: account.provider,
+                providerAccountId: account.providerAccountId
+              }
+            })
+          }
+          return "/login?error=domain-not-allowed"
         }
-        return "/login?error=domain-not-allowed"
       }
       const existing = await prisma.user.findUnique({ where: { email: userEmail } })
       const role = resolveSignInRole(userEmail, existing?.role ?? null, process.env.ADMIN_EMAILS)
