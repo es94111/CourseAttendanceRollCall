@@ -2,6 +2,7 @@ import { generateToken } from "@/lib/hmac"
 import { generateQRCodeDataURL } from "@/lib/qrcode"
 import { requireAdmin } from "@/lib/api"
 import { expireSessionIfNeeded } from "@/lib/session-expiry"
+import { prisma } from "@/lib/prisma"
 
 function event(name: string, data: unknown) {
   return `event: ${name}\ndata: ${JSON.stringify(data)}\n\n`
@@ -46,6 +47,40 @@ export async function GET(request: Request, { params }: any) {
             })
           )
         )
+        const detail = await prisma.attendanceSession.findUnique({
+          where: { id: params.id },
+          include: {
+            course: { include: { enrollments: true } },
+            records: { include: { student: true }, orderBy: { attendedAt: "desc" }, take: 1 }
+          }
+        })
+        if (detail) {
+          const [onTimeCount, lateCount, totalCount] = await Promise.all([
+            prisma.attendanceRecord.count({ where: { sessionId: params.id, status: "on_time" } }),
+            prisma.attendanceRecord.count({ where: { sessionId: params.id, status: "late" } }),
+            prisma.attendanceRecord.count({ where: { sessionId: params.id } })
+          ])
+          const latest = detail.records[0]
+          controller.enqueue(
+            encoder.encode(
+              event("attendance_count", {
+                sessionId: params.id,
+                onTimeCount,
+                lateCount,
+                totalCount,
+                enrolledCount: detail.course.enrollments.length,
+                latest: latest
+                  ? {
+                      studentName: latest.student.name,
+                      studentCode: latest.student.studentCode,
+                      status: latest.status,
+                      attendedAt: latest.attendedAt?.toISOString() ?? null
+                    }
+                  : null
+              })
+            )
+          )
+        }
       }
       const interval = setInterval(sendQr, 15_000)
       await sendQr()

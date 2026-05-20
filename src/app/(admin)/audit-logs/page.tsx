@@ -1,22 +1,26 @@
 import { prisma } from "@/lib/prisma"
-import { AuditLogTable } from "@/components/admin/AuditLogTable"
+import { AuditLogsClient } from "@/components/admin/AuditLogsClient"
+import { toTaipeiIso } from "@/lib/time"
 
 export default async function AuditLogsPage() {
-  const logs = await prisma.auditLog.findMany({ orderBy: { createdAt: "desc" }, take: 50 })
+  const [logs, total] = await Promise.all([
+    prisma.auditLog.findMany({ orderBy: { createdAt: "desc" }, take: 50 }),
+    prisma.auditLog.count()
+  ])
   return (
     <main className="shell">
       <h1>稽核日誌</h1>
-      <section className="panel toolbar">
-        <select>
-          <option value="">全部事件</option>
-          <option value="role_change">角色變更</option>
-          <option value="export_attendance">匯出</option>
-        </select>
-        <input placeholder="操作者 Email" />
-        <input type="date" />
-        <input type="date" />
-      </section>
-      <AuditLogTable logs={logs} />
+      <AuditLogsClient
+        initialTotal={total}
+        initialLogs={logs.map((log) => ({
+          id: log.id,
+          eventType: log.eventType,
+          actorEmail: log.actorEmail,
+          target: log.target,
+          reason: log.reason,
+          createdAt: toTaipeiIso(log.createdAt) ?? ""
+        }))}
+      />
     </main>
   )
 }

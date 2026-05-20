@@ -2,6 +2,25 @@ import { prisma } from "@/lib/prisma"
 import { error, handleRouteError, json, parseJson, requireAdmin } from "@/lib/api"
 import { studentSchema } from "@/lib/validation"
 
+export async function GET() {
+  const guard = await requireAdmin()
+  if ("response" in guard) return guard.response
+  try {
+    const students = await prisma.student.findMany({ orderBy: [{ studentCode: "asc" }, { name: "asc" }] })
+    return json(
+      students.map((student) => ({
+        id: student.id,
+        studentCode: student.studentCode,
+        name: student.name,
+        googleEmail: student.googleEmail,
+        isGoogleLinked: Boolean(student.userId)
+      }))
+    )
+  } catch (cause) {
+    return handleRouteError(cause)
+  }
+}
+
 export async function POST(request: Request) {
   const guard = await requireAdmin()
   if ("response" in guard) return guard.response

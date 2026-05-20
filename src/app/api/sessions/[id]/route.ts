@@ -9,14 +9,15 @@ export async function GET(_request: Request, { params }: any) {
     await expireSessionIfNeeded(params.id)
     const session = await prisma.attendanceSession.findUnique({
       where: { id: params.id },
-      include: { course: true, records: true }
+      include: { course: { include: { enrollments: true } }, records: true }
     })
     if (!session) return error("點名 Session 不存在", 404)
     return json({
       ...session,
       onTimeCount: session.records.filter((record) => record.status === "on_time").length,
       lateCount: session.records.filter((record) => record.status === "late").length,
-      totalCount: session.records.length
+      totalCount: session.records.length,
+      enrolledCount: session.course.enrollments.length
     })
   } catch (cause) {
     return handleRouteError(cause)

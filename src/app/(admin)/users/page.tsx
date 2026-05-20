@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { UserRoleManager } from "@/components/admin/UserRoleManager"
 
 export default async function UsersPage() {
   const session = await auth()
@@ -7,24 +8,15 @@ export default async function UsersPage() {
   return (
     <main className="shell">
       <h1>使用者角色</h1>
-      <table>
-        <thead>
-          <tr>
-            <th>Email</th>
-            <th>角色</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((user) => (
-            <tr key={user.id}>
-              <td>{user.email}</td>
-              <td>{user.role}</td>
-              <td>{user.id === session?.user.id ? "不可修改自身" : "使用 API /api/users/[id]/role 調整"}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <UserRoleManager
+        currentUserId={session?.user.id ?? ""}
+        users={users.map((user) => ({
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role
+        }))}
+      />
     </main>
   )
 }

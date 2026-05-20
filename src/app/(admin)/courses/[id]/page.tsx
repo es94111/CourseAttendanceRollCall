@@ -8,6 +8,7 @@ import { DeleteStudentDataButton } from "@/components/admin/DeleteStudentDataBut
 import { StudentManager } from "@/components/admin/StudentManager"
 import { OpenSessionForm } from "@/components/admin/OpenSessionForm"
 import { RemoveStudentFromCourseButton } from "@/components/admin/RemoveStudentFromCourseButton"
+import { ExistingStudentPicker } from "@/components/admin/ExistingStudentPicker"
 
 export default async function CourseDetailPage({ params }: any) {
   const course = await prisma.course.findUnique({
@@ -41,6 +42,10 @@ export default async function CourseDetailPage({ params }: any) {
           />
           <OpenSessionForm courseId={course.id} defaultStartTime={course.startTime} />
           <StudentManager courseId={course.id} />
+          <ExistingStudentPicker
+            courseId={course.id}
+            enrolledStudentIds={course.enrollments.map((enrollment) => enrollment.studentId)}
+          />
           <StudentImportDialog courseId={course.id} />
         </>
       ) : (
