@@ -69,9 +69,12 @@ export function AllowedEmailDomainsManager({
           其他 Email 在 OAuth 完成後會被伺服器拒絕。
         </p>
         <p className="text-muted">
-          清單恰好 1 個網域時，登入會自動帶入 Google 的 <code>hd</code> 參數， 帳號選擇器只顯示該
-          Workspace 網域的帳號並預填 @{previewDomains[0]?.domain ?? "domain"}； 多網域時不帶{" "}
-          <code>hd</code>（避免把其他合法網域也擋掉），但伺服器端仍會強制驗證。
+          清單恰好 1 個網域時，登入會自動帶入 Google 的 <code>hd</code> 參數， 只對{" "}
+          <strong>Google Workspace 網域</strong>有效：帳號選擇器只顯示該網域的帳號、 同意畫面套用該
+          Workspace 的 branding，並擋下非該網域的帳號（但
+          <strong>不會把 @{previewDomains[0]?.domain ?? "domain"} 自動填到 email 輸入框</strong>
+          ，Google OAuth 並沒有提供這個功能）。多網域時不帶 <code>hd</code>
+          （避免把其他合法網域擋掉），但伺服器端仍會強制驗證。
         </p>
         {error && <p style={{ color: "#b42318" }}>{error}</p>}
       </section>

@@ -15,12 +15,9 @@ export default async function LoginPage({
   const error = params?.error
   const turnstileEnabled = isTurnstileEnabled()
   const turnstileSiteKey = getTurnstileSiteKey()
-  const allowedDomains =
-    error === "domain-not-allowed"
-      ? (await prisma.allowedEmailDomain.findMany({ orderBy: { domain: "asc" } })).map(
-          (row) => row.domain
-        )
-      : []
+  const allowedDomains = (
+    await prisma.allowedEmailDomain.findMany({ orderBy: { domain: "asc" } })
+  ).map((row) => row.domain)
 
   async function loginAction(formData: FormData) {
     "use server"
@@ -66,7 +63,9 @@ export default async function LoginPage({
           <div className="text-center mb-6">
             <h1 className="mb-2">歡迎回來</h1>
             <p className="text-muted" style={{ margin: 0 }}>
-              請使用 Google 帳號登入以繼續
+              {allowedDomains.length > 0
+                ? `請使用 ${allowedDomains.map((domain) => `@${domain}`).join("、")} 的 Google 帳號登入`
+                : "請使用 Google 帳號登入以繼續"}
             </p>
           </div>
           {error === "account-mismatch" && (
