@@ -4,7 +4,7 @@ import Script from "next/script"
 
 export function TurnstileWidget({
   siteKey,
-  theme = "auto"
+  theme = "light"
 }: {
   siteKey: string
   theme?: "light" | "dark" | "auto"
