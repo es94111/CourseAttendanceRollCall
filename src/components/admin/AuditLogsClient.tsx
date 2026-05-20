@@ -21,6 +21,7 @@ const eventLabels: Record<string, string> = {
   void_session: "作廢點名 Session",
   role_change: "變更使用者角色",
   delete_student_data: "刪除學生個資",
+  delete_user: "刪除使用者",
   session_opened: "開啟點名",
   session_settings_update: "更新點名設定",
   connection_access_update: "更新連線限制",
@@ -29,6 +30,9 @@ const eventLabels: Record<string, string> = {
 
 const targetLabels: Record<string, string> = {
   userId: "使用者 ID",
+  userEmail: "使用者 Email",
+  userName: "使用者姓名",
+  userRole: "使用者角色",
   courseId: "課程 ID",
   sessionId: "點名 Session ID",
   studentId: "學生 ID",
@@ -82,6 +86,8 @@ function formatTarget(log: AuditLogRow) {
       return "手動調整一筆點名記錄"
     case "delete_student_data":
       return target.studentCode ? `刪除學號 ${target.studentCode} 的學生個資` : "刪除學生個資"
+    case "delete_user":
+      return `刪除使用者 ${target.userEmail ?? "未知"}（角色 ${target.userRole ?? "未知"}）`
     case "export_attendance": {
       const range =
         target.startDate === "全部時間" && target.endDate === "全部時間"
@@ -230,6 +236,7 @@ export function AuditLogsClient({
           <option value="leave_record_add">請假</option>
           <option value="void_session">作廢</option>
           <option value="delete_student_data">刪除個資</option>
+          <option value="delete_user">刪除使用者</option>
         </select>
         <input
           placeholder="操作者 Email"

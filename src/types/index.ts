@@ -10,6 +10,7 @@ export type AuditEventType =
   | "void_session"
   | "role_change"
   | "delete_student_data"
+  | "delete_user"
   | "session_opened"
   | "session_settings_update"
   | "connection_access_update"

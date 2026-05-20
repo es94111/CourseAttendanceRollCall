@@ -38,6 +38,7 @@ enum AuditEventType {
   void_session
   role_change
   delete_student_data
+  delete_user
   session_opened
   session_settings_update
   connection_access_update
@@ -160,12 +161,12 @@ model AttendanceSession {
   gracePeriodSeconds Int           @default(60)
   status             SessionStatus @default(active)
   voidReason         String?
-  createdBy          String
+  createdBy          String?
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
 
   course Course @relation(fields: [courseId], references: [id])
-  creator User @relation("CreatedByAdmin", fields: [createdBy], references: [id])
+  creator User? @relation("CreatedByAdmin", fields: [createdBy], references: [id], onDelete: SetNull)
   records AttendanceRecord[]
   leaveRecords LeaveRecord[]
 
@@ -220,7 +221,7 @@ model AuditLog {
   reason     String?
   createdAt  DateTime      @default(now())
 
-  actor User? @relation("ActorUser", fields: [actorId], references: [id])
+  actor User? @relation("ActorUser", fields: [actorId], references: [id], onDelete: SetNull)
 
   @@index([eventType, createdAt])
   @@index([actorEmail, createdAt])

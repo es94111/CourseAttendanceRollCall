@@ -19,7 +19,10 @@ export function UserRoleManager({ users, currentUserId }: { users: UserRow[]; cu
   const [query, setQuery] = useState("")
   const [roleFilter, setRoleFilter] = useState("all")
   const [pendingChange, setPendingChange] = useState<{ user: UserRow; role: "admin" | "student" } | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<UserRow | null>(null)
   const [isPending, startTransition] = useTransition()
+
+  const adminCount = useMemo(() => users.filter((user) => user.role === "admin").length, [users])
 
   const filteredUsers = useMemo(() => {
     const needle = query.trim().toLowerCase()
@@ -32,6 +35,10 @@ export function UserRoleManager({ users, currentUserId }: { users: UserRow[]; cu
       return matchesQuery && matchesRole
     })
   }, [query, roleFilter, users])
+
+  function isLastAdmin(user: UserRow) {
+    return user.role === "admin" && adminCount <= 1
+  }
 
   async function updateRole() {
     if (!pendingChange) return
@@ -51,6 +58,20 @@ export function UserRoleManager({ users, currentUserId }: { users: UserRow[]; cu
     startTransition(() => router.refresh())
   }
 
+  async function deleteUser() {
+    if (!pendingDelete) return
+    setError("")
+    const response = await fetch(`/api/users/${pendingDelete.id}`, { method: "DELETE" })
+    const body = await response.json().catch(() => ({}))
+    if (!response.ok) {
+      setError(body.error ?? "刪除使用者失敗")
+      return
+    }
+    showToast("使用者已刪除", "success")
+    setPendingDelete(null)
+    startTransition(() => router.refresh())
+  }
+
   return (
     <section className="panel">
       <div className="toolbar">
@@ -60,6 +81,7 @@ export function UserRoleManager({ users, currentUserId }: { users: UserRow[]; cu
           <option value="admin">admin</option>
           <option value="student">student</option>
         </select>
+        <span className="text-muted">目前管理員 {adminCount} 位</span>
       </div>
       {error && <p style={{ color: "#b42318" }}>{error}</p>}
       {filteredUsers.length === 0 ? (
@@ -71,26 +93,51 @@ export function UserRoleManager({ users, currentUserId }: { users: UserRow[]; cu
             <th>Email</th>
             <th>姓名</th>
             <th>角色</th>
+            <th>操作</th>
           </tr>
         </thead>
         <tbody>
-          {filteredUsers.map((user) => (
-            <tr key={user.id}>
-              <td>{user.email}</td>
-              <td>{user.name ?? "-"}</td>
-              <td>
-                <select
-                  value={user.role}
-                  disabled={isPending || user.id === currentUserId}
-                  onChange={(event) => setPendingChange({ user, role: event.target.value as "admin" | "student" })}
-                >
-                  <option value="student">student</option>
-                  <option value="admin">admin</option>
-                </select>
-                {user.id === currentUserId && <span style={{ marginLeft: 8 }}>不可修改自身</span>}
-              </td>
-            </tr>
-          ))}
+          {filteredUsers.map((user) => {
+            const isSelf = user.id === currentUserId
+            const lastAdmin = isLastAdmin(user)
+            const deleteDisabled = isPending || isSelf || lastAdmin
+            const deleteTitle = isSelf
+              ? "不可刪除自己"
+              : lastAdmin
+                ? "系統至少需保留 1 位管理員"
+                : ""
+            return (
+              <tr key={user.id}>
+                <td>{user.email}</td>
+                <td>{user.name ?? "-"}</td>
+                <td>
+                  <select
+                    value={user.role}
+                    disabled={isPending || isSelf || lastAdmin}
+                    onChange={(event) =>
+                      setPendingChange({ user, role: event.target.value as "admin" | "student" })
+                    }
+                  >
+                    <option value="student">student</option>
+                    <option value="admin">admin</option>
+                  </select>
+                  {isSelf && <span style={{ marginLeft: 8 }}>不可修改自身</span>}
+                  {!isSelf && lastAdmin && <span style={{ marginLeft: 8 }}>最後一位管理員</span>}
+                </td>
+                <td>
+                  <button
+                    className="btn secondary"
+                    type="button"
+                    disabled={deleteDisabled}
+                    title={deleteTitle}
+                    onClick={() => setPendingDelete(user)}
+                  >
+                    刪除
+                  </button>
+                </td>
+              </tr>
+            )
+          })}
         </tbody>
       </table>
       )}
@@ -104,6 +151,20 @@ export function UserRoleManager({ users, currentUserId }: { users: UserRow[]; cu
           </button>
           <button className="btn" type="button" disabled={isPending} onClick={updateRole}>
             確認變更
+          </button>
+        </div>
+      </Dialog>
+      <Dialog title="確認刪除使用者" open={pendingDelete !== null} onClose={() => setPendingDelete(null)}>
+        <p>
+          確定要刪除 {pendingDelete?.email}？此操作會移除其登入帳號與 OAuth 連結，
+          並保留其過往點名 Session 與稽核紀錄（操作者欄位將顯示為已刪除）。
+        </p>
+        <div className="toolbar dialog-actions">
+          <button className="btn secondary" type="button" disabled={isPending} onClick={() => setPendingDelete(null)}>
+            取消
+          </button>
+          <button className="btn" type="button" disabled={isPending} onClick={deleteUser}>
+            確認刪除
           </button>
         </div>
       </Dialog>
