@@ -2,6 +2,13 @@ import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { error, handleRouteError, json, parseJson, requireAdmin } from "@/lib/api"
 
+const addStudentSchema = z.object({
+  studentId: z.string().min(1).optional(),
+  studentCode: z.string().trim().min(1).optional(),
+  name: z.string().trim().min(1).optional(),
+  googleEmail: z.string().trim().email("Google Email 格式不符").optional().or(z.literal(""))
+})
+
 export async function GET(_request: Request, { params }: any) {
   const guard = await requireAdmin()
   if ("response" in guard) return guard.response
@@ -28,15 +35,47 @@ export async function GET(_request: Request, { params }: any) {
 export async function POST(request: Request, { params }: any) {
   const guard = await requireAdmin()
   if ("response" in guard) return guard.response
-  const parsed = await parseJson(request, z.object({ studentId: z.string().min(1) }))
+  const parsed = await parseJson(request, addStudentSchema)
   if ("response" in parsed) return parsed.response
   try {
-    const exists = await prisma.courseEnrollment.findUnique({
-      where: { studentId_courseId: { studentId: parsed.data.studentId, courseId: params.id } }
+    const course = await prisma.course.findUnique({ where: { id: params.id } })
+    if (!course || course.status !== "active") return error("課程不存在或已封存", 404)
+
+    let studentId = parsed.data.studentId
+
+    if (!studentId) {
+      if (!parsed.data.studentCode || !parsed.data.name) {
+        return error("新增學生需要學號與姓名", 400)
+      }
+      const googleEmail = parsed.data.googleEmail || null
+      const existing = await prisma.student.findFirst({
+        where: {
+          OR: [
+            { studentCode: parsed.data.studentCode },
+            ...(googleEmail ? [{ googleEmail }] : [])
+          ]
+        }
+      })
+      if (existing) {
+        studentId = existing.id
+      } else {
+        const student = await prisma.student.create({
+          data: {
+            studentCode: parsed.data.studentCode,
+            name: parsed.data.name,
+            googleEmail
+          }
+        })
+        studentId = student.id
+      }
+    }
+
+    const enrollment = await prisma.courseEnrollment.findUnique({
+      where: { studentId_courseId: { studentId, courseId: params.id } }
     })
-    if (exists) return error("學生已在此課程中", 409)
+    if (enrollment) return error("學生已在此課程中", 409)
     await prisma.courseEnrollment.create({
-      data: { studentId: parsed.data.studentId, courseId: params.id }
+      data: { studentId, courseId: params.id }
     })
     return json({ message: "學生已加入課程" }, { status: 201 })
   } catch (cause: any) {

@@ -9,6 +9,7 @@ export function StudentManager({ courseId }: { courseId: string }) {
   const [error, setError] = useState("")
   const [message, setMessage] = useState("")
   const [isPending, startTransition] = useTransition()
+  const [isSaving, setIsSaving] = useState(false)
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -22,30 +23,21 @@ export function StudentManager({ courseId }: { courseId: string }) {
       googleEmail: String(formData.get("googleEmail") ?? "").trim()
     }
 
-    const createResponse = await fetch("/api/students", {
+    setIsSaving(true)
+    const response = await fetch(`/api/courses/${courseId}/students`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     })
-    const created = await createResponse.json().catch(() => ({}))
-    if (!createResponse.ok) {
-      setError(created.error ?? "新增學生失敗")
-      return
-    }
-
-    const enrollResponse = await fetch(`/api/courses/${courseId}/students`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ studentId: created.id })
-    })
-    const enrolled = await enrollResponse.json().catch(() => ({}))
-    if (!enrollResponse.ok) {
-      setError(enrolled.error ?? "學生已建立，但加入課程失敗")
+    const body = await response.json().catch(() => ({}))
+    setIsSaving(false)
+    if (!response.ok) {
+      setError(body.error ?? "新增學生失敗")
       return
     }
 
     formRef.current?.reset()
-    setMessage("學生已新增並加入課程")
+    setMessage(body.message ?? "學生已新增並加入課程")
     startTransition(() => router.refresh())
   }
 
@@ -67,8 +59,8 @@ export function StudentManager({ courseId }: { courseId: string }) {
             <input name="googleEmail" type="email" />
           </div>
         </div>
-        <button className="btn" type="submit" disabled={isPending}>
-          {isPending ? "新增中" : "新增並加入課程"}
+        <button className="btn" type="submit" disabled={isPending || isSaving}>
+          {isPending || isSaving ? "新增中" : "新增並加入課程"}
         </button>
       </form>
       {message && <p>{message}</p>}
