@@ -16,16 +16,38 @@ export async function GET(request: Request, { params }: any) {
     async start(controller) {
       let timeout: ReturnType<typeof setTimeout> | null = null
       let closed = false
-      const sendQr = async () => {
-        const session = await expireSessionIfNeeded(params.id)
-        if (!session) {
+      const close = () => {
+        if (closed) return
+        closed = true
+        if (timeout) clearTimeout(timeout)
+        try {
           controller.close()
-          closed = true
-          return
+        } catch {
+          // Client disconnected while the server was preparing the next SSE event.
         }
-        if (session && session.status !== "active") {
-          controller.enqueue(
-            encoder.encode(
+      }
+      const enqueue = (payload: string) => {
+        if (closed) return false
+        try {
+          controller.enqueue(encoder.encode(payload))
+          return true
+        } catch {
+          close()
+          return false
+        }
+      }
+      request.signal.addEventListener("abort", close)
+      const sendQr = async () => {
+        try {
+          if (closed) return
+          const session = await expireSessionIfNeeded(params.id)
+          if (closed) return
+          if (!session) {
+            close()
+            return
+          }
+          if (session.status !== "active") {
+            enqueue(
               event("session_status_changed", {
                 sessionId: params.id,
                 oldStatus: "active",
@@ -33,43 +55,45 @@ export async function GET(request: Request, { params }: any) {
                 changedAt: new Date().toISOString()
               })
             )
-          )
-          controller.close()
-          closed = true
-          return
-        }
-        const validityMs = session.qrCodeValiditySeconds * 1000
-        const token = generateToken(params.id, Date.now(), session.qrCodeValiditySeconds)
-        const expiresAt = new Date((Math.floor(Date.now() / validityMs) + 1) * validityMs)
-        const checkinUrl = buildCheckinUrl(request, params.id, token, session.qrCodeValiditySeconds)
-        controller.enqueue(
-          encoder.encode(
-            event("qrcode_update", {
-              token,
-              checkinUrl,
-              qrcodeDataUrl: await generateQRCodeDataURL(checkinUrl),
-              slot: Math.floor(Date.now() / validityMs),
-              expiresAt: expiresAt.toISOString(),
-              remainingSeconds: Math.max(0, Math.ceil((expiresAt.getTime() - Date.now()) / 1000))
-            })
-          )
-        )
-        const detail = await prisma.attendanceSession.findUnique({
-          where: { id: params.id },
-          include: {
-            course: { include: { enrollments: true } },
-            records: { include: { student: true }, orderBy: { attendedAt: "desc" }, take: 1 }
+            close()
+            return
           }
-        })
-        if (detail) {
-          const [onTimeCount, lateCount, totalCount] = await Promise.all([
-            prisma.attendanceRecord.count({ where: { sessionId: params.id, status: "on_time" } }),
-            prisma.attendanceRecord.count({ where: { sessionId: params.id, status: "late" } }),
-            prisma.attendanceRecord.count({ where: { sessionId: params.id } })
-          ])
-          const latest = detail.records[0]
-          controller.enqueue(
-            encoder.encode(
+
+          const validityMs = session.qrCodeValiditySeconds * 1000
+          const token = generateToken(params.id, Date.now(), session.qrCodeValiditySeconds)
+          const expiresAt = new Date((Math.floor(Date.now() / validityMs) + 1) * validityMs)
+          const checkinUrl = buildCheckinUrl(request, params.id, token, session.qrCodeValiditySeconds)
+          const qrcodeDataUrl = await generateQRCodeDataURL(checkinUrl)
+          if (
+            !enqueue(
+              event("qrcode_update", {
+                token,
+                checkinUrl,
+                qrcodeDataUrl,
+                slot: Math.floor(Date.now() / validityMs),
+                expiresAt: expiresAt.toISOString(),
+                remainingSeconds: Math.max(0, Math.ceil((expiresAt.getTime() - Date.now()) / 1000))
+              })
+            )
+          ) {
+            return
+          }
+
+          const detail = await prisma.attendanceSession.findUnique({
+            where: { id: params.id },
+            include: {
+              course: { include: { enrollments: true } },
+              records: { include: { student: true }, orderBy: { attendedAt: "desc" }, take: 1 }
+            }
+          })
+          if (detail) {
+            const [onTimeCount, lateCount, totalCount] = await Promise.all([
+              prisma.attendanceRecord.count({ where: { sessionId: params.id, status: "on_time" } }),
+              prisma.attendanceRecord.count({ where: { sessionId: params.id, status: "late" } }),
+              prisma.attendanceRecord.count({ where: { sessionId: params.id } })
+            ])
+            const latest = detail.records[0]
+            enqueue(
               event("attendance_count", {
                 sessionId: params.id,
                 onTimeCount,
@@ -86,18 +110,15 @@ export async function GET(request: Request, { params }: any) {
                   : null
               })
             )
-          )
-        }
-        if (!closed) {
-          timeout = setTimeout(sendQr, Math.max(5, session.qrCodeValiditySeconds) * 1000)
+          }
+          if (!closed) {
+            timeout = setTimeout(() => void sendQr(), Math.max(5, session.qrCodeValiditySeconds) * 1000)
+          }
+        } catch {
+          close()
         }
       }
       await sendQr()
-      request.signal.addEventListener("abort", () => {
-        closed = true
-        if (timeout) clearTimeout(timeout)
-        controller.close()
-      })
     }
   })
   return new Response(stream, {
