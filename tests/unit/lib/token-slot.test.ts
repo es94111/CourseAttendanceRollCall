@@ -21,6 +21,15 @@ describe("parseTokenSlot", () => {
     })
   })
 
+  it("expires from the token issue time instead of the next wall-clock slot", () => {
+    const token = generateToken("session_1", 9_500, 10)
+    expect(parseTokenSlot(token, 10)).toEqual({
+      sessionId: "session_1",
+      slot: 0,
+      expiresAt: new Date(19_500)
+    })
+  })
+
   it("returns null for malformed tokens", () => {
     expect(parseTokenSlot("invalid")).toBeNull()
     expect(parseTokenSlot(Buffer.from("abc.def", "utf8").toString("base64url"))).toBeNull()

@@ -2,12 +2,12 @@ import { describe, expect, it, vi } from "vitest"
 import { generateToken, verifyToken } from "@/lib/hmac"
 
 describe("HMAC QR token", () => {
-  it("generates a base64url token with signed session slot payload", () => {
+  it("generates a base64url token with signed session timestamp payload", () => {
     vi.setSystemTime(new Date("2026-05-19T00:00:00.000Z"))
     const token = generateToken("session_1")
     const decoded = Buffer.from(token, "base64url").toString("utf8")
 
-    expect(decoded).toMatch(/^session_1:\d+\.[a-f0-9]{64}$/)
+    expect(decoded).toMatch(/^session_1:\d+:15\.[a-f0-9]{64}$/)
   })
 
   it("verifies a valid token", () => {
@@ -43,9 +43,16 @@ describe("HMAC QR token", () => {
   })
 
   it("uses configurable QR code validity seconds", () => {
-    const token = generateToken("session_1", 0, 60)
+    const token = generateToken("session_1", 1_234, 60)
 
-    expect(verifyToken(token, 0, 59_000, 60).valid).toBe(true)
-    expect(verifyToken(token, 0, 61_000, 60).valid).toBe(false)
+    expect(verifyToken(token, 0, 61_233, 60).valid).toBe(true)
+    expect(verifyToken(token, 0, 61_235, 60).valid).toBe(false)
+  })
+
+  it("keeps a token valid for the full configured seconds from issue time", () => {
+    const token = generateToken("session_1", 9_500, 10)
+
+    expect(verifyToken(token, 0, 19_499, 10).valid).toBe(true)
+    expect(verifyToken(token, 0, 19_501, 10).valid).toBe(false)
   })
 })

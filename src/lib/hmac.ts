@@ -27,7 +27,7 @@ export function generateToken(
   now = Date.now(),
   qrCodeValiditySeconds = DEFAULT_QR_CODE_VALIDITY_SECONDS
 ) {
-  const payload = `${sessionId}:${currentSlot(now, qrCodeValiditySeconds)}`
+  const payload = `${sessionId}:${Math.floor(now)}:${qrCodeValiditySeconds}`
   return Buffer.from(`${payload}.${sign(payload)}`, "utf8").toString("base64url")
 }
 
@@ -42,9 +42,11 @@ export function verifyToken(
     const [payload, signature] = decoded.split(".")
     if (!payload || !signature) return { valid: false as const }
 
-    const [sessionId, slotText] = payload.split(":")
-    const slot = Number(slotText)
-    if (!sessionId || !Number.isInteger(slot)) return { valid: false as const }
+    const parts = payload.split(":")
+    const [sessionId, timeText] = parts
+    const timeValue = Number(timeText)
+    const payloadValiditySeconds = Number(parts[2])
+    if (!sessionId || !Number.isInteger(timeValue)) return { valid: false as const }
 
     const expected = sign(payload)
     const expectedBytes = Buffer.from(expected, "hex")
@@ -53,11 +55,18 @@ export function verifyToken(
       return { valid: false as const }
     }
 
-    const issuedAt = slot * slotMs(qrCodeValiditySeconds)
+    const isIssuedAtPayload = parts.length >= 3 && Number.isInteger(payloadValiditySeconds)
+    const issuedAt = isIssuedAtPayload ? timeValue : timeValue * slotMs(qrCodeValiditySeconds)
     const expiresAt = issuedAt + slotMs(qrCodeValiditySeconds) + gracePeriodSeconds * 1000
     if (now > expiresAt) return { valid: false as const, sessionId }
 
-    return { valid: true as const, sessionId, slot, expiresAt: new Date(expiresAt) }
+    return {
+      valid: true as const,
+      sessionId,
+      slot: currentSlot(issuedAt, qrCodeValiditySeconds),
+      issuedAt: new Date(issuedAt),
+      expiresAt: new Date(expiresAt)
+    }
   } catch {
     return { valid: false as const }
   }

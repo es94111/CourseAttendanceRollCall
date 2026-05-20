@@ -92,8 +92,9 @@ export async function GET(request: Request, { params }: any) {
           }
 
           const validityMs = session.qrCodeValiditySeconds * 1000
-          const token = generateToken(params.id, Date.now(), session.qrCodeValiditySeconds)
-          const expiresAt = new Date((Math.floor(Date.now() / validityMs) + 1) * validityMs)
+          const issuedAt = Date.now()
+          const token = generateToken(params.id, issuedAt, session.qrCodeValiditySeconds)
+          const expiresAt = new Date(issuedAt + validityMs)
           const checkinUrl = buildCheckinUrl(
             request,
             params.id,
@@ -108,7 +109,7 @@ export async function GET(request: Request, { params }: any) {
                 token,
                 checkinUrl,
                 qrcodeDataUrl,
-                slot: Math.floor(Date.now() / validityMs),
+                slot: Math.floor(issuedAt / validityMs),
                 expiresAt: expiresAt.toISOString(),
                 validitySeconds: session.qrCodeValiditySeconds,
                 remainingSeconds: Math.max(0, Math.ceil((expiresAt.getTime() - Date.now()) / 1000))

@@ -10,8 +10,9 @@ export async function GET(request: Request, { params }: any) {
     const session = await expireSessionIfNeeded(params.id)
     if (!session) return json({ error: "點名 Session 不存在" }, { status: 404 })
     const validityMs = session.qrCodeValiditySeconds * 1000
-    const token = generateToken(params.id, Date.now(), session.qrCodeValiditySeconds)
-    const expiresAt = new Date((Math.floor(Date.now() / validityMs) + 1) * validityMs)
+    const issuedAt = Date.now()
+    const token = generateToken(params.id, issuedAt, session.qrCodeValiditySeconds)
+    const expiresAt = new Date(issuedAt + validityMs)
     const checkinUrl = buildCheckinUrl(
       request,
       params.id,
