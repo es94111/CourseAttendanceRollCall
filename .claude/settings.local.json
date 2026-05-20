@@ -33,7 +33,10 @@
       "Bash(python *)",
       "Bash(npx --no-install tsc --noEmit)",
       "Bash(echo \"EXIT_CODE=$?\")",
-      "Bash(npx next *)"
+      "Bash(npx next *)",
+      "Bash(npm ls *)",
+      "Bash(npm audit *)",
+      "Bash(npm view *)"
     ]
   }
 }
