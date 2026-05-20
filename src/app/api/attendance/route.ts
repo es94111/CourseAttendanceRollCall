@@ -7,6 +7,7 @@ import { toTaipeiIso } from "@/lib/time"
 import { normalizeEmail } from "@/lib/email"
 import { getClientIpMetadata } from "@/lib/request-ip"
 import { lookupIpinfoCountry } from "@/lib/ipinfo"
+import { evaluateConnectionAccess } from "@/lib/connection-access"
 
 export async function POST(request: Request) {
   const guard = await requireUser()
@@ -54,6 +55,9 @@ export async function POST(request: Request) {
     )
     const clientIp = getClientIpMetadata(request.headers)
     const ipinfo = await lookupIpinfoCountry(clientIp.ipAddress)
+    const ipCountry = ipinfo.ipCountry ?? clientIp.ipCountry
+    const access = await evaluateConnectionAccess({ ipAddress: clientIp.ipAddress, ipCountry })
+    if (!access.allowed) return error(access.reason ?? "此連線來源不允許點名", 403)
     const record = await prisma.attendanceRecord.create({
       data: {
         sessionId: session.id,
@@ -61,7 +65,7 @@ export async function POST(request: Request) {
         status,
         attendedAt,
         ipAddress: clientIp.ipAddress,
-        ipCountry: ipinfo.ipCountry ?? clientIp.ipCountry,
+        ipCountry,
         ipCountryName: ipinfo.ipCountryName,
         userAgent: request.headers.get("user-agent")
       }

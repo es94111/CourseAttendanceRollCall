@@ -40,6 +40,7 @@ enum AuditEventType {
   delete_student_data
   session_opened
   session_settings_update
+  connection_access_update
 }
 
 model User {
@@ -223,4 +224,19 @@ model AuditLog {
   @@index([eventType, createdAt])
   @@index([actorEmail, createdAt])
   @@map("audit_logs")
+}
+
+model ConnectionAccessRule {
+  id        String   @id @default(cuid())
+  action    String
+  targetType String
+  value     String
+  note      String?
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([action, targetType, value])
+  @@index([enabled, action, targetType])
+  @@map("connection_access_rules")
 }

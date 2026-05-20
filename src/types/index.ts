@@ -12,6 +12,7 @@ export type AuditEventType =
   | "delete_student_data"
   | "session_opened"
   | "session_settings_update"
+  | "connection_access_update"
 
 export interface ApiError {
   error: string

@@ -22,7 +22,8 @@ const eventLabels: Record<string, string> = {
   role_change: "變更使用者角色",
   delete_student_data: "刪除學生個資",
   session_opened: "開啟點名",
-  session_settings_update: "更新點名設定"
+  session_settings_update: "更新點名設定",
+  connection_access_update: "更新連線限制"
 }
 
 const targetLabels: Record<string, string> = {
@@ -85,6 +86,8 @@ function formatTarget(log: AuditLogRow) {
       return `變更 ${userDisplay} 的角色`
     case "void_session":
       return `課程「${courseName}」作廢${sessionLabel}`
+    case "connection_access_update":
+      return `更新連線限制規則，共 ${target.total ?? "-"} 筆`
     default:
       return targetEntries(target)
         .map(([key, value]) => `${key}：${value}`)
@@ -198,6 +201,7 @@ export function AuditLogsClient({ initialLogs, initialTotal }: { initialLogs: Au
           <option value="session_settings_update">更新點名設定</option>
           <option value="role_change">角色變更</option>
           <option value="export_attendance">匯出</option>
+          <option value="connection_access_update">連線限制</option>
           <option value="manual_attendance_override">手動補登</option>
           <option value="leave_record_add">請假</option>
           <option value="void_session">作廢</option>

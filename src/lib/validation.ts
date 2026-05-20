@@ -51,3 +51,15 @@ export const manualAttendanceSchema = z.object({
   sessionId: z.string().optional(),
   reason: z.string().trim().min(1)
 })
+
+export const connectionAccessRulesSchema = z.object({
+  rules: z.array(
+    z.object({
+      action: z.enum(["allow", "block"]),
+      targetType: z.enum(["country", "ip"]),
+      value: z.string().trim().min(1),
+      note: z.string().trim().optional().nullable(),
+      enabled: z.boolean().default(true)
+    })
+  )
+})
