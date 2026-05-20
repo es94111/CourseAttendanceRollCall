@@ -1,22 +1,52 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { auth } from "@/lib/auth"
+import { auth, signOut } from "@/lib/auth"
+
+const NAV_ITEMS = [
+  { href: "/dashboard", label: "總覽" },
+  { href: "/courses", label: "課程" },
+  { href: "/students", label: "學生" },
+  { href: "/courses/archived", label: "封存" },
+  { href: "/users", label: "使用者" },
+  { href: "/audit-logs", label: "稽核" }
+]
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()
   if (!session?.user || session.user.role !== "admin") redirect("/login")
+  const displayName = session.user.name ?? session.user.email ?? "管理員"
+
   return (
     <div>
-      <header className="panel" style={{ borderRadius: 0 }}>
-        <nav className="toolbar shell" style={{ paddingTop: 0, paddingBottom: 0 }}>
-          <strong>管理後台</strong>
-          <div className="toolbar">
-            <Link href="/dashboard">總覽</Link>
-            <Link href="/courses">課程</Link>
-            <Link href="/students">學生</Link>
-            <Link href="/courses/archived">封存</Link>
-            <Link href="/users">使用者</Link>
-            <Link href="/audit-logs">稽核</Link>
+      <header className="app-header">
+        <nav className="nav" aria-label="管理員導覽">
+          <Link href="/dashboard" className="brand">
+            <span className="brand-mark" aria-hidden>
+              CA
+            </span>
+            管理後台
+          </Link>
+          <div className="links">
+            {NAV_ITEMS.map((item) => (
+              <Link key={item.href} href={item.href}>
+                {item.label}
+              </Link>
+            ))}
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-muted" style={{ fontSize: "0.875rem" }}>
+              {displayName}
+            </span>
+            <form
+              action={async () => {
+                "use server"
+                await signOut({ redirectTo: "/login" })
+              }}
+            >
+              <button className="btn secondary" type="submit" style={{ minHeight: 36, padding: "0 12px", fontSize: "0.875rem" }}>
+                登出
+              </button>
+            </form>
           </div>
         </nav>
       </header>

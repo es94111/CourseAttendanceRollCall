@@ -37,7 +37,9 @@ export function SessionControls({
   const [closeOpen, setCloseOpen] = useState(false)
   const [voidOpen, setVoidOpen] = useState(false)
   const [voidReason, setVoidReason] = useState("")
-  const [qrCodeValiditySeconds, setQrCodeValiditySeconds] = useState(String(initialQrCodeValiditySeconds))
+  const [qrCodeValiditySeconds, setQrCodeValiditySeconds] = useState(
+    String(initialQrCodeValiditySeconds)
+  )
   const [isUpdatingSettings, setIsUpdatingSettings] = useState(false)
   const [isPending, startTransition] = useTransition()
 
@@ -115,61 +117,196 @@ export function SessionControls({
   }
 
   const finished = status !== "active"
+  const attendancePct =
+    counts.enrolledCount > 0 ? Math.round((counts.totalCount / counts.enrolledCount) * 100) : 0
 
   return (
     <section className={`panel ${finished ? "session-ended" : ""}`}>
-      <div className="toolbar">
-        <div>
-          <h2>即時點名狀態</h2>
-          <p>
-            已點名 {counts.totalCount} / {counts.enrolledCount}，準時 {counts.onTimeCount}，遲到{" "}
-            {counts.lateCount}
-          </p>
-          {counts.latest && (
-            <p>
-              最新：{counts.latest.studentCode} {counts.latest.studentName} ({counts.latest.status})
-            </p>
-          )}
+      <div className="flex items-start justify-between flex-wrap gap-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 mb-2">
+            <h2 style={{ margin: 0 }}>即時點名狀態</h2>
+            <span className={`badge ${status === "active" ? "active" : status}`}>
+              {status === "active" && <span className="dot" aria-hidden />}
+              {status === "active"
+                ? "進行中"
+                : status === "closed"
+                  ? "已關閉"
+                  : status === "voided"
+                    ? "已作廢"
+                    : status}
+            </span>
+          </div>
+
           {finished && (
-            <p>
+            <p className="text-muted" style={{ marginBottom: 8, fontSize: "0.875rem" }}>
               本次 Session 已{status === "closed" ? "關閉" : status === "voided" ? "作廢" : "結束"}，QR Code 已停用。
             </p>
           )}
         </div>
-        <div className="toolbar">
-          <button className="btn secondary" type="button" disabled={isPending || status !== "active"} onClick={() => setCloseOpen(true)}>
+
+        <div className="flex gap-2 flex-wrap">
+          <button
+            className="btn secondary"
+            type="button"
+            disabled={isPending || status !== "active"}
+            onClick={() => setCloseOpen(true)}
+          >
             關閉點名
           </button>
-          <button className="btn secondary" type="button" disabled={isPending || status !== "closed"} onClick={() => setVoidOpen(true)}>
+          <button
+            className="btn danger"
+            type="button"
+            disabled={isPending || status !== "closed"}
+            onClick={() => setVoidOpen(true)}
+          >
             作廢 Session
           </button>
         </div>
       </div>
-      <div className="toolbar">
-        <div className="field">
-          <label>QR Code 有效秒數</label>
-          <input
-            type="number"
-            min={5}
-            value={qrCodeValiditySeconds}
-            disabled={finished || isUpdatingSettings}
-            onChange={(event) => setQrCodeValiditySeconds(event.target.value)}
-          />
+
+      {/* Stats */}
+      <div className="stat-grid compact" style={{ marginTop: 16 }}>
+        <div className="stat-card">
+          <span>已點名</span>
+          <strong>
+            {counts.totalCount}
+            <span style={{ fontSize: "1rem", color: "var(--color-text-muted)", fontWeight: 500 }}>
+              {" "}
+              / {counts.enrolledCount}
+            </span>
+          </strong>
         </div>
-        <button
-          className="btn secondary"
-          type="button"
-          disabled={finished || isUpdatingSettings}
-          onClick={updateQrCodeValidity}
-        >
-          {isUpdatingSettings ? "更新中" : "更新秒數"}
-        </button>
+        <div className="stat-card">
+          <span>準時</span>
+          <strong style={{ color: "var(--color-success)" }}>{counts.onTimeCount}</strong>
+        </div>
+        <div className="stat-card">
+          <span>遲到</span>
+          <strong style={{ color: "var(--color-warning)" }}>{counts.lateCount}</strong>
+        </div>
+        <div className="stat-card">
+          <span>出席率</span>
+          <strong>
+            {attendancePct}
+            <span style={{ fontSize: "1rem", color: "var(--color-text-muted)", fontWeight: 500 }}>%</span>
+          </strong>
+        </div>
       </div>
-      {error && <p style={{ color: "#b42318" }}>{error}</p>}
+
+      {/* Attendance progress */}
+      <div
+        className="mt-3 h-2 w-full rounded-full overflow-hidden"
+        style={{ background: "var(--color-primary-100)" }}
+        aria-label={`出席率 ${attendancePct}%`}
+      >
+        <div
+          className="h-full transition-[width] duration-500 ease-out"
+          style={{
+            width: `${attendancePct}%`,
+            background:
+              attendancePct >= 80
+                ? "var(--color-success)"
+                : attendancePct >= 50
+                  ? "var(--color-primary-600)"
+                  : "var(--color-warning)"
+          }}
+        />
+      </div>
+
+      {/* Latest checkin */}
+      {counts.latest && (
+        <div
+          className="mt-4 flex items-center gap-3 px-3 py-2 rounded-lg border"
+          style={{
+            background: "var(--color-primary-50)",
+            borderColor: "var(--color-primary-200)"
+          }}
+        >
+          <span
+            className="inline-grid place-items-center w-8 h-8 rounded-full shrink-0"
+            style={{ background: "var(--color-success-soft)", color: "#14532d" }}
+            aria-hidden
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M20 6L9 17l-5-5" />
+            </svg>
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="text-sm" style={{ color: "var(--color-text)" }}>
+              <strong>{counts.latest.studentName}</strong>
+              <span className="text-muted" style={{ marginLeft: 6, fontSize: "0.8125rem" }}>
+                {counts.latest.studentCode}
+              </span>
+            </div>
+            {counts.latest.attendedAt && (
+              <div className="text-muted text-xs tabular">{counts.latest.attendedAt}</div>
+            )}
+          </div>
+          <span className={`badge ${counts.latest.status}`}>
+            {counts.latest.status === "on_time"
+              ? "準時"
+              : counts.latest.status === "late"
+                ? "遲到"
+                : counts.latest.status}
+          </span>
+        </div>
+      )}
+
+      {/* QR validity settings */}
+      <div
+        className="mt-5 pt-4 border-t"
+        style={{ borderColor: "var(--color-border)" }}
+      >
+        <div className="flex items-end gap-3 flex-wrap">
+          <div className="field" style={{ marginBottom: 0, flex: "1 1 200px", minWidth: 0 }}>
+            <label htmlFor="qr-validity-seconds">QR Code 有效秒數</label>
+            <input
+              id="qr-validity-seconds"
+              type="number"
+              min={5}
+              value={qrCodeValiditySeconds}
+              disabled={finished || isUpdatingSettings}
+              onChange={(event) => setQrCodeValiditySeconds(event.target.value)}
+            />
+            <span className="hint">最少 5 秒，數字越小防作弊性越高</span>
+          </div>
+          <button
+            className="btn secondary"
+            type="button"
+            disabled={finished || isUpdatingSettings}
+            onClick={updateQrCodeValidity}
+          >
+            {isUpdatingSettings ? "更新中…" : "更新秒數"}
+          </button>
+        </div>
+      </div>
+
+      {error && (
+        <div className="status-card error" role="alert">
+          <strong>無法完成操作</strong>
+          <p style={{ margin: 0 }}>{error}</p>
+        </div>
+      )}
+
       <Dialog title="關閉點名" open={closeOpen} onClose={() => setCloseOpen(false)}>
         <p>關閉後學生將無法再使用目前 QR Code 點名。確定要關閉本次點名？</p>
         <div className="toolbar dialog-actions">
-          <button className="btn secondary" type="button" disabled={isPending} onClick={() => setCloseOpen(false)}>
+          <button
+            className="btn secondary"
+            type="button"
+            disabled={isPending}
+            onClick={() => setCloseOpen(false)}
+          >
             取消
           </button>
           <button className="btn" type="button" disabled={isPending} onClick={closeSession}>
@@ -177,16 +314,36 @@ export function SessionControls({
           </button>
         </div>
       </Dialog>
+
       <Dialog title="作廢 Session" open={voidOpen} onClose={() => setVoidOpen(false)}>
+        <p className="text-muted" style={{ marginTop: 0 }}>
+          作廢後此次點名結果將標記為無效，請填寫原因供稽核追蹤。
+        </p>
         <div className="field">
-          <label>作廢原因</label>
-          <textarea value={voidReason} onChange={(event) => setVoidReason(event.target.value)} rows={4} />
+          <label htmlFor="void-reason">作廢原因</label>
+          <textarea
+            id="void-reason"
+            value={voidReason}
+            onChange={(event) => setVoidReason(event.target.value)}
+            rows={4}
+            placeholder="例：系統異常導致部分學生無法點名"
+          />
         </div>
         <div className="toolbar dialog-actions">
-          <button className="btn secondary" type="button" disabled={isPending} onClick={() => setVoidOpen(false)}>
+          <button
+            className="btn secondary"
+            type="button"
+            disabled={isPending}
+            onClick={() => setVoidOpen(false)}
+          >
             取消
           </button>
-          <button className="btn" type="button" disabled={isPending || !voidReason.trim()} onClick={voidSession}>
+          <button
+            className="btn danger"
+            type="button"
+            disabled={isPending || !voidReason.trim()}
+            onClick={voidSession}
+          >
             確認作廢
           </button>
         </div>
