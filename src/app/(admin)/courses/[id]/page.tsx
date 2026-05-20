@@ -4,12 +4,11 @@ import { prisma } from "@/lib/prisma"
 import { CourseForm } from "@/components/admin/CourseForm"
 import { StudentImportDialog } from "@/components/admin/StudentImportDialog"
 import { DataTable } from "@/components/shared/DataTable"
-import { DeleteStudentDataButton } from "@/components/admin/DeleteStudentDataButton"
 import { StudentManager } from "@/components/admin/StudentManager"
 import { OpenSessionForm } from "@/components/admin/OpenSessionForm"
-import { RemoveStudentFromCourseButton } from "@/components/admin/RemoveStudentFromCourseButton"
 import { ExistingStudentPicker } from "@/components/admin/ExistingStudentPicker"
 import { ArchiveCourseButton } from "@/components/admin/ArchiveCourseButton"
+import { CourseStudentTable } from "@/components/admin/CourseStudentTable"
 
 export default async function CourseDetailPage({ params }: any) {
   const course = await prisma.course.findUnique({
@@ -60,27 +59,15 @@ export default async function CourseDetailPage({ params }: any) {
       )}
       <section className="panel">
         <h2>學生名單</h2>
-        <DataTable
-          rows={course.enrollments.map((item) => item.student)}
-          columns={[
-            { key: "code", header: "學號", render: (row) => row.studentCode },
-            { key: "name", header: "姓名", render: (row) => row.name },
-            { key: "email", header: "Google Email", render: (row) => row.googleEmail ?? "-" },
-            {
-              key: "remove",
-              header: "課程",
-              render: (row) =>
-                readonly ? null : <RemoveStudentFromCourseButton courseId={course.id} studentId={row.id} />
-            },
-            {
-              key: "delete",
-              header: "個資",
-              render: (row) =>
-                readonly ? null : (
-                  <DeleteStudentDataButton studentId={row.id} />
-                )
-            }
-          ]}
+        <CourseStudentTable
+          courseId={course.id}
+          readonly={readonly}
+          students={course.enrollments.map((item) => ({
+            id: item.student.id,
+            studentCode: item.student.studentCode,
+            name: item.student.name,
+            googleEmail: item.student.googleEmail
+          }))}
         />
       </section>
       <section className="panel">

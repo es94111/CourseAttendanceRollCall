@@ -94,3 +94,76 @@ td {
   color: #24575a;
   font-size: 12px;
 }
+
+.toast-region {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 60;
+  display: grid;
+  gap: 8px;
+  max-width: min(360px, calc(100vw - 32px));
+}
+
+.toast {
+  border: 1px solid #c9c7bd;
+  border-radius: 8px;
+  background: white;
+  padding: 12px 14px;
+  box-shadow: 0 8px 28px rgba(23, 32, 42, 0.16);
+}
+
+.toast.success {
+  border-color: #2f6f73;
+}
+
+.toast.error {
+  border-color: #b42318;
+}
+
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  background: rgba(23, 32, 42, 0.45);
+  padding: 16px;
+}
+
+.dialog {
+  width: min(680px, 100%);
+  max-height: min(720px, calc(100vh - 32px));
+  overflow: auto;
+  border-radius: 8px;
+  background: white;
+  padding: 18px;
+}
+
+.empty-state {
+  border: 1px dashed #c9c7bd;
+  border-radius: 8px;
+  padding: 24px;
+  text-align: center;
+  color: #5f6b73;
+}
+
+@media (max-width: 720px) {
+  .shell {
+    padding: 14px;
+  }
+
+  .toolbar {
+    align-items: stretch;
+  }
+
+  .toolbar > * {
+    max-width: 100%;
+  }
+
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}

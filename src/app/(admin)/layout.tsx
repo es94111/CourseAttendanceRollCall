@@ -13,6 +13,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <div className="toolbar">
             <Link href="/dashboard">總覽</Link>
             <Link href="/courses">課程</Link>
+            <Link href="/students">學生</Link>
             <Link href="/courses/archived">封存</Link>
             <Link href="/users">使用者</Link>
             <Link href="/audit-logs">稽核</Link>

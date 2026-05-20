@@ -1,12 +1,19 @@
 "use client"
 
-import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { useState, useTransition } from "react"
 
 export function StudentImportDialog({ courseId }: { courseId?: string }) {
-  const [result, setResult] = useState<any>(null)
+  const router = useRouter()
+  const [result, setResult] = useState<{
+    successCount: number
+    skipCount: number
+    errors: Array<{ row: number; reason: string }>
+  } | null>(null)
   const [file, setFile] = useState<File | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [error, setError] = useState("")
+  const [isPending, startTransition] = useTransition()
 
   async function upload() {
     setError("")
@@ -27,7 +34,7 @@ export function StudentImportDialog({ courseId }: { courseId?: string }) {
         return
       }
       setResult(body)
-      location.reload()
+      startTransition(() => router.refresh())
     } finally {
       setIsUploading(false)
     }
@@ -36,12 +43,41 @@ export function StudentImportDialog({ courseId }: { courseId?: string }) {
   return (
     <div className="panel">
       <h2>CSV 匯入學生</h2>
-      <input type="file" accept=".csv,text/csv" onChange={(event) => setFile(event.target.files?.[0] ?? null)} />
-      <button className="btn" type="button" disabled={isUploading} onClick={upload}>
-        {isUploading ? "匯入中" : "匯入 CSV"}
-      </button>
+      <div className="toolbar">
+        <input type="file" accept=".csv,text/csv" onChange={(event) => setFile(event.target.files?.[0] ?? null)} />
+        <button className="btn" type="button" disabled={isUploading || isPending} onClick={upload}>
+          {isUploading || isPending ? "匯入中" : "匯入 CSV"}
+        </button>
+      </div>
       {error && <p style={{ color: "#b42318" }}>{error}</p>}
-      {result && <pre>{JSON.stringify(result, null, 2)}</pre>}
+      {result && (
+        <div>
+          <div className="toolbar">
+            <span className="badge">成功 {result.successCount}</span>
+            <span className="badge">略過 {result.skipCount}</span>
+          </div>
+          {result.errors.length > 0 ? (
+            <table>
+              <thead>
+                <tr>
+                  <th>列號</th>
+                  <th>原因</th>
+                </tr>
+              </thead>
+              <tbody>
+                {result.errors.map((item) => (
+                  <tr key={`${item.row}-${item.reason}`}>
+                    <td>{item.row}</td>
+                    <td>{item.reason}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p>所有資料列皆已成功匯入。</p>
+          )}
+        </div>
+      )}
     </div>
   )
 }

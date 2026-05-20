@@ -1,8 +1,7 @@
 import Link from "next/link"
 import { prisma } from "@/lib/prisma"
 import { CourseForm } from "@/components/admin/CourseForm"
-import { DataTable } from "@/components/shared/DataTable"
-import { ArchiveCourseButton } from "@/components/admin/ArchiveCourseButton"
+import { CourseListTable } from "@/components/admin/CourseListTable"
 
 export default async function CoursesPage() {
   const courses = await prisma.course.findMany({
@@ -17,15 +16,16 @@ export default async function CoursesPage() {
         <Link href="/courses/archived">封存課程</Link>
       </div>
       <CourseForm />
-      <DataTable
-        rows={courses}
-        columns={[
-          { key: "name", header: "課程", render: (row) => <Link href={`/courses/${row.id}`}>{row.name}</Link>, sortValue: (row) => row.name },
-          { key: "time", header: "時間", render: (row) => `${row.startTime}-${row.endTime}` },
-          { key: "students", header: "學生", render: (row) => row._count.enrollments },
-          { key: "stats", header: "統計", render: (row) => <Link href={`/statistics/${row.id}`}>查看</Link> },
-          { key: "archive", header: "封存", render: (row) => <ArchiveCourseButton courseId={row.id} /> }
-        ]}
+      <CourseListTable
+        courses={courses.map((course) => ({
+          id: course.id,
+          name: course.name,
+          dayOfWeek: course.dayOfWeek,
+          startTime: course.startTime,
+          endTime: course.endTime,
+          lateThresholdMinutes: course.lateThresholdMinutes,
+          enrolledCount: course._count.enrollments
+        }))}
       />
     </main>
   )
