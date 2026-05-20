@@ -26,11 +26,13 @@ export function buildCheckinUrl(
   request: Request,
   sessionId: string,
   token: string,
-  qrCodeValiditySeconds: number
+  qrCodeValiditySeconds: number,
+  gracePeriodSeconds: number
 ) {
   const checkinUrl = new URL("/checkin", getPublicBaseUrl(request))
   checkinUrl.searchParams.set("sessionId", sessionId)
   checkinUrl.searchParams.set("token", token)
   checkinUrl.searchParams.set("validitySeconds", String(qrCodeValiditySeconds))
+  checkinUrl.searchParams.set("gracePeriodSeconds", String(gracePeriodSeconds))
   return checkinUrl.toString()
 }

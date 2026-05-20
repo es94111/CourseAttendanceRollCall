@@ -62,7 +62,13 @@ export async function GET(request: Request, { params }: any) {
           const validityMs = session.qrCodeValiditySeconds * 1000
           const token = generateToken(params.id, Date.now(), session.qrCodeValiditySeconds)
           const expiresAt = new Date((Math.floor(Date.now() / validityMs) + 1) * validityMs)
-          const checkinUrl = buildCheckinUrl(request, params.id, token, session.qrCodeValiditySeconds)
+          const checkinUrl = buildCheckinUrl(
+            request,
+            params.id,
+            token,
+            session.qrCodeValiditySeconds,
+            session.gracePeriodSeconds
+          )
           const qrcodeDataUrl = await generateQRCodeDataURL(checkinUrl)
           if (
             !enqueue(
