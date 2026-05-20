@@ -4,6 +4,7 @@ import { Suspense, useEffect, useMemo, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { getSession, signIn } from "next-auth/react"
 import { parseTokenSlot } from "@/lib/token-slot"
+import { SecureSignOutButton } from "@/components/shared/SecureSignOutButton"
 
 function CheckinContent() {
   const params = useSearchParams()
@@ -178,8 +179,15 @@ function CheckinContent() {
 
           {/* Actions */}
           {currentEmail && (
-            <div className="mt-4 rounded-md bg-primary-50 px-3 py-2 text-sm text-primary-900">
-              目前登入 Google 帳號：<strong>{currentEmail}</strong>
+            <div className="mt-4 rounded-md bg-primary-50 px-3 py-2 text-sm text-primary-900 grid gap-2">
+              <p style={{ margin: 0 }}>
+                目前登入 Google 帳號：<strong>{currentEmail}</strong>
+              </p>
+              <SecureSignOutButton
+                label="登出並更換 Google 帳號"
+                returnTo={`/checkin?sessionId=${encodeURIComponent(sessionId)}&token=${encodeURIComponent(token)}&validitySeconds=${validitySeconds}&gracePeriodSeconds=${gracePeriodSeconds}`}
+                style={{ minHeight: 36, width: "100%" }}
+              />
             </div>
           )}
           <div className="mt-5 grid gap-2">

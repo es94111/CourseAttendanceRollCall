@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { auth, signOut } from "@/lib/auth"
+import { auth } from "@/lib/auth"
+import { SecureSignOutButton } from "@/components/shared/SecureSignOutButton"
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "總覽" },
@@ -37,20 +38,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <span className="text-muted" style={{ fontSize: "0.875rem" }}>
               {displayName}
             </span>
-            <form
-              action={async () => {
-                "use server"
-                await signOut({ redirectTo: "/login" })
-              }}
-            >
-              <button
-                className="btn secondary"
-                type="submit"
-                style={{ minHeight: 36, padding: "0 12px", fontSize: "0.875rem" }}
-              >
-                登出
-              </button>
-            </form>
+            <SecureSignOutButton
+              label="安全登出"
+              style={{ minHeight: 36, padding: "0 12px", fontSize: "0.875rem" }}
+            />
           </div>
         </nav>
       </header>
