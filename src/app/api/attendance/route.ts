@@ -44,10 +44,10 @@ export async function POST(request: Request) {
       where: { sessionId_studentId: { sessionId: session.id, studentId: student.id } }
     })
     if (existing) return error("已完成點名，不重複記錄", 409)
-    const attendedAt = new Date()
+    const attendedAt = tokenResult.issuedAt ?? new Date()
     const status = attendanceStatus(
       attendedAt,
-      session.officialStartTime,
+      session.createdAt,
       session.course.lateThresholdMinutes
     )
     const record = await prisma.attendanceRecord.create({

@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import { AuditLogsClient } from "@/components/admin/AuditLogsClient"
-import { toTaipeiIso } from "@/lib/time"
+import { serializeAuditLogs } from "@/lib/audit-log-display"
 
 export default async function AuditLogsPage() {
   const [logs, total] = await Promise.all([
@@ -12,16 +12,7 @@ export default async function AuditLogsPage() {
       <h1>稽核日誌</h1>
       <AuditLogsClient
         initialTotal={total}
-        initialLogs={logs.map((log) => ({
-          id: log.id,
-          eventType: log.eventType,
-          actorEmail: log.actorEmail,
-          target: log.target,
-          oldValue: log.oldValue,
-          newValue: log.newValue,
-          reason: log.reason,
-          createdAt: toTaipeiIso(log.createdAt) ?? ""
-        }))}
+        initialLogs={await serializeAuditLogs(logs)}
       />
     </main>
   )

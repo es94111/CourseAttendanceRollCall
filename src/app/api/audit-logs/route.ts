@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import { handleRouteError, json, requireAdmin } from "@/lib/api"
-import { endOfTaipeiDay, startOfTaipeiDay, toTaipeiIso } from "@/lib/time"
+import { serializeAuditLogs } from "@/lib/audit-log-display"
+import { endOfTaipeiDay, startOfTaipeiDay } from "@/lib/time"
 
 export async function GET(request: Request) {
   const guard = await requireAdmin()
@@ -37,7 +38,7 @@ export async function GET(request: Request) {
       total,
       page,
       pageSize,
-      logs: logs.map((log) => ({ ...log, createdAt: toTaipeiIso(log.createdAt) }))
+      logs: await serializeAuditLogs(logs)
     })
   } catch (cause) {
     return handleRouteError(cause)

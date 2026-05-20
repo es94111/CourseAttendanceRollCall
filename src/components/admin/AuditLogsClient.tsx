@@ -40,6 +40,8 @@ const targetLabels: Record<string, string> = {
   total: "筆數"
 }
 
+const targetDisplayKeys = new Set(["courseName", "sessionLabel", "userDisplay"])
+
 function eventLabel(eventType: string) {
   return eventLabels[eventType] ?? eventType
 }
@@ -57,27 +59,30 @@ function valueObject(value: unknown) {
 function formatTarget(log: AuditLogRow) {
   const target = targetObject(log.target)
   if (typeof target === "string") return target
+  const courseName = String(target.courseName ?? "此課程")
+  const sessionLabel = String(target.sessionLabel ?? "此點名 Session")
+  const userDisplay = String(target.userDisplay ?? "此使用者")
 
   switch (log.eventType) {
     case "session_opened":
-      return "開啟此課程的點名 Session"
+      return `開啟課程「${courseName}」的${sessionLabel}`
     case "session_settings_update":
-      return "更新此點名 Session 的設定"
+      return `更新課程「${courseName}」${sessionLabel}的設定`
     case "manual_attendance_override":
       return "手動調整一筆點名記錄"
     case "delete_student_data":
       return target.studentCode ? `刪除學號 ${target.studentCode} 的學生個資` : "刪除學生個資"
     case "export_attendance":
-      return `匯出 ${target.startDate ?? "-"} 至 ${target.endDate ?? "-"} 的點名資料，共 ${target.total ?? "-"} 筆`
+      return `匯出課程「${courseName}」${target.startDate ?? "-"} 至 ${target.endDate ?? "-"} 的點名資料，共 ${target.total ?? "-"} 筆`
     case "leave_record_add":
       return "新增請假記錄並更新點名狀態"
     case "role_change":
-      return "變更一位使用者的角色"
+      return `變更 ${userDisplay} 的角色`
     case "void_session":
-      return "作廢一個點名 Session"
+      return `作廢${sessionLabel}`
     default:
-      return Object.entries(target)
-        .map(([key, value]) => `${targetLabels[key] ?? key}：${String(value)}`)
+      return targetEntries(target)
+        .map(([key, value]) => `${key}：${value}`)
         .join("，")
   }
 }
@@ -95,7 +100,15 @@ function formatDescription(log: AuditLogRow) {
 
 function targetEntries(target: unknown) {
   if (!target || typeof target !== "object" || Array.isArray(target)) return [["目標", String(target ?? "-")]]
-  return Object.entries(target).map(([key, value]) => [targetLabels[key] ?? key, String(value)])
+  const record = target as Record<string, unknown>
+  return Object.entries(record)
+    .filter(([key]) => !targetDisplayKeys.has(key))
+    .map(([key, value]) => {
+      if (key === "courseId" && record.courseName) return ["課程", String(record.courseName)]
+      if (key === "sessionId" && record.sessionLabel) return ["點名", String(record.sessionLabel)]
+      if (key === "userId" && record.userDisplay) return ["使用者", String(record.userDisplay)]
+      return [targetLabels[key] ?? key, String(value)]
+    })
 }
 
 const valueLabels: Record<string, string> = {
@@ -109,6 +122,23 @@ const valueLabels: Record<string, string> = {
 function valueEntries(value: unknown) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return []
   return Object.entries(value).map(([key, item]) => [valueLabels[key] ?? key, String(item)])
+}
+
+function formatDateTime(value: string) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  const parts = new Intl.DateTimeFormat("zh-TW", {
+    timeZone: "Asia/Taipei",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false
+  }).formatToParts(date)
+  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find((item) => item.type === type)?.value ?? ""
+  return `${part("year")}/${part("month")}/${part("day")} ${part("hour")}:${part("minute")}:${part("second")}`
 }
 
 export function AuditLogsClient({ initialLogs, initialTotal }: { initialLogs: AuditLogRow[]; initialTotal: number }) {
@@ -196,7 +226,7 @@ export function AuditLogsClient({ initialLogs, initialTotal }: { initialLogs: Au
               <td>{log.actorEmail}</td>
               <td>{formatDescription(log)}</td>
               <td>{log.reason ?? "未填寫原因"}</td>
-              <td>{log.createdAt}</td>
+              <td>{formatDateTime(log.createdAt)}</td>
               <td>
                 <button className="btn secondary" type="button" onClick={() => setSelectedLog(log)}>
                   詳情
@@ -235,7 +265,7 @@ export function AuditLogsClient({ initialLogs, initialTotal }: { initialLogs: Au
             </div>
             <div>
               <span>時間</span>
-              <strong>{selectedLog.createdAt}</strong>
+              <strong>{formatDateTime(selectedLog.createdAt)}</strong>
             </div>
             <div>
               <span>原因</span>

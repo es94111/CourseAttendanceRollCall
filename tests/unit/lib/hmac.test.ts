@@ -14,7 +14,11 @@ describe("HMAC QR token", () => {
     vi.setSystemTime(new Date("2026-05-19T00:00:00.000Z"))
     const token = generateToken("session_1")
 
-    expect(verifyToken(token, 60)).toMatchObject({ valid: true, sessionId: "session_1" })
+    expect(verifyToken(token, 60)).toMatchObject({
+      valid: true,
+      sessionId: "session_1",
+      issuedAt: new Date("2026-05-19T00:00:00.000Z")
+    })
   })
 
   it("rejects an expired token", () => {
