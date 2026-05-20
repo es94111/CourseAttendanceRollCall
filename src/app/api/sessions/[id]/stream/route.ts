@@ -1,5 +1,5 @@
 import { generateToken } from "@/lib/hmac"
-import { generateQRCodeDataURL } from "@/lib/qrcode"
+import { buildCheckinUrl, generateQRCodeDataURL } from "@/lib/qrcode"
 import { requireAdmin } from "@/lib/api"
 import { expireSessionIfNeeded } from "@/lib/session-expiry"
 import { prisma } from "@/lib/prisma"
@@ -33,14 +33,13 @@ export async function GET(request: Request, { params }: any) {
         }
         const token = generateToken(params.id)
         const expiresAt = new Date((Math.floor(Date.now() / 15_000) + 1) * 15_000)
-        const checkinUrl = new URL("/checkin", request.url)
-        checkinUrl.searchParams.set("sessionId", params.id)
-        checkinUrl.searchParams.set("token", token)
+        const checkinUrl = buildCheckinUrl(request, params.id, token)
         controller.enqueue(
           encoder.encode(
             event("qrcode_update", {
               token,
-              qrcodeDataUrl: await generateQRCodeDataURL(checkinUrl.toString()),
+              checkinUrl,
+              qrcodeDataUrl: await generateQRCodeDataURL(checkinUrl),
               slot: Math.floor(Date.now() / 15_000),
               expiresAt: expiresAt.toISOString(),
               remainingSeconds: Math.max(0, Math.ceil((expiresAt.getTime() - Date.now()) / 1000))

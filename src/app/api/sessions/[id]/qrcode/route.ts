@@ -1,6 +1,6 @@
 import { generateToken } from "@/lib/hmac"
-import { generateQRCodeDataURL } from "@/lib/qrcode"
-import { error, handleRouteError, json, requireAdmin } from "@/lib/api"
+import { buildCheckinUrl, generateQRCodeDataURL } from "@/lib/qrcode"
+import { handleRouteError, json, requireAdmin } from "@/lib/api"
 
 export async function GET(request: Request, { params }: any) {
   const guard = await requireAdmin()
@@ -8,12 +8,11 @@ export async function GET(request: Request, { params }: any) {
   try {
     const token = generateToken(params.id)
     const expiresAt = new Date((Math.floor(Date.now() / 15_000) + 1) * 15_000)
-    const checkinUrl = new URL("/checkin", request.url)
-    checkinUrl.searchParams.set("sessionId", params.id)
-    checkinUrl.searchParams.set("token", token)
+    const checkinUrl = buildCheckinUrl(request, params.id, token)
     return json({
       token,
-      qrcodeDataUrl: await generateQRCodeDataURL(checkinUrl.toString()),
+      checkinUrl,
+      qrcodeDataUrl: await generateQRCodeDataURL(checkinUrl),
       expiresAt: expiresAt.toISOString(),
       remainingSeconds: Math.max(0, Math.ceil((expiresAt.getTime() - Date.now()) / 1000))
     })
