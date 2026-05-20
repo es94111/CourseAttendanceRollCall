@@ -33,7 +33,10 @@ export function AttendanceTable({
   const { showToast } = useToast()
   const [error, setError] = useState("")
   const [rows, setRows] = useState(records)
-  const [overrideTarget, setOverrideTarget] = useState<{ student: StudentRow; status: string } | null>(null)
+  const [overrideTarget, setOverrideTarget] = useState<{
+    student: StudentRow
+    status: string
+  } | null>(null)
   const [leaveTarget, setLeaveTarget] = useState<StudentRow | null>(null)
   const [reason, setReason] = useState("")
   const [isPending, startTransition] = useTransition()
@@ -50,16 +53,18 @@ export function AttendanceTable({
     const response = await fetch(`/api/sessions/${sessionId}`)
     if (!response.ok) return
     const body = await response.json().catch(() => ({}))
-    const nextRows = (body.records ?? []).map((record: AttendanceRow & { attendedAt?: string | null }) => ({
-      id: record.id,
-      studentId: record.studentId,
-      status: record.status,
-      attendedAt: record.attendedAt
-        ? new Date(record.attendedAt).toLocaleString("zh-TW", { timeZone: "Asia/Taipei" })
-        : null,
-      ipAddress: record.ipAddress,
-      userAgent: record.userAgent
-    }))
+    const nextRows = (body.records ?? []).map(
+      (record: AttendanceRow & { attendedAt?: string | null }) => ({
+        id: record.id,
+        studentId: record.studentId,
+        status: record.status,
+        attendedAt: record.attendedAt
+          ? new Date(record.attendedAt).toLocaleString("zh-TW", { timeZone: "Asia/Taipei" })
+          : null,
+        ipAddress: record.ipAddress,
+        userAgent: record.userAgent
+      })
+    )
     setRows(nextRows)
   }
 
@@ -89,16 +94,19 @@ export function AttendanceTable({
     if (!trimmedReason) return
     setError("")
     const existing = recordByStudent.get(student.id)
-    const response = await fetch(`/api/attendance/${existing?.id ?? `manual-${sessionId}-${student.id}`}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        sessionId,
-        studentId: student.id,
-        status,
-        reason: trimmedReason
-      })
-    })
+    const response = await fetch(
+      `/api/attendance/${existing?.id ?? `manual-${sessionId}-${student.id}`}`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId,
+          studentId: student.id,
+          status,
+          reason: trimmedReason
+        })
+      }
+    )
     const body = await response.json().catch(() => ({}))
     if (!response.ok) {
       setError(body.error ?? "出席狀態更新失敗")
@@ -156,7 +164,16 @@ export function AttendanceTable({
                 <td>{student.studentCode}</td>
                 <td>{student.name}</td>
                 <td>
-                  <span className="badge">{record?.status ?? "absent"}</span>
+                  <span className={`badge ${record?.status ?? "absent"}`}>
+                    {(() => {
+                      const status = record?.status ?? "absent"
+                      if (status === "on_time") return "準時"
+                      if (status === "late") return "遲到"
+                      if (status === "leave") return "請假"
+                      if (status === "absent") return "缺席"
+                      return status
+                    })()}
+                  </span>
                 </td>
                 <td>{record?.attendedAt ?? "-"}</td>
                 <td>{record?.ipAddress ?? "-"}</td>
@@ -194,19 +211,34 @@ export function AttendanceTable({
           })}
         </tbody>
       </table>
-      <Dialog title="覆寫出席狀態" open={overrideTarget !== null} onClose={() => setOverrideTarget(null)}>
+      <Dialog
+        title="覆寫出席狀態"
+        open={overrideTarget !== null}
+        onClose={() => setOverrideTarget(null)}
+      >
         <p>
-          將 {overrideTarget?.student.name} 改為 {overrideTarget?.status}。請留下原因，方便稽核追蹤。
+          將 {overrideTarget?.student.name} 改為 {overrideTarget?.status}
+          。請留下原因，方便稽核追蹤。
         </p>
         <div className="field">
           <label>原因</label>
           <textarea rows={4} value={reason} onChange={(event) => setReason(event.target.value)} />
         </div>
         <div className="toolbar dialog-actions">
-          <button className="btn secondary" type="button" disabled={isPending} onClick={() => setOverrideTarget(null)}>
+          <button
+            className="btn secondary"
+            type="button"
+            disabled={isPending}
+            onClick={() => setOverrideTarget(null)}
+          >
             取消
           </button>
-          <button className="btn" type="button" disabled={isPending || !reason.trim()} onClick={override}>
+          <button
+            className="btn"
+            type="button"
+            disabled={isPending || !reason.trim()}
+            onClick={override}
+          >
             確認更新
           </button>
         </div>
@@ -218,10 +250,20 @@ export function AttendanceTable({
           <textarea rows={4} value={reason} onChange={(event) => setReason(event.target.value)} />
         </div>
         <div className="toolbar dialog-actions">
-          <button className="btn secondary" type="button" disabled={isPending} onClick={() => setLeaveTarget(null)}>
+          <button
+            className="btn secondary"
+            type="button"
+            disabled={isPending}
+            onClick={() => setLeaveTarget(null)}
+          >
             取消
           </button>
-          <button className="btn" type="button" disabled={isPending || !reason.trim()} onClick={addLeave}>
+          <button
+            className="btn"
+            type="button"
+            disabled={isPending || !reason.trim()}
+            onClick={addLeave}
+          >
             新增
           </button>
         </div>

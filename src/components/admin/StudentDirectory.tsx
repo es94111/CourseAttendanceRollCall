@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import { EditStudentButton } from "@/components/admin/EditStudentButton"
 
 interface StudentRow {
   id: string
@@ -42,6 +43,7 @@ export function StudentDirectory({ students }: { students: StudentRow[] }) {
               <th>姓名</th>
               <th>Google Email</th>
               <th>課程</th>
+              <th>資料</th>
             </tr>
           </thead>
           <tbody>
@@ -51,6 +53,9 @@ export function StudentDirectory({ students }: { students: StudentRow[] }) {
                 <td>{student.name}</td>
                 <td>{student.googleEmail ?? "-"}</td>
                 <td>{student.courses.map((course) => course.name).join("、") || "-"}</td>
+                <td>
+                  <EditStudentButton student={student} />
+                </td>
               </tr>
             ))}
           </tbody>

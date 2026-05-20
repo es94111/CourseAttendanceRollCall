@@ -34,9 +34,21 @@ export default async function SessionPage({ params }: any) {
   }
   return (
     <main className="shell">
-      <div className="toolbar">
-        <h1>{session.course.name} 點名</h1>
-        <span className="badge">{session.status}</span>
+      <div className="page-heading">
+        <div>
+          <h1>{session.course.name} 點名</h1>
+          <p>第 {session.id.slice(0, 8)} 次 Session</p>
+        </div>
+        <span className={`badge ${session.status}`}>
+          {session.status === "active" && <span className="dot" aria-hidden />}
+          {session.status === "active"
+            ? "進行中"
+            : session.status === "closed"
+              ? "已關閉"
+              : session.status === "voided"
+                ? "已作廢"
+                : session.status}
+        </span>
       </div>
       <QRCodeDisplay sessionId={session.id} initialStatus={session.status} />
       <SessionControls

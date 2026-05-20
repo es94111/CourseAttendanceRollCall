@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react"
 import { DeleteStudentDataButton } from "@/components/admin/DeleteStudentDataButton"
+import { EditStudentButton } from "@/components/admin/EditStudentButton"
 import { RemoveStudentFromCourseButton } from "@/components/admin/RemoveStudentFromCourseButton"
 
 interface CourseStudentRow {
@@ -54,6 +55,7 @@ export function CourseStudentTable({
               <th>學號</th>
               <th>姓名</th>
               <th>Google Email</th>
+              <th>資料</th>
               <th>課程</th>
               <th>個資</th>
             </tr>
@@ -64,6 +66,7 @@ export function CourseStudentTable({
                 <td>{student.studentCode}</td>
                 <td>{student.name}</td>
                 <td>{student.googleEmail ?? "-"}</td>
+                <td>{readonly ? "-" : <EditStudentButton student={student} />}</td>
                 <td>{readonly ? "-" : <RemoveStudentFromCourseButton courseId={courseId} studentId={student.id} />}</td>
                 <td>{readonly ? "-" : <DeleteStudentDataButton studentId={student.id} />}</td>
               </tr>

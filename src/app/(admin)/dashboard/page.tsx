@@ -79,9 +79,7 @@ export default async function DashboardPage() {
             href="/courses"
             title="新增課程"
             desc="建立課程並指派老師"
-            icon={
-              <path d="M12 5v14M5 12h14" />
-            }
+            icon={<path d="M12 5v14M5 12h14" />}
           />
           <QuickLink
             href="/students"

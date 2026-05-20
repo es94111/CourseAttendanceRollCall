@@ -124,7 +124,9 @@ export function QRCodeDisplay({
           <p className="text-muted">
             Session 狀態：<span className={`badge ${status}`}>{status}</span>
           </p>
-          <p className="text-muted">此頁面保留作為本次點名的結束摘要，學生不能再掃描此 QR Code 送出點名。</p>
+          <p className="text-muted">
+            此頁面保留作為本次點名的結束摘要，學生不能再掃描此 QR Code 送出點名。
+          </p>
         </div>
       )}
     </section>

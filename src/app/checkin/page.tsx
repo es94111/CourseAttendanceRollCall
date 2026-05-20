@@ -19,6 +19,7 @@ function CheckinContent() {
     title: string
     detail: string
   } | null>(null)
+  const [currentEmail, setCurrentEmail] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [autoSubmitted, setAutoSubmitted] = useState(false)
   const expired = remaining <= 0
@@ -83,6 +84,7 @@ function CheckinContent() {
     let cancelled = false
     void getSession().then((session) => {
       if (cancelled || !session) return
+      setCurrentEmail(session.user?.email ?? null)
       setAutoSubmitted(true)
       void submit()
     })
@@ -175,6 +177,11 @@ function CheckinContent() {
           )}
 
           {/* Actions */}
+          {currentEmail && (
+            <div className="mt-4 rounded-md bg-primary-50 px-3 py-2 text-sm text-primary-900">
+              目前登入 Google 帳號：<strong>{currentEmail}</strong>
+            </div>
+          )}
           <div className="mt-5 grid gap-2">
             {result?.kind !== "success" && (
               <>
@@ -257,26 +264,62 @@ function StatusHeader({
         aria-hidden
       >
         {icon === "success" && (
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={cfg.iconColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke={cfg.iconColor}
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <path d="M20 6L9 17l-5-5" />
           </svg>
         )}
         {icon === "warn" && (
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={cfg.iconColor} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke={cfg.iconColor}
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
             <path d="M12 9v4" />
             <path d="M12 17h.01" />
           </svg>
         )}
         {icon === "info" && (
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={cfg.iconColor} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke={cfg.iconColor}
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <circle cx="12" cy="12" r="10" />
             <path d="M12 16v-4" />
             <path d="M12 8h.01" />
           </svg>
         )}
         {icon === "qr" && (
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={cfg.iconColor} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke={cfg.iconColor}
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <rect x="3" y="3" width="7" height="7" />
             <rect x="14" y="3" width="7" height="7" />
             <rect x="3" y="14" width="7" height="7" />
@@ -300,14 +343,7 @@ function StatusHeader({
 
 function Spinner() {
   return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      className="spin"
-      aria-hidden
-    >
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="spin" aria-hidden>
       <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity="0.25" strokeWidth="3" />
       <path
         d="M22 12a10 10 0 0 0-10-10"

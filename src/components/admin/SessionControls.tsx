@@ -140,7 +140,8 @@ export function SessionControls({
 
           {finished && (
             <p className="text-muted" style={{ marginBottom: 8, fontSize: "0.875rem" }}>
-              本次 Session 已{status === "closed" ? "關閉" : status === "voided" ? "作廢" : "結束"}，QR Code 已停用。
+              本次 Session 已{status === "closed" ? "關閉" : status === "voided" ? "作廢" : "結束"}
+              ，QR Code 已停用。
             </p>
           )}
         </div>
@@ -189,7 +190,9 @@ export function SessionControls({
           <span>出席率</span>
           <strong>
             {attendancePct}
-            <span style={{ fontSize: "1rem", color: "var(--color-text-muted)", fontWeight: 500 }}>%</span>
+            <span style={{ fontSize: "1rem", color: "var(--color-text-muted)", fontWeight: 500 }}>
+              %
+            </span>
           </strong>
         </div>
       </div>
@@ -263,10 +266,7 @@ export function SessionControls({
       )}
 
       {/* QR validity settings */}
-      <div
-        className="mt-5 pt-4 border-t"
-        style={{ borderColor: "var(--color-border)" }}
-      >
+      <div className="mt-5 pt-4 border-t" style={{ borderColor: "var(--color-border)" }}>
         <div className="flex items-end gap-3 flex-wrap">
           <div className="field" style={{ marginBottom: 0, flex: "1 1 200px", minWidth: 0 }}>
             <label htmlFor="qr-validity-seconds">QR Code 有效秒數</label>

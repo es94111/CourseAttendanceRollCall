@@ -43,7 +43,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                 await signOut({ redirectTo: "/login" })
               }}
             >
-              <button className="btn secondary" type="submit" style={{ minHeight: 36, padding: "0 12px", fontSize: "0.875rem" }}>
+              <button
+                className="btn secondary"
+                type="submit"
+                style={{ minHeight: 36, padding: "0 12px", fontSize: "0.875rem" }}
+              >
                 登出
               </button>
             </form>

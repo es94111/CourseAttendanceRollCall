@@ -62,7 +62,7 @@ const config: Config = {
         "pulse-dot": "pulse_dot 1.6s ease-in-out infinite"
       },
       fontFamily: {
-        sans: ['Inter', '"Noto Sans TC"', "system-ui", "sans-serif"],
+        sans: ["Inter", '"Noto Sans TC"', "system-ui", "sans-serif"],
         mono: ['"JetBrains Mono"', "ui-monospace", "monospace"]
       }
     }
