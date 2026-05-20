@@ -11,19 +11,28 @@ function CheckinContent() {
   const token = params.get("token") ?? ""
   const sessionId = params.get("sessionId") ?? ""
   const validitySeconds = Math.max(5, Number(params.get("validitySeconds") ?? 15) || 15)
+  const gracePeriodSeconds = Math.max(0, Number(params.get("gracePeriodSeconds") ?? 60) || 60)
   const slot = useMemo(() => parseTokenSlot(token, validitySeconds), [token, validitySeconds])
   const [remaining, setRemaining] = useState(0)
+  const [acceptedRemaining, setAcceptedRemaining] = useState(0)
   const [result, setResult] = useState<{ kind: "info" | "success" | "error"; title: string; detail: string } | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [autoSubmitted, setAutoSubmitted] = useState(false)
   const expired = remaining <= 0
+  const canAttemptCheckin = Boolean(token && sessionId && acceptedRemaining > 0)
 
   useEffect(() => {
-    const tick = () => setRemaining(slot ? Math.max(0, Math.ceil((slot.expiresAt.getTime() - Date.now()) / 1000)) : 0)
+    const tick = () => {
+      const expiresAt = slot?.expiresAt.getTime() ?? 0
+      setRemaining(slot ? Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000)) : 0)
+      setAcceptedRemaining(
+        slot ? Math.max(0, Math.ceil((expiresAt + gracePeriodSeconds * 1000 - Date.now()) / 1000)) : 0
+      )
+    }
     tick()
     const interval = setInterval(tick, 1000)
     return () => clearInterval(interval)
-  }, [slot])
+  }, [gracePeriodSeconds, slot])
 
   async function submit() {
     setIsSubmitting(true)
@@ -52,7 +61,7 @@ function CheckinContent() {
   }
 
   useEffect(() => {
-    if (expired || autoSubmitted || !token || !sessionId) return
+    if (!canAttemptCheckin || autoSubmitted) return
     let cancelled = false
     void getSession().then((session) => {
       if (cancelled || !session) return
@@ -63,7 +72,7 @@ function CheckinContent() {
       cancelled = true
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoSubmitted, expired, sessionId, token])
+  }, [autoSubmitted, canAttemptCheckin, sessionId, token])
 
   function login() {
     void signIn("google", { callbackUrl: window.location.href })
@@ -73,12 +82,18 @@ function CheckinContent() {
     <main className="shell" style={{ maxWidth: 560 }}>
       <h1>課程點名</h1>
       <section className="panel">
-        {expired ? <p>QR Code 已失效，請等待管理員顯示新 QR Code 後重新掃描</p> : <p>QR Code 將於 {remaining} 秒後更新</p>}
+        {!canAttemptCheckin ? (
+          <p>QR Code 已失效，請等待管理員顯示新 QR Code 後重新掃描</p>
+        ) : expired ? (
+          <p>QR Code 已更新，仍可在 {acceptedRemaining} 秒內完成登入點名</p>
+        ) : (
+          <p>QR Code 將於 {remaining} 秒後更新</p>
+        )}
         <div className="toolbar">
-          <button className="btn secondary" type="button" disabled={expired} onClick={login}>
+          <button className="btn secondary" type="button" disabled={!canAttemptCheckin} onClick={login}>
             使用 Google 登入
           </button>
-          <button className="btn" type="button" disabled={expired || isSubmitting} onClick={submit}>
+          <button className="btn" type="button" disabled={!canAttemptCheckin || isSubmitting} onClick={submit}>
             {isSubmitting ? "提交中" : "提交點名"}
           </button>
         </div>
