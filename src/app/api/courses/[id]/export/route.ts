@@ -11,12 +11,20 @@ export async function GET(request: Request, { params }: any) {
     const url = new URL(request.url)
     const startDate = url.searchParams.get("startDate")
     const endDate = url.searchParams.get("endDate")
-    if (!startDate || !endDate) return error("日期範圍未填", 400)
     if (url.searchParams.get("confirmed") !== "true") return error("需確認 PII 匯出警告", 400)
+    const dateWhere =
+      startDate || endDate
+        ? {
+            createdAt: {
+              gte: startDate ? startOfTaipeiDay(startDate) : undefined,
+              lte: endDate ? endOfTaipeiDay(endDate) : undefined
+            }
+          }
+        : {}
     const where = {
       session: {
         courseId: params.id,
-        createdAt: { gte: startOfTaipeiDay(startDate), lte: endOfTaipeiDay(endDate) }
+        ...dateWhere
       }
     }
     const total = await prisma.attendanceRecord.count({ where })
@@ -31,7 +39,7 @@ export async function GET(request: Request, { params }: any) {
       eventType: "export_attendance",
       actorId: guard.user.id,
       actorEmail: guard.user.email ?? "",
-      target: { courseId: params.id, startDate, endDate, total }
+      target: { courseId: params.id, startDate: startDate ?? "全部時間", endDate: endDate ?? "全部時間", total }
     })
     return new Response(attendanceRowsToCsv(rows), {
       headers: {

@@ -61,15 +61,13 @@ export function StatisticsPanel({
 
   function openExportDialog() {
     setError("")
-    if (!startDate || !endDate) {
-      setError("匯出前請選擇開始與結束日期")
-      return
-    }
     setExportOpen(true)
   }
 
   function exportCsv() {
-    const params = new URLSearchParams({ startDate, endDate, confirmed: "true" })
+    const params = new URLSearchParams({ confirmed: "true" })
+    if (startDate) params.set("startDate", startDate)
+    if (endDate) params.set("endDate", endDate)
     window.location.href = `/api/courses/${courseId}/export?${params.toString()}`
     setExportOpen(false)
   }
@@ -168,6 +166,10 @@ export function StatisticsPanel({
       )}
       <Dialog title="確認匯出個資 CSV" open={exportOpen} onClose={() => setExportOpen(false)}>
         <p>匯出的 CSV 含學生姓名、學號與出席資料。請確認你只會用於授權的課務或稽核目的。</p>
+        <p>
+          匯出範圍：
+          {startDate || endDate ? `${startDate || "最早"} 至 ${endDate || "最新"}` : "全部時間"}
+        </p>
         <div className="toolbar dialog-actions">
           <button className="btn secondary" type="button" onClick={() => setExportOpen(false)}>
             取消

@@ -72,8 +72,13 @@ function formatTarget(log: AuditLogRow) {
       return "手動調整一筆點名記錄"
     case "delete_student_data":
       return target.studentCode ? `刪除學號 ${target.studentCode} 的學生個資` : "刪除學生個資"
-    case "export_attendance":
-      return `匯出課程「${courseName}」${target.startDate ?? "-"} 至 ${target.endDate ?? "-"} 的點名資料，共 ${target.total ?? "-"} 筆`
+    case "export_attendance": {
+      const range =
+        target.startDate === "全部時間" && target.endDate === "全部時間"
+          ? "全部時間"
+          : `${target.startDate ?? "最早"} 至 ${target.endDate ?? "最新"}`
+      return `匯出課程「${courseName}」${range} 的點名資料，共 ${target.total ?? "-"} 筆`
+    }
     case "leave_record_add":
       return "新增請假記錄並更新點名狀態"
     case "role_change":
