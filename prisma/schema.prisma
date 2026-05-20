@@ -41,6 +41,7 @@ enum AuditEventType {
   session_opened
   session_settings_update
   connection_access_update
+  connection_access_block
 }
 
 model User {
@@ -211,7 +212,7 @@ model LeaveRecord {
 model AuditLog {
   id         String         @id @default(cuid())
   eventType  AuditEventType
-  actorId    String
+  actorId    String?
   actorEmail String
   target     Json
   oldValue   Json?
@@ -219,7 +220,7 @@ model AuditLog {
   reason     String?
   createdAt  DateTime      @default(now())
 
-  actor User @relation("ActorUser", fields: [actorId], references: [id])
+  actor User? @relation("ActorUser", fields: [actorId], references: [id])
 
   @@index([eventType, createdAt])
   @@index([actorEmail, createdAt])

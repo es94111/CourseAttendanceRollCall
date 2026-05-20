@@ -1,5 +1,9 @@
 import { isIP } from "node:net"
 import { prisma } from "@/lib/prisma"
+import { getClientIpMetadata } from "@/lib/request-ip"
+import { lookupIpinfoCountry } from "@/lib/ipinfo"
+import { writeAuditLog } from "@/lib/audit"
+import { logger } from "@/lib/logger"
 
 export type ConnectionAccessAction = "allow" | "block"
 export type ConnectionAccessTargetType = "country" | "ip"
@@ -15,6 +19,87 @@ export interface ConnectionAccessRuleInput {
 export interface ConnectionIdentity {
   ipAddress: string | null
   ipCountry: string | null
+  ipCountryName?: string | null
+  userAgent?: string | null
+  path?: string | null
+}
+
+interface ParsedIpCidr {
+  ip: string
+  prefix: number
+  version: 4 | 6
+}
+
+function parseIpCidr(value: string): ParsedIpCidr | null {
+  const [ip, prefixText] = value.split("/")
+  if (!ip || !prefixText || value.split("/").length !== 2) return null
+  const version = isIP(ip)
+  if (!version || !/^\d+$/.test(prefixText)) return null
+  const ipVersion: 4 | 6 = version === 4 ? 4 : 6
+  const prefix = Number(prefixText)
+  const maxPrefix = ipVersion === 4 ? 32 : 128
+  if (prefix < 0 || prefix > maxPrefix) return null
+  return { ip, prefix, version: ipVersion }
+}
+
+function normalizeIpRuleValue(value: string) {
+  const cidr = parseIpCidr(value)
+  if (cidr) return `${cidr.ip}/${cidr.prefix}`
+  if (isIP(value)) return value
+  throw new Error("IP 格式不正確，請輸入單一 IP 或 CIDR 網段，例如 203.0.113.10 或 173.245.48.0/20")
+}
+
+function ipv4ToBigInt(ip: string) {
+  const parts = ip.split(".")
+  if (parts.length !== 4) return null
+  let value = 0n
+  for (const part of parts) {
+    if (!/^\d+$/.test(part)) return null
+    const octet = Number(part)
+    if (octet < 0 || octet > 255) return null
+    value = (value << 8n) + BigInt(octet)
+  }
+  return value
+}
+
+function ipv6ToBigInt(ip: string) {
+  const [leftText, rightText, extra] = ip.toLowerCase().split("::")
+  if (extra !== undefined) return null
+  const left = leftText ? leftText.split(":") : []
+  const right = rightText ? rightText.split(":") : []
+  const hasCompression = ip.includes("::")
+  const missing = hasCompression ? 8 - left.length - right.length : 0
+  const groups = hasCompression ? [...left, ...Array(Math.max(0, missing)).fill("0"), ...right] : ip.split(":")
+  if (groups.length !== 8) return null
+  let value = 0n
+  for (const group of groups) {
+    if (!/^[0-9a-f]{1,4}$/.test(group)) return null
+    value = (value << 16n) + BigInt(Number.parseInt(group, 16))
+  }
+  return value
+}
+
+function ipToBigInt(ip: string, version: 4 | 6) {
+  return version === 4 ? ipv4ToBigInt(ip) : ipv6ToBigInt(ip)
+}
+
+export function ipRuleMatches(ruleValue: string, ipAddress: string | null | undefined) {
+  if (!ipAddress) return false
+  const ipVersion = isIP(ipAddress)
+  if (!ipVersion) return false
+
+  const cidr = parseIpCidr(ruleValue)
+  if (!cidr) return ipAddress === ruleValue
+  if (cidr.version !== ipVersion) return false
+
+  const totalBits = cidr.version === 4 ? 32 : 128
+  const ruleIp = ipToBigInt(cidr.ip, cidr.version)
+  const requestIp = ipToBigInt(ipAddress, cidr.version)
+  if (ruleIp === null || requestIp === null) return false
+  if (cidr.prefix === 0) return true
+
+  const shift = BigInt(totalBits - cidr.prefix)
+  return ruleIp >> shift === requestIp >> shift
 }
 
 export function normalizeConnectionAccessRule(input: ConnectionAccessRuleInput) {
@@ -25,13 +110,12 @@ export function normalizeConnectionAccessRule(input: ConnectionAccessRuleInput) 
     return { ...input, value: country, note: input.note?.trim() || null, enabled: input.enabled ?? true }
   }
 
-  if (!isIP(value)) throw new Error("IP 格式不正確")
-  return { ...input, value, note: input.note?.trim() || null, enabled: input.enabled ?? true }
+  return { ...input, value: normalizeIpRuleValue(value), note: input.note?.trim() || null, enabled: input.enabled ?? true }
 }
 
 function ruleMatches(rule: { targetType: string; value: string }, identity: ConnectionIdentity) {
   if (rule.targetType === "country") return identity.ipCountry?.toUpperCase() === rule.value.toUpperCase()
-  if (rule.targetType === "ip") return identity.ipAddress === rule.value
+  if (rule.targetType === "ip") return ipRuleMatches(rule.value, identity.ipAddress)
   return false
 }
 
@@ -39,7 +123,8 @@ export async function evaluateConnectionAccess(identity: ConnectionIdentity) {
   const rules = await prisma.connectionAccessRule.findMany({ where: { enabled: true } })
   const blockRule = rules.find((rule) => rule.action === "block" && ruleMatches(rule, identity))
   if (blockRule) {
-    return { allowed: false, reason: "此連線來源已被封鎖", rule: blockRule }
+    const target = blockRule.targetType === "country" ? `國家 ${blockRule.value}` : `IP ${blockRule.value}`
+    return { allowed: false, reason: blockRule.note || `此連線來源符合封鎖規則：${target}`, rule: blockRule }
   }
 
   const allowRules = rules.filter((rule) => rule.action === "allow")
@@ -49,4 +134,60 @@ export async function evaluateConnectionAccess(identity: ConnectionIdentity) {
   }
 
   return { allowed: true, reason: null, rule: null }
+}
+
+export async function getConnectionIdentity(headers: Headers, path?: string | null): Promise<ConnectionIdentity> {
+  const clientIp = getClientIpMetadata(headers)
+  const ipinfo = clientIp.ipCountry ? null : await lookupIpinfoCountry(clientIp.ipAddress)
+  return {
+    ipAddress: clientIp.ipAddress,
+    ipCountry: clientIp.ipCountry ?? ipinfo?.ipCountry ?? null,
+    ipCountryName: ipinfo?.ipCountryName ?? null,
+    userAgent: headers.get("user-agent"),
+    path: path ?? null
+  }
+}
+
+export async function recordConnectionAccessBlock(
+  identity: ConnectionIdentity,
+  result: Awaited<ReturnType<typeof evaluateConnectionAccess>>
+) {
+  if (result.allowed) return
+  try {
+    await writeAuditLog({
+      eventType: "connection_access_block",
+      actorId: null,
+      actorEmail: "system",
+      target: {
+        ipAddress: identity.ipAddress,
+        ipCountry: identity.ipCountry,
+        ipCountryName: identity.ipCountryName ?? null,
+        userAgent: identity.userAgent ?? null,
+        path: identity.path ?? null,
+        matchedRule: result.rule
+          ? {
+              id: result.rule.id,
+              action: result.rule.action,
+              targetType: result.rule.targetType,
+              value: result.rule.value,
+              note: result.rule.note
+            }
+          : null
+      },
+      reason: result.reason
+    })
+  } catch (cause) {
+    logger.error("connection_access_block_audit_failed", {
+      error: cause instanceof Error ? cause.message : String(cause),
+      identity,
+      reason: result.reason
+    })
+  }
+}
+
+export async function checkConnectionAccess(headers: Headers, path?: string | null) {
+  const identity = await getConnectionIdentity(headers, path)
+  const result = await evaluateConnectionAccess(identity)
+  if (!result.allowed) await recordConnectionAccessBlock(identity, result)
+  return { identity, ...result }
 }

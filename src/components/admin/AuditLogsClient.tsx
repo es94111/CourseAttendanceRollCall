@@ -23,7 +23,8 @@ const eventLabels: Record<string, string> = {
   delete_student_data: "刪除學生個資",
   session_opened: "開啟點名",
   session_settings_update: "更新點名設定",
-  connection_access_update: "更新連線限制"
+  connection_access_update: "更新連線限制",
+  connection_access_block: "封鎖連線"
 }
 
 const targetLabels: Record<string, string> = {
@@ -38,7 +39,13 @@ const targetLabels: Record<string, string> = {
   leaveRecordId: "請假記錄 ID",
   startDate: "開始日期",
   endDate: "結束日期",
-  total: "筆數"
+  total: "筆數",
+  ipAddress: "IP",
+  ipCountry: "國家",
+  ipCountryName: "國家名稱",
+  userAgent: "瀏覽器",
+  path: "路徑",
+  matchedRule: "命中規則"
 }
 
 const targetDisplayKeys = new Set(["courseName", "sessionLabel", "userDisplay"])
@@ -88,6 +95,8 @@ function formatTarget(log: AuditLogRow) {
       return `課程「${courseName}」作廢${sessionLabel}`
     case "connection_access_update":
       return `更新連線限制規則，共 ${target.total ?? "-"} 筆`
+    case "connection_access_block":
+      return `封鎖連線來源 ${target.ipAddress ?? "未知 IP"}${target.ipCountry ? `（${target.ipCountry}）` : ""}`
     default:
       return targetEntries(target)
         .map(([key, value]) => `${key}：${value}`)
@@ -202,6 +211,7 @@ export function AuditLogsClient({ initialLogs, initialTotal }: { initialLogs: Au
           <option value="role_change">角色變更</option>
           <option value="export_attendance">匯出</option>
           <option value="connection_access_update">連線限制</option>
+          <option value="connection_access_block">封鎖連線</option>
           <option value="manual_attendance_override">手動補登</option>
           <option value="leave_record_add">請假</option>
           <option value="void_session">作廢</option>

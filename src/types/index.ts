@@ -13,6 +13,7 @@ export type AuditEventType =
   | "session_opened"
   | "session_settings_update"
   | "connection_access_update"
+  | "connection_access_block"
 
 export interface ApiError {
   error: string

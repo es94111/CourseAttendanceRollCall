@@ -4,7 +4,7 @@ import { logger } from "@/lib/logger"
 
 interface AuditInput {
   eventType: AuditEventType
-  actorId: string
+  actorId?: string | null
   actorEmail: string
   target: unknown
   oldValue?: unknown
@@ -16,7 +16,7 @@ export async function writeAuditLog(input: AuditInput) {
   const record = await prisma.auditLog.create({
     data: {
       eventType: input.eventType,
-      actorId: input.actorId,
+      actorId: input.actorId ?? null,
       actorEmail: input.actorEmail,
       target: input.target as object,
       oldValue: input.oldValue === undefined ? undefined : (input.oldValue as object),

@@ -100,11 +100,11 @@ export function ConnectionAccessManager({ initialRules }: { initialRules: Connec
               <label>封鎖 IP</label>
               <textarea
                 rows={8}
-                placeholder={"203.0.113.10\n2001:db8::1"}
+                placeholder={"203.0.113.10\n173.245.48.0/20\n2001:db8::1"}
                 value={blockIps}
                 onChange={(event) => setBlockIps(event.target.value)}
               />
-              <span className="hint">每行一個 IPv4 或 IPv6。</span>
+              <span className="hint">每行一個 IPv4、IPv6 或 CIDR 網段。</span>
             </div>
           </div>
         </div>
@@ -130,11 +130,11 @@ export function ConnectionAccessManager({ initialRules }: { initialRules: Connec
               <label>允許 IP</label>
               <textarea
                 rows={8}
-                placeholder={"198.51.100.8\n2001:db8::2"}
+                placeholder={"198.51.100.8\n103.21.244.0/22\n2001:db8::2"}
                 value={allowIps}
                 onChange={(event) => setAllowIps(event.target.value)}
               />
-              <span className="hint">留空表示不限制 IP。</span>
+              <span className="hint">可填 IPv4、IPv6 或 CIDR；留空表示不限制 IP。</span>
             </div>
           </div>
         </div>

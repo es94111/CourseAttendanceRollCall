@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server"
+import { headers } from "next/headers"
 import { ZodError, type ZodSchema } from "zod"
 import { auth } from "@/lib/auth"
 import { logger } from "@/lib/logger"
+import { checkConnectionAccess } from "@/lib/connection-access"
 
 export function json(data: unknown, init?: ResponseInit) {
   return NextResponse.json(data, init)
@@ -12,6 +14,8 @@ export function error(message: string, status = 400) {
 }
 
 export async function requireUser() {
+  const access = await checkConnectionAccess(await headers())
+  if (!access.allowed) return { response: error(access.reason ?? "此連線來源已被封鎖", 403) as NextResponse }
   const session = await auth()
   if (!session?.user?.id) return { response: error("請先登入", 401) as NextResponse }
   return { user: session.user }
