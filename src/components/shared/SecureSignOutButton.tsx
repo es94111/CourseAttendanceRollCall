@@ -3,11 +3,6 @@
 import { signOut } from "next-auth/react"
 import { useState } from "react"
 
-function googleLogoutUrl(returnTo: string) {
-  const appEngineLogout = `https://appengine.google.com/_ah/logout?continue=${encodeURIComponent(returnTo)}`
-  return `https://accounts.google.com/Logout?continue=${encodeURIComponent(appEngineLogout)}`
-}
-
 export function SecureSignOutButton({
   label = "安全登出",
   className = "btn secondary",
@@ -31,7 +26,7 @@ export function SecureSignOutButton({
       // Storage may be blocked in some private browsing contexts.
     }
     await signOut({ redirect: false })
-    window.location.assign(googleLogoutUrl(target))
+    window.location.assign(target)
   }
 
   return (

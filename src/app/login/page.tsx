@@ -1,6 +1,8 @@
 import { signIn } from "@/lib/auth"
 
-export default function LoginPage() {
+export default async function LoginPage({ searchParams }: { searchParams?: Promise<{ error?: string }> }) {
+  const params = await searchParams
+  const error = params?.error
   return (
     <main className="min-h-dvh grid place-items-center px-4 py-10 bg-gradient-to-b from-primary-50 via-paper to-paper">
       <div className="w-full max-w-md">
@@ -32,6 +34,12 @@ export default function LoginPage() {
               請使用 Google 帳號登入以繼續
             </p>
           </div>
+          {error === "account-mismatch" && (
+            <div className="status-card error">
+              <strong>Google 帳號連結異常</strong>
+              <p style={{ margin: 0 }}>系統已清除錯誤連結，請重新選擇正確的 Google 帳號登入。</p>
+            </div>
+          )}
 
           <form
             action={async () => {

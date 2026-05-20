@@ -3,6 +3,7 @@ import Google from "next-auth/providers/google"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import { resolveSignInRole } from "@/lib/auth-role"
 import { prisma } from "@/lib/prisma"
+import { normalizeEmail } from "@/lib/email"
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -15,16 +16,28 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       allowDangerousEmailAccountLinking: true,
       authorization: {
         params: {
-          prompt: "select_account"
+          prompt: "select_account",
+          max_age: "0"
         }
       }
     })
   ],
   callbacks: {
-    async signIn({ user }) {
-      if (!user.email) return false
-      const existing = await prisma.user.findUnique({ where: { email: user.email } })
-      const role = resolveSignInRole(user.email, existing?.role ?? null, process.env.ADMIN_EMAILS)
+    async signIn({ user, account, profile }) {
+      const userEmail = normalizeEmail(user.email)
+      const profileEmail = normalizeEmail(typeof profile?.email === "string" ? profile.email : null)
+      if (!userEmail) return false
+      if (account?.provider === "google" && profileEmail && profileEmail !== userEmail) {
+        await prisma.account.deleteMany({
+          where: {
+            provider: account.provider,
+            providerAccountId: account.providerAccountId
+          }
+        })
+        return "/login?error=account-mismatch"
+      }
+      const existing = await prisma.user.findUnique({ where: { email: userEmail } })
+      const role = resolveSignInRole(userEmail, existing?.role ?? null, process.env.ADMIN_EMAILS)
       if (existing && existing.role !== role) {
         await prisma.user.update({ where: { id: existing.id }, data: { role } })
       }
