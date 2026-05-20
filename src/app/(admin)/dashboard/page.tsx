@@ -1,6 +1,10 @@
 import Link from "next/link"
 import { prisma } from "@/lib/prisma"
 
+function formatTaipeiDateTime(date: Date) {
+  return date.toLocaleString("zh-TW", { timeZone: "Asia/Taipei", hour12: false })
+}
+
 export default async function DashboardPage() {
   const [courseCount, activeSessions, activeSessionRows, studentCount, archivedCount] = await Promise.all([
     prisma.course.count({ where: { status: "active" } }),
@@ -105,17 +109,22 @@ export default async function DashboardPage() {
                 <th>課程</th>
                 <th>第幾次點名</th>
                 <th>開放時間</th>
+                <th>結束時間</th>
                 <th>操作</th>
               </tr>
             </thead>
             <tbody>
               {activeSessionRows.map((session) => {
                 const sessionOrder = session.course.sessions.findIndex((item) => item.id === session.id) + 1
+                const closeAt = session.autoExpireMinutes
+                  ? new Date(session.createdAt.getTime() + session.autoExpireMinutes * 60_000)
+                  : null
                 return (
                   <tr key={session.id}>
                     <td>{session.course.name}</td>
                     <td>第 {sessionOrder} 次點名</td>
-                    <td>{session.createdAt.toLocaleString("zh-TW", { timeZone: "Asia/Taipei" })}</td>
+                    <td>{formatTaipeiDateTime(session.createdAt)}</td>
+                    <td>{closeAt ? formatTaipeiDateTime(closeAt) : "未設定"}</td>
                     <td>
                       <Link className="btn secondary" href={`/sessions/${session.id}`}>
                         進入點名
