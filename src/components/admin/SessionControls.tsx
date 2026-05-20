@@ -22,12 +22,16 @@ export function SessionControls({
   sessionId,
   initialStatus,
   initialCounts,
-  initialQrCodeValiditySeconds
+  initialQrCodeValiditySeconds,
+  sessionOpenedAt,
+  autoExpireMinutes
 }: {
   sessionId: string
   initialStatus: string
   initialCounts: Counts
   initialQrCodeValiditySeconds: number
+  sessionOpenedAt: string
+  autoExpireMinutes: number | null
 }) {
   const router = useRouter()
   const { showToast } = useToast()
@@ -41,6 +45,7 @@ export function SessionControls({
     String(initialQrCodeValiditySeconds)
   )
   const [isUpdatingSettings, setIsUpdatingSettings] = useState(false)
+  const [now, setNow] = useState(() => Date.now())
   const [isPending, startTransition] = useTransition()
 
   useEffect(() => {
@@ -57,6 +62,12 @@ export function SessionControls({
     })
     return () => source.close()
   }, [router, sessionId, status])
+
+  useEffect(() => {
+    if (status !== "active" || !autoExpireMinutes) return
+    const interval = window.setInterval(() => setNow(Date.now()), 1000)
+    return () => window.clearInterval(interval)
+  }, [autoExpireMinutes, status])
 
   async function post(path: string, body?: unknown) {
     setError("")
@@ -119,6 +130,18 @@ export function SessionControls({
   const finished = status !== "active"
   const attendancePct =
     counts.enrolledCount > 0 ? Math.round((counts.totalCount / counts.enrolledCount) * 100) : 0
+  const autoCloseAt = autoExpireMinutes
+    ? new Date(new Date(sessionOpenedAt).getTime() + autoExpireMinutes * 60_000)
+    : null
+  const remainingCloseSeconds = autoCloseAt
+    ? Math.max(0, Math.ceil((autoCloseAt.getTime() - now) / 1000))
+    : null
+  const closeCountdownText =
+    remainingCloseSeconds === null
+      ? "未設定"
+      : `${Math.floor(remainingCloseSeconds / 60)
+          .toString()
+          .padStart(2, "0")}:${(remainingCloseSeconds % 60).toString().padStart(2, "0")}`
 
   return (
     <section className={`panel ${finished ? "session-ended" : ""}`}>
@@ -195,7 +218,32 @@ export function SessionControls({
             </span>
           </strong>
         </div>
+        <div className="stat-card">
+          <span>{finished ? "點名狀態" : "距離關閉"}</span>
+          <strong
+            className="tabular"
+            style={{
+              color:
+                remainingCloseSeconds !== null && remainingCloseSeconds <= 60 && !finished
+                  ? "var(--color-accent)"
+                  : "var(--color-primary-900)"
+            }}
+          >
+            {finished ? "已結束" : closeCountdownText}
+          </strong>
+        </div>
       </div>
+
+      {!finished && (
+        <p className="text-muted text-sm" style={{ marginTop: 10, marginBottom: 0 }}>
+          {autoCloseAt
+            ? `此點名將於 ${autoCloseAt.toLocaleString("zh-TW", {
+                timeZone: "Asia/Taipei",
+                hour12: false
+              })} 自動關閉。`
+            : "此點名未設定自動關閉時間，需由管理員手動關閉。"}
+        </p>
+      )}
 
       {/* Attendance progress */}
       <div

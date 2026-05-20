@@ -65,6 +65,8 @@ export default async function SessionPage({ params }: any) {
         initialStatus={session.status}
         initialCounts={initialCounts}
         initialQrCodeValiditySeconds={session.qrCodeValiditySeconds}
+        sessionOpenedAt={session.createdAt.toISOString()}
+        autoExpireMinutes={session.autoExpireMinutes}
       />
       <section className="panel">
         <h2>點名記錄</h2>
