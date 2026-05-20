@@ -1,6 +1,7 @@
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { error, handleRouteError, json, parseJson, requireAdmin } from "@/lib/api"
+import { normalizeEmail } from "@/lib/email"
 
 const addStudentSchema = z.object({
   studentId: z.string().min(1).optional(),
@@ -47,7 +48,7 @@ export async function POST(request: Request, { params }: any) {
       if (!parsed.data.studentCode || !parsed.data.name) {
         return error("新增學生需要學號與姓名", 400)
       }
-      const googleEmail = parsed.data.googleEmail || null
+      const googleEmail = normalizeEmail(parsed.data.googleEmail)
       const existing = await prisma.student.findFirst({
         where: {
           OR: [

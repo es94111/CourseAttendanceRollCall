@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import { error, handleRouteError, json, requireAdmin } from "@/lib/api"
+import { normalizeEmail } from "@/lib/email"
 
 function parseCsv(text: string) {
   const lines = text.split(/\r?\n/).filter(Boolean)
@@ -10,7 +11,7 @@ function parseCsv(text: string) {
       row: index + 2,
       studentCode: values[headers.indexOf("學號")],
       name: values[headers.indexOf("姓名")],
-      googleEmail: values[headers.indexOf("Google Email")]
+      googleEmail: normalizeEmail(values[headers.indexOf("Google Email")])
     }
   })
 }

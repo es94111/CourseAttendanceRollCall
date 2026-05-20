@@ -558,6 +558,16 @@ tbody tr:last-child td {
   }
 }
 
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spin {
+  animation: spin 0.9s linear infinite;
+}
+
 .dialog-actions {
   justify-content: flex-end;
   margin-top: 20px;

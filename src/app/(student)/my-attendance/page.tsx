@@ -2,11 +2,12 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { calculateStats } from "@/lib/attendance-stats"
 import { MyAttendanceTable } from "@/components/student/MyAttendanceTable"
+import { normalizeEmail } from "@/lib/email"
 
 export default async function MyAttendancePage() {
   const session = await auth()
   const student = await prisma.student.findFirst({
-    where: { googleEmail: session?.user.email ?? "" },
+    where: { googleEmail: { equals: normalizeEmail(session?.user.email) ?? "", mode: "insensitive" } },
     include: { records: true, enrollments: { include: { course: { include: { sessions: true } } } } }
   })
   const rows =

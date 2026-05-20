@@ -1,13 +1,14 @@
 import { prisma } from "@/lib/prisma"
 import { handleRouteError, json, requireUser } from "@/lib/api"
 import { calculateStats } from "@/lib/attendance-stats"
+import { normalizeEmail } from "@/lib/email"
 
 export async function GET() {
   const guard = await requireUser()
   if ("response" in guard) return guard.response
   try {
     const student = await prisma.student.findFirst({
-      where: { googleEmail: guard.user.email ?? "" },
+      where: { googleEmail: { equals: normalizeEmail(guard.user.email) ?? "", mode: "insensitive" } },
       include: {
         enrollments: {
           include: {

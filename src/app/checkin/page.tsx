@@ -305,7 +305,7 @@ function Spinner() {
       height="16"
       viewBox="0 0 24 24"
       fill="none"
-      style={{ animation: "spin 0.9s linear infinite" }}
+      className="spin"
       aria-hidden
     >
       <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity="0.25" strokeWidth="3" />
@@ -315,7 +315,6 @@ function Spinner() {
         strokeWidth="3"
         strokeLinecap="round"
       />
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </svg>
   )
 }

@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import { error, handleRouteError, json, parseJson, requireAdmin } from "@/lib/api"
 import { studentSchema } from "@/lib/validation"
+import { normalizeEmail } from "@/lib/email"
 
 export async function GET() {
   const guard = await requireAdmin()
@@ -28,7 +29,7 @@ export async function POST(request: Request) {
   if ("response" in parsed) return parsed.response
   try {
     const student = await prisma.student.create({
-      data: { ...parsed.data, googleEmail: parsed.data.googleEmail || null }
+      data: { ...parsed.data, googleEmail: normalizeEmail(parsed.data.googleEmail) }
     })
     return json(student, { status: 201 })
   } catch (cause: any) {

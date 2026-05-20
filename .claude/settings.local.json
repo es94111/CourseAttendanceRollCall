@@ -31,7 +31,9 @@
       "Bash(python scripts/search.py \"education attendance classroom productivity tool admin dashboard\" --design-system -p \"Course Attendance Roll Call\")",
       "Bash(cmd *)",
       "Bash(python *)",
-      "Bash(npx --no-install tsc --noEmit)"
+      "Bash(npx --no-install tsc --noEmit)",
+      "Bash(echo \"EXIT_CODE=$?\")",
+      "Bash(npx next *)"
     ]
   }
 }

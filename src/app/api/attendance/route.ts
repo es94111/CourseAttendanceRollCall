@@ -4,6 +4,7 @@ import { error, handleRouteError, json, parseJson, requireUser } from "@/lib/api
 import { verifyToken } from "@/lib/hmac"
 import { attendanceStatus, expireSessionIfNeeded } from "@/lib/session-expiry"
 import { toTaipeiIso } from "@/lib/time"
+import { normalizeEmail } from "@/lib/email"
 
 export async function POST(request: Request) {
   const guard = await requireUser()
@@ -27,8 +28,14 @@ export async function POST(request: Request) {
       return error("Token 無效或已過期", 400)
     }
     if (session.status !== "active") return error("Session 已關閉", 403)
-    const student = await prisma.student.findFirst({ where: { googleEmail: guard.user.email ?? "" } })
+    const userEmail = normalizeEmail(guard.user.email)
+    const student = userEmail
+      ? await prisma.student.findFirst({ where: { googleEmail: { equals: userEmail, mode: "insensitive" } } })
+      : null
     if (!student) return error("找不到對應學生記錄", 404)
+    if (!student.userId) {
+      await prisma.student.update({ where: { id: student.id }, data: { userId: guard.user.id, googleEmail: userEmail } })
+    }
     const enrollment = await prisma.courseEnrollment.findUnique({
       where: { studentId_courseId: { studentId: student.id, courseId: session.courseId } }
     })
