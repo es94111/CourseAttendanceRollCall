@@ -1,8 +1,34 @@
+import { headers } from "next/headers"
+import { redirect } from "next/navigation"
 import { signIn } from "@/lib/auth"
+import { TurnstileWidget } from "@/components/shared/TurnstileWidget"
+import { getClientIpMetadata } from "@/lib/request-ip"
+import { getTurnstileSiteKey, isTurnstileEnabled, verifyTurnstileToken } from "@/lib/turnstile"
 
-export default async function LoginPage({ searchParams }: { searchParams?: Promise<{ error?: string }> }) {
+export default async function LoginPage({
+  searchParams
+}: {
+  searchParams?: Promise<{ error?: string }>
+}) {
   const params = await searchParams
   const error = params?.error
+  const turnstileEnabled = isTurnstileEnabled()
+  const turnstileSiteKey = getTurnstileSiteKey()
+
+  async function loginAction(formData: FormData) {
+    "use server"
+    if (isTurnstileEnabled()) {
+      const tokenValue = formData.get("cf-turnstile-response")
+      const token = typeof tokenValue === "string" ? tokenValue : null
+      const { ipAddress } = getClientIpMetadata(await headers())
+      const result = await verifyTurnstileToken(token, ipAddress)
+      if (!result.success) {
+        redirect("/login?error=turnstile-failed")
+      }
+    }
+    await signIn("google", { redirectTo: "/dashboard" })
+  }
+
   return (
     <main className="min-h-dvh grid place-items-center px-4 py-10 bg-gradient-to-b from-primary-50 via-paper to-paper">
       <div className="w-full max-w-md">
@@ -40,13 +66,15 @@ export default async function LoginPage({ searchParams }: { searchParams?: Promi
               <p style={{ margin: 0 }}>系統已清除錯誤連結，請重新選擇正確的 Google 帳號登入。</p>
             </div>
           )}
+          {error === "turnstile-failed" && (
+            <div className="status-card error">
+              <strong>機器人驗證未通過</strong>
+              <p style={{ margin: 0 }}>請重新完成 Cloudflare 驗證後再試一次。</p>
+            </div>
+          )}
 
-          <form
-            action={async () => {
-              "use server"
-              await signIn("google", { redirectTo: "/dashboard" })
-            }}
-          >
+          <form action={loginAction}>
+            {turnstileEnabled && turnstileSiteKey && <TurnstileWidget siteKey={turnstileSiteKey} />}
             <button
               className="btn"
               type="submit"
