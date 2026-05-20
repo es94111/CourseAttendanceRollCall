@@ -2,8 +2,18 @@ import NextAuth from "next-auth"
 import Google from "next-auth/providers/google"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import { resolveSignInRole } from "@/lib/auth-role"
+import { isEmailDomainAllowed, parseAllowedEmailDomains } from "@/lib/auth-domain"
 import { prisma } from "@/lib/prisma"
 import { normalizeEmail } from "@/lib/email"
+
+const allowedEmailDomains = parseAllowedEmailDomains(process.env.ALLOWED_EMAIL_DOMAINS)
+const googleAuthorizationParams: Record<string, string> = {
+  prompt: "select_account",
+  max_age: "0"
+}
+if (allowedEmailDomains.length === 1) {
+  googleAuthorizationParams.hd = allowedEmailDomains[0]
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -25,12 +35,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       clientId: process.env.GOOGLE_CLIENT_ID ?? "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
       allowDangerousEmailAccountLinking: true,
-      authorization: {
-        params: {
-          prompt: "select_account",
-          max_age: "0"
-        }
-      }
+      authorization: { params: googleAuthorizationParams }
     })
   ],
   callbacks: {
@@ -46,6 +51,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           }
         })
         return "/login?error=account-mismatch"
+      }
+      if (!isEmailDomainAllowed(userEmail, allowedEmailDomains)) {
+        if (account?.provider) {
+          await prisma.account.deleteMany({
+            where: {
+              provider: account.provider,
+              providerAccountId: account.providerAccountId
+            }
+          })
+        }
+        return "/login?error=domain-not-allowed"
       }
       const existing = await prisma.user.findUnique({ where: { email: userEmail } })
       const role = resolveSignInRole(userEmail, existing?.role ?? null, process.env.ADMIN_EMAILS)

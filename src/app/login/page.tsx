@@ -2,6 +2,7 @@ import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 import { signIn } from "@/lib/auth"
 import { TurnstileWidget } from "@/components/shared/TurnstileWidget"
+import { parseAllowedEmailDomains } from "@/lib/auth-domain"
 import { getClientIpMetadata } from "@/lib/request-ip"
 import { getTurnstileSiteKey, isTurnstileEnabled, verifyTurnstileToken } from "@/lib/turnstile"
 
@@ -14,6 +15,7 @@ export default async function LoginPage({
   const error = params?.error
   const turnstileEnabled = isTurnstileEnabled()
   const turnstileSiteKey = getTurnstileSiteKey()
+  const allowedDomains = parseAllowedEmailDomains(process.env.ALLOWED_EMAIL_DOMAINS)
 
   async function loginAction(formData: FormData) {
     "use server"
@@ -70,6 +72,16 @@ export default async function LoginPage({
             <div className="status-card error">
               <strong>機器人驗證未通過</strong>
               <p style={{ margin: 0 }}>請重新完成 Cloudflare 驗證後再試一次。</p>
+            </div>
+          )}
+          {error === "domain-not-allowed" && (
+            <div className="status-card error">
+              <strong>不允許的 Google 網域</strong>
+              <p style={{ margin: 0 }}>
+                {allowedDomains.length > 0
+                  ? `本系統僅允許 ${allowedDomains.map((domain) => `@${domain}`).join("、")} 的 Google 帳號登入，請改用授權網域登入。`
+                  : "本系統限制 Google 網域，請聯絡管理員確認你的帳號可登入。"}
+              </p>
             </div>
           )}
 
