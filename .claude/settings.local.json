@@ -26,7 +26,11 @@
       "Bash(Select-Object -First 30)",
       "Bash(npx vitest *)",
       "Bash(npm install *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Read(//c/Users/hongyu/.claude/plugins/cache/ui-ux-pro-max-skill/ui-ux-pro-max/2.5.0/.claude/skills/ui-ux-pro-max/**)",
+      "Bash(python scripts/search.py \"education attendance classroom productivity tool admin dashboard\" --design-system -p \"Course Attendance Roll Call\")",
+      "Bash(cmd *)",
+      "Bash(python *)"
     ]
   }
 }
