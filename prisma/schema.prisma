@@ -178,6 +178,8 @@ model AttendanceRecord {
   status     AttendanceStatus
   attendedAt DateTime?
   ipAddress  String?
+  ipCountry  String?
+  ipCountryName String?
   userAgent  String?          @db.Text
   isManual   Boolean          @default(false)
   createdAt  DateTime         @default(now())

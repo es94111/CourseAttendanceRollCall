@@ -5,6 +5,8 @@ import { verifyToken } from "@/lib/hmac"
 import { attendanceStatus, expireSessionIfNeeded } from "@/lib/session-expiry"
 import { toTaipeiIso } from "@/lib/time"
 import { normalizeEmail } from "@/lib/email"
+import { getClientIpMetadata } from "@/lib/request-ip"
+import { lookupIpinfoCountry } from "@/lib/ipinfo"
 
 export async function POST(request: Request) {
   const guard = await requireUser()
@@ -50,13 +52,17 @@ export async function POST(request: Request) {
       session.createdAt,
       session.course.lateThresholdMinutes
     )
+    const clientIp = getClientIpMetadata(request.headers)
+    const ipinfo = await lookupIpinfoCountry(clientIp.ipAddress)
     const record = await prisma.attendanceRecord.create({
       data: {
         sessionId: session.id,
         studentId: student.id,
         status,
         attendedAt,
-        ipAddress: request.headers.get("x-forwarded-for") ?? null,
+        ipAddress: clientIp.ipAddress,
+        ipCountry: ipinfo.ipCountry ?? clientIp.ipCountry,
+        ipCountryName: ipinfo.ipCountryName,
         userAgent: request.headers.get("user-agent")
       }
     })

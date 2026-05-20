@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useState, useTransition } from "react"
 import { Dialog } from "@/components/shared/Dialog"
 import { useToast } from "@/components/shared/ToastProvider"
+import { formatIpLocation } from "@/lib/request-ip"
 
 interface StudentRow {
   id: string
@@ -17,6 +18,8 @@ interface AttendanceRow {
   status: string
   attendedAt: string | null
   ipAddress: string | null
+  ipCountry: string | null
+  ipCountryName: string | null
   userAgent: string | null
 }
 
@@ -62,6 +65,8 @@ export function AttendanceTable({
           ? new Date(record.attendedAt).toLocaleString("zh-TW", { timeZone: "Asia/Taipei" })
           : null,
         ipAddress: record.ipAddress,
+        ipCountry: record.ipCountry,
+        ipCountryName: record.ipCountryName,
         userAgent: record.userAgent
       })
     )
@@ -152,6 +157,7 @@ export function AttendanceTable({
             <th>狀態</th>
             <th>時間</th>
             <th>IP</th>
+            <th>IP 國家</th>
             <th>裝置</th>
             <th>操作</th>
           </tr>
@@ -177,6 +183,7 @@ export function AttendanceTable({
                 </td>
                 <td>{record?.attendedAt ?? "-"}</td>
                 <td>{record?.ipAddress ?? "-"}</td>
+                <td>{formatIpLocation(record?.ipCountry, record?.ipCountryName) || "-"}</td>
                 <td>{record?.userAgent ?? "-"}</td>
                 <td>
                   <div className="toolbar">

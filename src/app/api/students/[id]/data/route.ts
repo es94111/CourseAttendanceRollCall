@@ -17,7 +17,7 @@ export async function DELETE(request: Request, { params }: any) {
     })
     await prisma.attendanceRecord.updateMany({
       where: { studentId: params.id },
-      data: { ipAddress: null, userAgent: null }
+      data: { ipAddress: null, ipCountry: null, ipCountryName: null, userAgent: null }
     })
     await writeAuditLog({
       eventType: "delete_student_data",

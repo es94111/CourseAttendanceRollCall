@@ -30,6 +30,8 @@ export default async function SessionPage({ params }: any) {
     status: record.status,
     attendedAt: record.attendedAt?.toLocaleString("zh-TW", { timeZone: "Asia/Taipei" }) ?? null,
     ipAddress: record.ipAddress,
+    ipCountry: record.ipCountry,
+    ipCountryName: record.ipCountryName,
     userAgent: record.userAgent
   }))
   const initialCounts = {
