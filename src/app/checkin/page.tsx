@@ -3,7 +3,7 @@
 import { Suspense } from "react"
 import { useEffect, useMemo, useState } from "react"
 import { useSearchParams } from "next/navigation"
-import { signIn } from "next-auth/react"
+import { getSession, signIn } from "next-auth/react"
 import { parseTokenSlot } from "@/lib/token-slot"
 
 function CheckinContent() {
@@ -12,8 +12,10 @@ function CheckinContent() {
   const sessionId = params.get("sessionId") ?? ""
   const slot = useMemo(() => parseTokenSlot(token), [token])
   const [remaining, setRemaining] = useState(0)
-  const [message, setMessage] = useState("")
+  const [result, setResult] = useState<{ kind: "info" | "success" | "error"; title: string; detail: string } | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [autoSubmitted, setAutoSubmitted] = useState(false)
+  const expired = remaining <= 0
 
   useEffect(() => {
     const tick = () => setRemaining(slot ? Math.max(0, Math.ceil((slot.expiresAt.getTime() - Date.now()) / 1000)) : 0)
@@ -24,7 +26,7 @@ function CheckinContent() {
 
   async function submit() {
     setIsSubmitting(true)
-    setMessage("")
+    setResult(null)
     try {
       const response = await fetch("/api/attendance", {
         method: "POST",
@@ -33,22 +35,39 @@ function CheckinContent() {
       })
       const body = await response.json()
       if (response.status === 401) {
-        setMessage("請先使用 Google 帳號登入，再提交點名。")
+        setResult({ kind: "info", title: "需要登入", detail: "請先使用 Google 帳號登入，再提交點名。" })
         return
       }
-      setMessage(response.ok ? `${body.message}：${body.status}` : body.error)
+      setResult(
+        response.ok
+          ? { kind: "success", title: body.message ?? "點名成功", detail: `狀態：${body.status}` }
+          : { kind: "error", title: "點名失敗", detail: body.error ?? "請重新掃描 QR Code" }
+      )
     } catch {
-      setMessage("網路異常，請重新掃描 QR Code")
+      setResult({ kind: "error", title: "網路異常", detail: "請重新掃描 QR Code" })
     } finally {
       setIsSubmitting(false)
     }
   }
 
+  useEffect(() => {
+    if (expired || autoSubmitted || !token || !sessionId) return
+    let cancelled = false
+    void getSession().then((session) => {
+      if (cancelled || !session) return
+      setAutoSubmitted(true)
+      void submit()
+    })
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoSubmitted, expired, sessionId, token])
+
   function login() {
     void signIn("google", { callbackUrl: window.location.href })
   }
 
-  const expired = remaining <= 0
   return (
     <main className="shell" style={{ maxWidth: 560 }}>
       <h1>課程點名</h1>
@@ -62,7 +81,12 @@ function CheckinContent() {
             {isSubmitting ? "提交中" : "提交點名"}
           </button>
         </div>
-        {message && <p>{message}</p>}
+        {result && (
+          <div className={`status-card ${result.kind}`}>
+            <strong>{result.title}</strong>
+            <p>{result.detail}</p>
+          </div>
+        )}
       </section>
     </main>
   )

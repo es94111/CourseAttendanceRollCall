@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState, useTransition } from "react"
+import { Dialog } from "@/components/shared/Dialog"
 
 interface StatRow {
   studentId: string
@@ -26,6 +27,8 @@ export function StatisticsPanel({
   const [totalSessions, setTotalSessions] = useState(initialTotalSessions)
   const [startDate, setStartDate] = useState("")
   const [endDate, setEndDate] = useState("")
+  const [statusFilter, setStatusFilter] = useState("all")
+  const [exportOpen, setExportOpen] = useState(false)
   const [error, setError] = useState("")
   const [isPending, startTransition] = useTransition()
 
@@ -56,17 +59,32 @@ export function StatisticsPanel({
     })
   }
 
-  function exportCsv() {
+  function openExportDialog() {
     setError("")
     if (!startDate || !endDate) {
       setError("匯出前請選擇開始與結束日期")
       return
     }
-    const confirmed = window.confirm("匯出的 CSV 含學生個資與出席資料，請確認只用於授權用途。")
-    if (!confirmed) return
+    setExportOpen(true)
+  }
+
+  function exportCsv() {
     const params = new URLSearchParams({ startDate, endDate, confirmed: "true" })
     window.location.href = `/api/courses/${courseId}/export?${params.toString()}`
+    setExportOpen(false)
   }
+
+  const filteredRows = rows.filter((row) => {
+    if (statusFilter === "low") return row.attendanceRate < 80
+    if (statusFilter === "absent") return row.absentCount > 0
+    if (statusFilter === "late") return row.lateCount > 0
+    return true
+  })
+  const averageRate = rows.length
+    ? Math.round(rows.reduce((sum, row) => sum + row.attendanceRate, 0) / rows.length)
+    : 0
+  const lowAttendanceCount = rows.filter((row) => row.attendanceRate < 80).length
+  const absentRiskCount = rows.filter((row) => row.absentCount >= 2).length
 
   return (
     <>
@@ -83,13 +101,42 @@ export function StatisticsPanel({
           <button className="btn secondary" type="button" disabled={isPending} onClick={loadFiltered}>
             套用篩選
           </button>
-          <button className="btn" type="button" onClick={exportCsv}>
+          <div className="field">
+            <label>狀態篩選</label>
+            <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+              <option value="all">全部學生</option>
+              <option value="low">低出席率 (&lt; 80%)</option>
+              <option value="absent">有缺席</option>
+              <option value="late">有遲到</option>
+            </select>
+          </div>
+          <button className="btn" type="button" onClick={openExportDialog}>
             匯出 CSV
           </button>
         </div>
-        <p>統計課次：{totalSessions}</p>
+        <div className="stat-grid">
+          <div className="stat-card">
+            <span>統計課次</span>
+            <strong>{totalSessions}</strong>
+          </div>
+          <div className="stat-card">
+            <span>平均出席率</span>
+            <strong>{averageRate}%</strong>
+          </div>
+          <div className="stat-card">
+            <span>低出席率</span>
+            <strong>{lowAttendanceCount}</strong>
+          </div>
+          <div className="stat-card">
+            <span>缺席風險</span>
+            <strong>{absentRiskCount}</strong>
+          </div>
+        </div>
         {error && <p style={{ color: "#b42318" }}>{error}</p>}
       </section>
+      {filteredRows.length === 0 ? (
+        <div className="empty-state">目前篩選條件沒有統計資料</div>
+      ) : (
       <table>
         <thead>
           <tr>
@@ -103,7 +150,7 @@ export function StatisticsPanel({
           </tr>
         </thead>
         <tbody>
-          {rows.map((row) => (
+          {filteredRows.map((row) => (
             <tr key={row.studentId}>
               <td>{row.studentCode}</td>
               <td>{row.name}</td>
@@ -118,6 +165,18 @@ export function StatisticsPanel({
           ))}
         </tbody>
       </table>
+      )}
+      <Dialog title="確認匯出個資 CSV" open={exportOpen} onClose={() => setExportOpen(false)}>
+        <p>匯出的 CSV 含學生姓名、學號與出席資料。請確認你只會用於授權的課務或稽核目的。</p>
+        <div className="toolbar dialog-actions">
+          <button className="btn secondary" type="button" onClick={() => setExportOpen(false)}>
+            取消
+          </button>
+          <button className="btn" type="button" onClick={exportCsv}>
+            確認匯出
+          </button>
+        </div>
+      </Dialog>
     </>
   )
 }

@@ -38,7 +38,7 @@ export default async function SessionPage({ params }: any) {
         <h1>{session.course.name} 點名</h1>
         <span className="badge">{session.status}</span>
       </div>
-      <QRCodeDisplay sessionId={session.id} />
+      <QRCodeDisplay sessionId={session.id} initialStatus={session.status} />
       <SessionControls sessionId={session.id} initialStatus={session.status} initialCounts={initialCounts} />
       <section className="panel">
         <h2>點名記錄</h2>

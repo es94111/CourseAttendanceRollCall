@@ -1,7 +1,9 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { useMemo, useState, useTransition } from "react"
+import { useEffect, useMemo, useState, useTransition } from "react"
+import { Dialog } from "@/components/shared/Dialog"
+import { useToast } from "@/components/shared/ToastProvider"
 
 interface StudentRow {
   id: string
@@ -28,17 +30,64 @@ export function AttendanceTable({
   students: StudentRow[]
 }) {
   const router = useRouter()
+  const { showToast } = useToast()
   const [error, setError] = useState("")
+  const [rows, setRows] = useState(records)
+  const [overrideTarget, setOverrideTarget] = useState<{ student: StudentRow; status: string } | null>(null)
+  const [leaveTarget, setLeaveTarget] = useState<StudentRow | null>(null)
+  const [reason, setReason] = useState("")
   const [isPending, startTransition] = useTransition()
   const recordByStudent = useMemo(
-    () => new Map(records.map((record) => [record.studentId, record])),
-    [records]
+    () => new Map(rows.map((record) => [record.studentId, record])),
+    [rows]
   )
 
-  async function override(student: StudentRow, status: string) {
+  useEffect(() => {
+    setRows(records)
+  }, [records])
+
+  async function refreshRecords() {
+    const response = await fetch(`/api/sessions/${sessionId}`)
+    if (!response.ok) return
+    const body = await response.json().catch(() => ({}))
+    const nextRows = (body.records ?? []).map((record: AttendanceRow & { attendedAt?: string | null }) => ({
+      id: record.id,
+      studentId: record.studentId,
+      status: record.status,
+      attendedAt: record.attendedAt
+        ? new Date(record.attendedAt).toLocaleString("zh-TW", { timeZone: "Asia/Taipei" })
+        : null,
+      ipAddress: record.ipAddress,
+      userAgent: record.userAgent
+    }))
+    setRows(nextRows)
+  }
+
+  useEffect(() => {
+    const source = new EventSource(`/api/sessions/${sessionId}/stream`)
+    source.addEventListener("attendance_count", () => {
+      void refreshRecords()
+    })
+    source.addEventListener("session_status_changed", () => {
+      source.close()
+      void refreshRecords()
+    })
+    const interval = window.setInterval(() => {
+      void refreshRecords()
+    }, 10000)
+    return () => {
+      source.close()
+      window.clearInterval(interval)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId])
+
+  async function override() {
+    if (!overrideTarget) return
+    const { student, status } = overrideTarget
+    const trimmedReason = reason.trim()
+    if (!trimmedReason) return
     setError("")
-    const reason = window.prompt(`請輸入 ${student.name} 改為 ${status} 的原因`)
-    if (!reason) return
     const existing = recordByStudent.get(student.id)
     const response = await fetch(`/api/attendance/${existing?.id ?? `manual-${sessionId}-${student.id}`}`, {
       method: "PUT",
@@ -47,7 +96,7 @@ export function AttendanceTable({
         sessionId,
         studentId: student.id,
         status,
-        reason
+        reason: trimmedReason
       })
     })
     const body = await response.json().catch(() => ({}))
@@ -55,23 +104,32 @@ export function AttendanceTable({
       setError(body.error ?? "出席狀態更新失敗")
       return
     }
+    setOverrideTarget(null)
+    setReason("")
+    await refreshRecords()
+    showToast("出席狀態已更新", "success")
     startTransition(() => router.refresh())
   }
 
-  async function addLeave(student: StudentRow) {
+  async function addLeave() {
+    if (!leaveTarget) return
+    const trimmedReason = reason.trim()
+    if (!trimmedReason) return
     setError("")
-    const reason = window.prompt(`請輸入 ${student.name} 的請假原因`)
-    if (!reason) return
     const response = await fetch("/api/leave", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sessionId, studentId: student.id, reason })
+      body: JSON.stringify({ sessionId, studentId: leaveTarget.id, reason: trimmedReason })
     })
     const body = await response.json().catch(() => ({}))
     if (!response.ok) {
       setError(body.error ?? "新增請假失敗")
       return
     }
+    setLeaveTarget(null)
+    setReason("")
+    await refreshRecords()
+    showToast("請假記錄已新增", "success")
     startTransition(() => router.refresh())
   }
 
@@ -108,14 +166,25 @@ export function AttendanceTable({
                     <select
                       disabled={isPending}
                       value={record?.status ?? "absent"}
-                      onChange={(event) => override(student, event.target.value)}
+                      onChange={(event) => {
+                        setReason("")
+                        setOverrideTarget({ student, status: event.target.value })
+                      }}
                     >
                       <option value="on_time">準時</option>
                       <option value="late">遲到</option>
                       <option value="leave">請假</option>
                       <option value="absent">缺席</option>
                     </select>
-                    <button className="btn secondary" type="button" disabled={isPending} onClick={() => addLeave(student)}>
+                    <button
+                      className="btn secondary"
+                      type="button"
+                      disabled={isPending}
+                      onClick={() => {
+                        setReason("")
+                        setLeaveTarget(student)
+                      }}
+                    >
                       新增請假
                     </button>
                   </div>
@@ -125,6 +194,38 @@ export function AttendanceTable({
           })}
         </tbody>
       </table>
+      <Dialog title="覆寫出席狀態" open={overrideTarget !== null} onClose={() => setOverrideTarget(null)}>
+        <p>
+          將 {overrideTarget?.student.name} 改為 {overrideTarget?.status}。請留下原因，方便稽核追蹤。
+        </p>
+        <div className="field">
+          <label>原因</label>
+          <textarea rows={4} value={reason} onChange={(event) => setReason(event.target.value)} />
+        </div>
+        <div className="toolbar dialog-actions">
+          <button className="btn secondary" type="button" disabled={isPending} onClick={() => setOverrideTarget(null)}>
+            取消
+          </button>
+          <button className="btn" type="button" disabled={isPending || !reason.trim()} onClick={override}>
+            確認更新
+          </button>
+        </div>
+      </Dialog>
+      <Dialog title="新增請假記錄" open={leaveTarget !== null} onClose={() => setLeaveTarget(null)}>
+        <p>為 {leaveTarget?.name} 新增請假記錄。</p>
+        <div className="field">
+          <label>請假原因</label>
+          <textarea rows={4} value={reason} onChange={(event) => setReason(event.target.value)} />
+        </div>
+        <div className="toolbar dialog-actions">
+          <button className="btn secondary" type="button" disabled={isPending} onClick={() => setLeaveTarget(null)}>
+            取消
+          </button>
+          <button className="btn" type="button" disabled={isPending || !reason.trim()} onClick={addLeave}>
+            新增
+          </button>
+        </div>
+      </Dialog>
     </div>
   )
 }

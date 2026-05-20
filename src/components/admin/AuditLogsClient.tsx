@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState, useTransition } from "react"
+import { Dialog } from "@/components/shared/Dialog"
 
 interface AuditLogRow {
   id: string
@@ -19,6 +20,7 @@ export function AuditLogsClient({ initialLogs, initialTotal }: { initialLogs: Au
   const [actorEmail, setActorEmail] = useState("")
   const [startDate, setStartDate] = useState("")
   const [endDate, setEndDate] = useState("")
+  const [selectedLog, setSelectedLog] = useState<AuditLogRow | null>(null)
   const [error, setError] = useState("")
   const [isPending, startTransition] = useTransition()
   const pageSize = 50
@@ -82,6 +84,7 @@ export function AuditLogsClient({ initialLogs, initialTotal }: { initialLogs: Au
             <th>目標</th>
             <th>原因</th>
             <th>時間</th>
+            <th>操作</th>
           </tr>
         </thead>
         <tbody>
@@ -94,6 +97,11 @@ export function AuditLogsClient({ initialLogs, initialTotal }: { initialLogs: Au
               <td>{JSON.stringify(log.target)}</td>
               <td>{log.reason ?? "-"}</td>
               <td>{log.createdAt}</td>
+              <td>
+                <button className="btn secondary" type="button" onClick={() => setSelectedLog(log)}>
+                  詳情
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>
@@ -114,6 +122,32 @@ export function AuditLogsClient({ initialLogs, initialTotal }: { initialLogs: Au
           下一頁
         </button>
       </div>
+      <Dialog title="稽核日誌詳情" open={selectedLog !== null} onClose={() => setSelectedLog(null)}>
+        {selectedLog && (
+          <div className="detail-grid">
+            <div>
+              <span>事件</span>
+              <strong>{selectedLog.eventType}</strong>
+            </div>
+            <div>
+              <span>操作者</span>
+              <strong>{selectedLog.actorEmail}</strong>
+            </div>
+            <div>
+              <span>時間</span>
+              <strong>{selectedLog.createdAt}</strong>
+            </div>
+            <div>
+              <span>原因</span>
+              <strong>{selectedLog.reason ?? "-"}</strong>
+            </div>
+            <div className="detail-wide">
+              <span>目標資料</span>
+              <pre>{JSON.stringify(selectedLog.target, null, 2)}</pre>
+            </div>
+          </div>
+        )}
+      </Dialog>
     </>
   )
 }

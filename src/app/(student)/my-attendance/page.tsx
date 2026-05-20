@@ -13,12 +13,24 @@ export default async function MyAttendancePage() {
     student?.enrollments.map(({ course }) => {
       const stats = calculateStats(course.sessions, student.records).get(student.id)
       return {
+        courseId: course.id,
         courseName: course.name,
         onTimeCount: stats?.onTimeCount ?? 0,
         lateCount: stats?.lateCount ?? 0,
         leaveCount: stats?.leaveCount ?? 0,
         absentCount: stats?.absentCount ?? course.sessions.length,
-        attendanceRate: stats?.attendanceRate ?? 0
+        attendanceRate: stats?.attendanceRate ?? 0,
+        details: course.sessions
+          .map((attendanceSession) => {
+            const record = student.records.find((item) => item.sessionId === attendanceSession.id)
+            return {
+              sessionId: attendanceSession.id,
+              date: attendanceSession.officialStartTime.toLocaleString("zh-TW", { timeZone: "Asia/Taipei" }),
+              status: record?.status ?? "absent",
+              attendedAt: record?.attendedAt?.toLocaleString("zh-TW", { timeZone: "Asia/Taipei" }) ?? null
+            }
+          })
+          .sort((a, b) => b.date.localeCompare(a.date))
       }
     }) ?? []
   return (
