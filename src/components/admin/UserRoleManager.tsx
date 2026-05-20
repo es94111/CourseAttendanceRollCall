@@ -12,13 +12,22 @@ interface UserRow {
   role: "admin" | "student"
 }
 
-export function UserRoleManager({ users, currentUserId }: { users: UserRow[]; currentUserId: string }) {
+export function UserRoleManager({
+  users,
+  currentUserId
+}: {
+  users: UserRow[]
+  currentUserId: string
+}) {
   const router = useRouter()
   const { showToast } = useToast()
   const [error, setError] = useState("")
   const [query, setQuery] = useState("")
   const [roleFilter, setRoleFilter] = useState("all")
-  const [pendingChange, setPendingChange] = useState<{ user: UserRow; role: "admin" | "student" } | null>(null)
+  const [pendingChange, setPendingChange] = useState<{
+    user: UserRow
+    role: "admin" | "student"
+  } | null>(null)
   const [pendingDelete, setPendingDelete] = useState<UserRow | null>(null)
   const [isPending, startTransition] = useTransition()
 
@@ -75,7 +84,11 @@ export function UserRoleManager({ users, currentUserId }: { users: UserRow[]; cu
   return (
     <section className="panel">
       <div className="toolbar">
-        <input placeholder="搜尋 Email 或姓名" value={query} onChange={(event) => setQuery(event.target.value)} />
+        <input
+          placeholder="搜尋 Email 或姓名"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+        />
         <select value={roleFilter} onChange={(event) => setRoleFilter(event.target.value)}>
           <option value="all">全部角色</option>
           <option value="admin">admin</option>
@@ -87,66 +100,75 @@ export function UserRoleManager({ users, currentUserId }: { users: UserRow[]; cu
       {filteredUsers.length === 0 ? (
         <div className="empty-state">沒有符合條件的使用者</div>
       ) : (
-      <table>
-        <thead>
-          <tr>
-            <th>Email</th>
-            <th>姓名</th>
-            <th>角色</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredUsers.map((user) => {
-            const isSelf = user.id === currentUserId
-            const lastAdmin = isLastAdmin(user)
-            const deleteDisabled = isPending || isSelf || lastAdmin
-            const deleteTitle = isSelf
-              ? "不可刪除自己"
-              : lastAdmin
-                ? "系統至少需保留 1 位管理員"
-                : ""
-            return (
-              <tr key={user.id}>
-                <td>{user.email}</td>
-                <td>{user.name ?? "-"}</td>
-                <td>
-                  <select
-                    value={user.role}
-                    disabled={isPending || isSelf || lastAdmin}
-                    onChange={(event) =>
-                      setPendingChange({ user, role: event.target.value as "admin" | "student" })
-                    }
-                  >
-                    <option value="student">student</option>
-                    <option value="admin">admin</option>
-                  </select>
-                  {isSelf && <span style={{ marginLeft: 8 }}>不可修改自身</span>}
-                  {!isSelf && lastAdmin && <span style={{ marginLeft: 8 }}>最後一位管理員</span>}
-                </td>
-                <td>
-                  <button
-                    className="btn secondary"
-                    type="button"
-                    disabled={deleteDisabled}
-                    title={deleteTitle}
-                    onClick={() => setPendingDelete(user)}
-                  >
-                    刪除
-                  </button>
-                </td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
+        <table>
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>姓名</th>
+              <th>角色</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredUsers.map((user) => {
+              const isSelf = user.id === currentUserId
+              const lastAdmin = isLastAdmin(user)
+              const deleteDisabled = isPending || isSelf || lastAdmin
+              const deleteTitle = isSelf
+                ? "不可刪除自己"
+                : lastAdmin
+                  ? "系統至少需保留 1 位管理員"
+                  : ""
+              return (
+                <tr key={user.id}>
+                  <td>{user.email}</td>
+                  <td>{user.name ?? "-"}</td>
+                  <td>
+                    <select
+                      value={user.role}
+                      disabled={isPending || isSelf || lastAdmin}
+                      onChange={(event) =>
+                        setPendingChange({ user, role: event.target.value as "admin" | "student" })
+                      }
+                    >
+                      <option value="student">student</option>
+                      <option value="admin">admin</option>
+                    </select>
+                    {isSelf && <span style={{ marginLeft: 8 }}>不可修改自身</span>}
+                    {!isSelf && lastAdmin && <span style={{ marginLeft: 8 }}>最後一位管理員</span>}
+                  </td>
+                  <td>
+                    <button
+                      className="btn secondary"
+                      type="button"
+                      disabled={deleteDisabled}
+                      title={deleteTitle}
+                      onClick={() => setPendingDelete(user)}
+                    >
+                      刪除
+                    </button>
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
       )}
-      <Dialog title="確認角色變更" open={pendingChange !== null} onClose={() => setPendingChange(null)}>
+      <Dialog
+        title="確認角色變更"
+        open={pendingChange !== null}
+        onClose={() => setPendingChange(null)}
+      >
         <p>
           將 {pendingChange?.user.email} 的角色改為 {pendingChange?.role}。此操作會影響後台權限。
         </p>
         <div className="toolbar dialog-actions">
-          <button className="btn secondary" type="button" disabled={isPending} onClick={() => setPendingChange(null)}>
+          <button
+            className="btn secondary"
+            type="button"
+            disabled={isPending}
+            onClick={() => setPendingChange(null)}
+          >
             取消
           </button>
           <button className="btn" type="button" disabled={isPending} onClick={updateRole}>
@@ -154,13 +176,22 @@ export function UserRoleManager({ users, currentUserId }: { users: UserRow[]; cu
           </button>
         </div>
       </Dialog>
-      <Dialog title="確認刪除使用者" open={pendingDelete !== null} onClose={() => setPendingDelete(null)}>
+      <Dialog
+        title="確認刪除使用者"
+        open={pendingDelete !== null}
+        onClose={() => setPendingDelete(null)}
+      >
         <p>
-          確定要刪除 {pendingDelete?.email}？此操作會移除其登入帳號與 OAuth 連結，
-          並保留其過往點名 Session 與稽核紀錄（操作者欄位將顯示為已刪除）。
+          確定要刪除 {pendingDelete?.email}？此操作會移除其登入帳號與 OAuth 連結， 並保留其過往點名
+          Session 與稽核紀錄（操作者欄位將顯示為已刪除）。
         </p>
         <div className="toolbar dialog-actions">
-          <button className="btn secondary" type="button" disabled={isPending} onClick={() => setPendingDelete(null)}>
+          <button
+            className="btn secondary"
+            type="button"
+            disabled={isPending}
+            onClick={() => setPendingDelete(null)}
+          >
             取消
           </button>
           <button className="btn" type="button" disabled={isPending} onClick={deleteUser}>
