@@ -43,6 +43,8 @@ const targetLabels: Record<string, string> = {
   ipAddress: "IP",
   ipCountry: "國家",
   ipCountryName: "國家名稱",
+  ipAsn: "ASN",
+  ipAsnName: "ASN 名稱",
   userAgent: "瀏覽器",
   path: "路徑",
   matchedRule: "命中規則"
@@ -95,8 +97,12 @@ function formatTarget(log: AuditLogRow) {
       return `課程「${courseName}」作廢${sessionLabel}`
     case "connection_access_update":
       return `更新連線限制規則，共 ${target.total ?? "-"} 筆`
-    case "connection_access_block":
-      return `封鎖連線來源 ${target.ipAddress ?? "未知 IP"}${target.ipCountry ? `（${target.ipCountry}）` : ""}`
+    case "connection_access_block": {
+      const ip = target.ipAddress ?? "未知 IP"
+      const country = target.ipCountry ? `（${target.ipCountry}）` : ""
+      const asn = target.ipAsn ? `，ASN ${target.ipAsn}` : ""
+      return `封鎖連線來源 ${ip}${country}${asn}`
+    }
     default:
       return targetEntries(target)
         .map(([key, value]) => `${key}：${value}`)
@@ -116,7 +122,8 @@ function formatDescription(log: AuditLogRow) {
 }
 
 function targetEntries(target: unknown) {
-  if (!target || typeof target !== "object" || Array.isArray(target)) return [["目標", String(target ?? "-")]]
+  if (!target || typeof target !== "object" || Array.isArray(target))
+    return [["目標", String(target ?? "-")]]
   const record = target as Record<string, unknown>
   return Object.entries(record)
     .filter(([key]) => !targetDisplayKeys.has(key))
@@ -154,11 +161,18 @@ function formatDateTime(value: string) {
     second: "2-digit",
     hour12: false
   }).formatToParts(date)
-  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find((item) => item.type === type)?.value ?? ""
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((item) => item.type === type)?.value ?? ""
   return `${part("year")}/${part("month")}/${part("day")} ${part("hour")}:${part("minute")}:${part("second")}`
 }
 
-export function AuditLogsClient({ initialLogs, initialTotal }: { initialLogs: AuditLogRow[]; initialTotal: number }) {
+export function AuditLogsClient({
+  initialLogs,
+  initialTotal
+}: {
+  initialLogs: AuditLogRow[]
+  initialTotal: number
+}) {
   const [logs, setLogs] = useState(initialLogs)
   const [total, setTotal] = useState(initialTotal)
   const [page, setPage] = useState(1)
@@ -217,10 +231,23 @@ export function AuditLogsClient({ initialLogs, initialTotal }: { initialLogs: Au
           <option value="void_session">作廢</option>
           <option value="delete_student_data">刪除個資</option>
         </select>
-        <input placeholder="操作者 Email" value={actorEmail} onChange={(event) => setActorEmail(event.target.value)} />
-        <input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} />
+        <input
+          placeholder="操作者 Email"
+          value={actorEmail}
+          onChange={(event) => setActorEmail(event.target.value)}
+        />
+        <input
+          type="date"
+          value={startDate}
+          onChange={(event) => setStartDate(event.target.value)}
+        />
         <input type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} />
-        <button className="btn secondary" type="button" disabled={isPending} onClick={() => load(1)}>
+        <button
+          className="btn secondary"
+          type="button"
+          disabled={isPending}
+          onClick={() => load(1)}
+        >
           查詢
         </button>
       </section>
@@ -256,7 +283,12 @@ export function AuditLogsClient({ initialLogs, initialTotal }: { initialLogs: Au
         </tbody>
       </table>
       <div className="toolbar">
-        <button className="btn secondary" type="button" disabled={page <= 1 || isPending} onClick={() => load(page - 1)}>
+        <button
+          className="btn secondary"
+          type="button"
+          disabled={page <= 1 || isPending}
+          onClick={() => load(page - 1)}
+        >
           上一頁
         </button>
         <span>
@@ -307,7 +339,8 @@ export function AuditLogsClient({ initialLogs, initialTotal }: { initialLogs: Au
                 </tbody>
               </table>
             </div>
-            {(valueEntries(selectedLog.oldValue).length > 0 || valueEntries(selectedLog.newValue).length > 0) && (
+            {(valueEntries(selectedLog.oldValue).length > 0 ||
+              valueEntries(selectedLog.newValue).length > 0) && (
               <div className="detail-wide">
                 <span>變更內容</span>
                 <table>
@@ -325,8 +358,12 @@ export function AuditLogsClient({ initialLogs, initialTotal }: { initialLogs: Au
                         ...valueEntries(selectedLog.newValue).map(([label]) => label)
                       ])
                     ).map((label) => {
-                      const oldValue = valueEntries(selectedLog.oldValue).find(([item]) => item === label)?.[1] ?? "-"
-                      const newValue = valueEntries(selectedLog.newValue).find(([item]) => item === label)?.[1] ?? "-"
+                      const oldValue =
+                        valueEntries(selectedLog.oldValue).find(([item]) => item === label)?.[1] ??
+                        "-"
+                      const newValue =
+                        valueEntries(selectedLog.newValue).find(([item]) => item === label)?.[1] ??
+                        "-"
                       return (
                         <tr key={label}>
                           <th>{label}</th>

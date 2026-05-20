@@ -1,12 +1,12 @@
 import { isIP } from "node:net"
 import { prisma } from "@/lib/prisma"
 import { getClientIpMetadata } from "@/lib/request-ip"
-import { lookupIpinfoCountry } from "@/lib/ipinfo"
+import { lookupIpinfo, normalizeAsn } from "@/lib/ipinfo"
 import { writeAuditLog } from "@/lib/audit"
 import { logger } from "@/lib/logger"
 
 export type ConnectionAccessAction = "allow" | "block"
-export type ConnectionAccessTargetType = "country" | "ip"
+export type ConnectionAccessTargetType = "country" | "ip" | "asn"
 
 export interface ConnectionAccessRuleInput {
   action: ConnectionAccessAction
@@ -20,6 +20,8 @@ export interface ConnectionIdentity {
   ipAddress: string | null
   ipCountry: string | null
   ipCountryName?: string | null
+  ipAsn?: string | null
+  ipAsnName?: string | null
   userAgent?: string | null
   path?: string | null
 }
@@ -49,6 +51,12 @@ function normalizeIpRuleValue(value: string) {
   throw new Error("IP 格式不正確，請輸入單一 IP 或 CIDR 網段，例如 203.0.113.10 或 173.245.48.0/20")
 }
 
+function normalizeAsnRuleValue(value: string) {
+  const asn = normalizeAsn(value)
+  if (!asn) throw new Error("ASN 格式不正確，請輸入 AS 編號，例如 AS15169 或 15169")
+  return asn
+}
+
 function ipv4ToBigInt(ip: string) {
   const parts = ip.split(".")
   if (parts.length !== 4) return null
@@ -69,7 +77,9 @@ function ipv6ToBigInt(ip: string) {
   const right = rightText ? rightText.split(":") : []
   const hasCompression = ip.includes("::")
   const missing = hasCompression ? 8 - left.length - right.length : 0
-  const groups = hasCompression ? [...left, ...Array(Math.max(0, missing)).fill("0"), ...right] : ip.split(":")
+  const groups = hasCompression
+    ? [...left, ...Array(Math.max(0, missing)).fill("0"), ...right]
+    : ip.split(":")
   if (groups.length !== 8) return null
   let value = 0n
   for (const group of groups) {
@@ -104,27 +114,49 @@ export function ipRuleMatches(ruleValue: string, ipAddress: string | null | unde
 
 export function normalizeConnectionAccessRule(input: ConnectionAccessRuleInput) {
   const value = input.value.trim()
+  const note = input.note?.trim() || null
+  const enabled = input.enabled ?? true
+
   if (input.targetType === "country") {
     const country = value.toUpperCase()
     if (!/^[A-Z0-9]{2}$/.test(country)) throw new Error("國家代碼需為 2 碼，例如 TW、JP、US")
-    return { ...input, value: country, note: input.note?.trim() || null, enabled: input.enabled ?? true }
+    return { ...input, value: country, note, enabled }
   }
 
-  return { ...input, value: normalizeIpRuleValue(value), note: input.note?.trim() || null, enabled: input.enabled ?? true }
+  if (input.targetType === "asn") {
+    return { ...input, value: normalizeAsnRuleValue(value), note, enabled }
+  }
+
+  return { ...input, value: normalizeIpRuleValue(value), note, enabled }
 }
 
 function ruleMatches(rule: { targetType: string; value: string }, identity: ConnectionIdentity) {
-  if (rule.targetType === "country") return identity.ipCountry?.toUpperCase() === rule.value.toUpperCase()
+  if (rule.targetType === "country")
+    return identity.ipCountry?.toUpperCase() === rule.value.toUpperCase()
   if (rule.targetType === "ip") return ipRuleMatches(rule.value, identity.ipAddress)
+  if (rule.targetType === "asn") {
+    const ruleAsn = normalizeAsn(rule.value)
+    const identityAsn = normalizeAsn(identity.ipAsn ?? null)
+    return Boolean(ruleAsn && identityAsn && ruleAsn === identityAsn)
+  }
   return false
+}
+
+function describeRuleTarget(rule: { targetType: string; value: string }) {
+  if (rule.targetType === "country") return `國家 ${rule.value}`
+  if (rule.targetType === "asn") return `ASN ${rule.value}`
+  return `IP ${rule.value}`
 }
 
 export async function evaluateConnectionAccess(identity: ConnectionIdentity) {
   const rules = await prisma.connectionAccessRule.findMany({ where: { enabled: true } })
   const blockRule = rules.find((rule) => rule.action === "block" && ruleMatches(rule, identity))
   if (blockRule) {
-    const target = blockRule.targetType === "country" ? `國家 ${blockRule.value}` : `IP ${blockRule.value}`
-    return { allowed: false, reason: blockRule.note || `此連線來源符合封鎖規則：${target}`, rule: blockRule }
+    return {
+      allowed: false,
+      reason: blockRule.note || `此連線來源符合封鎖規則：${describeRuleTarget(blockRule)}`,
+      rule: blockRule
+    }
   }
 
   const allowRules = rules.filter((rule) => rule.action === "allow")
@@ -136,13 +168,18 @@ export async function evaluateConnectionAccess(identity: ConnectionIdentity) {
   return { allowed: true, reason: null, rule: null }
 }
 
-export async function getConnectionIdentity(headers: Headers, path?: string | null): Promise<ConnectionIdentity> {
+export async function getConnectionIdentity(
+  headers: Headers,
+  path?: string | null
+): Promise<ConnectionIdentity> {
   const clientIp = getClientIpMetadata(headers)
-  const ipinfo = clientIp.ipCountry ? null : await lookupIpinfoCountry(clientIp.ipAddress)
+  const ipinfo = await lookupIpinfo(clientIp.ipAddress)
   return {
     ipAddress: clientIp.ipAddress,
-    ipCountry: clientIp.ipCountry ?? ipinfo?.ipCountry ?? null,
-    ipCountryName: ipinfo?.ipCountryName ?? null,
+    ipCountry: clientIp.ipCountry ?? ipinfo.ipCountry ?? null,
+    ipCountryName: ipinfo.ipCountryName ?? null,
+    ipAsn: ipinfo.ipAsn ?? null,
+    ipAsnName: ipinfo.ipAsnName ?? null,
     userAgent: headers.get("user-agent"),
     path: path ?? null
   }
@@ -162,6 +199,8 @@ export async function recordConnectionAccessBlock(
         ipAddress: identity.ipAddress,
         ipCountry: identity.ipCountry,
         ipCountryName: identity.ipCountryName ?? null,
+        ipAsn: identity.ipAsn ?? null,
+        ipAsnName: identity.ipAsnName ?? null,
         userAgent: identity.userAgent ?? null,
         path: identity.path ?? null,
         matchedRule: result.rule

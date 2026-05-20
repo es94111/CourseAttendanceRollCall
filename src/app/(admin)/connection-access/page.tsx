@@ -11,14 +11,14 @@ export default async function ConnectionAccessPage() {
       <div className="page-heading">
         <div>
           <h1>連線限制</h1>
-          <p>管理學生點名時允許或封鎖的來源國家與 IP。</p>
+          <p>管理學生點名時允許或封鎖的來源國家、IP 與 ASN。</p>
         </div>
       </div>
       <ConnectionAccessManager
         initialRules={rules.map((rule) => ({
           id: rule.id,
           action: rule.action as "allow" | "block",
-          targetType: rule.targetType as "country" | "ip",
+          targetType: rule.targetType as "country" | "ip" | "asn",
           value: rule.value,
           note: rule.note,
           enabled: rule.enabled

@@ -15,11 +15,13 @@ export const courseSchema = courseBaseSchema.refine((data) => data.endTime > dat
   path: ["endTime"]
 })
 
-export const coursePatchSchema = courseBaseSchema.partial().refine(
-  (data: Partial<z.infer<typeof courseBaseSchema>>) =>
-    !data.startTime || !data.endTime || data.endTime > data.startTime,
-  { message: "結束時間必須晚於開始時間", path: ["endTime"] }
-)
+export const coursePatchSchema = courseBaseSchema
+  .partial()
+  .refine(
+    (data: Partial<z.infer<typeof courseBaseSchema>>) =>
+      !data.startTime || !data.endTime || data.endTime > data.startTime,
+    { message: "結束時間必須晚於開始時間", path: ["endTime"] }
+  )
 
 export const studentSchema = z.object({
   studentCode: z.string().trim().min(1, "學號必填"),
@@ -56,7 +58,7 @@ export const connectionAccessRulesSchema = z.object({
   rules: z.array(
     z.object({
       action: z.enum(["allow", "block"]),
-      targetType: z.enum(["country", "ip"]),
+      targetType: z.enum(["country", "ip", "asn"]),
       value: z.string().trim().min(1),
       note: z.string().trim().optional().nullable(),
       enabled: z.boolean().default(true)

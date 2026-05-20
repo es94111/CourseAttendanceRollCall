@@ -6,7 +6,7 @@ import { attendanceStatus, expireSessionIfNeeded } from "@/lib/session-expiry"
 import { toTaipeiIso } from "@/lib/time"
 import { normalizeEmail } from "@/lib/email"
 import { getClientIpMetadata } from "@/lib/request-ip"
-import { lookupIpinfoCountry } from "@/lib/ipinfo"
+import { lookupIpinfo } from "@/lib/ipinfo"
 import { evaluateConnectionAccess } from "@/lib/connection-access"
 
 export async function POST(request: Request) {
@@ -33,11 +33,16 @@ export async function POST(request: Request) {
     if (session.status !== "active") return error("Session 已關閉", 403)
     const userEmail = normalizeEmail(guard.user.email)
     const student = userEmail
-      ? await prisma.student.findFirst({ where: { googleEmail: { equals: userEmail, mode: "insensitive" } } })
+      ? await prisma.student.findFirst({
+          where: { googleEmail: { equals: userEmail, mode: "insensitive" } }
+        })
       : null
     if (!student) return error("找不到對應學生記錄", 404)
     if (!student.userId) {
-      await prisma.student.update({ where: { id: student.id }, data: { userId: guard.user.id, googleEmail: userEmail } })
+      await prisma.student.update({
+        where: { id: student.id },
+        data: { userId: guard.user.id, googleEmail: userEmail }
+      })
     }
     const enrollment = await prisma.courseEnrollment.findUnique({
       where: { studentId_courseId: { studentId: student.id, courseId: session.courseId } }
@@ -54,9 +59,15 @@ export async function POST(request: Request) {
       session.course.lateThresholdMinutes
     )
     const clientIp = getClientIpMetadata(request.headers)
-    const ipinfo = await lookupIpinfoCountry(clientIp.ipAddress)
+    const ipinfo = await lookupIpinfo(clientIp.ipAddress)
     const ipCountry = ipinfo.ipCountry ?? clientIp.ipCountry
-    const access = await evaluateConnectionAccess({ ipAddress: clientIp.ipAddress, ipCountry })
+    const access = await evaluateConnectionAccess({
+      ipAddress: clientIp.ipAddress,
+      ipCountry,
+      ipCountryName: ipinfo.ipCountryName,
+      ipAsn: ipinfo.ipAsn,
+      ipAsnName: ipinfo.ipAsnName
+    })
     if (!access.allowed) return error(access.reason ?? "此連線來源不允許點名", 403)
     const record = await prisma.attendanceRecord.create({
       data: {
@@ -70,7 +81,11 @@ export async function POST(request: Request) {
         userAgent: request.headers.get("user-agent")
       }
     })
-    return json({ message: "點名成功", status: record.status, attendedAt: toTaipeiIso(record.attendedAt) })
+    return json({
+      message: "點名成功",
+      status: record.status,
+      attendedAt: toTaipeiIso(record.attendedAt)
+    })
   } catch (cause) {
     return handleRouteError(cause)
   }
