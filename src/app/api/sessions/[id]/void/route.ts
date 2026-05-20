@@ -20,7 +20,7 @@ export async function POST(request: Request, { params }: any) {
       eventType: "void_session",
       actorId: guard.user.id,
       actorEmail: guard.user.email ?? "",
-      target: { sessionId: params.id },
+      target: { sessionId: params.id, courseId: session.courseId },
       reason: parsed.data.reason
     })
     return json({ message: "Session 已作廢" })

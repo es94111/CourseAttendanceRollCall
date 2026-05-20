@@ -79,7 +79,7 @@ function formatTarget(log: AuditLogRow) {
     case "role_change":
       return `變更 ${userDisplay} 的角色`
     case "void_session":
-      return `作廢${sessionLabel}`
+      return `課程「${courseName}」作廢${sessionLabel}`
     default:
       return targetEntries(target)
         .map(([key, value]) => `${key}：${value}`)
