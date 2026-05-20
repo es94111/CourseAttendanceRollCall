@@ -36,7 +36,8 @@
       "Bash(npx next *)",
       "Bash(npm ls *)",
       "Bash(npm audit *)",
-      "Bash(npm view *)"
+      "Bash(npm view *)",
+      "Bash(gh api *)"
     ]
   }
 }
