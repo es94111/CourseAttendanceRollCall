@@ -21,6 +21,10 @@ export default async function CourseDetailPage({ params }: any) {
   if (!course) notFound()
   const readonly = course.status === "archived"
   const activeSession = course.sessions.find((session) => session.status === "active")
+  const sessionsWithOrder = course.sessions.map((session) => ({
+    ...session,
+    order: course.sessions.filter((item) => item.createdAt <= session.createdAt).length
+  }))
   return (
     <main className="shell">
       <div className="toolbar">
@@ -73,9 +77,9 @@ export default async function CourseDetailPage({ params }: any) {
       <section className="panel">
         <h2>歷史 Session</h2>
         <DataTable
-          rows={course.sessions}
+          rows={sessionsWithOrder}
           columns={[
-            { key: "id", header: "Session", render: (row) => <Link href={`/sessions/${row.id}`}>{row.id}</Link> },
+            { key: "id", header: "點名", render: (row) => <Link href={`/sessions/${row.id}`}>第 {row.order} 次點名</Link> },
             { key: "status", header: "狀態", render: (row) => <span className="badge">{row.status}</span> },
             { key: "createdAt", header: "建立時間", render: (row) => row.createdAt.toLocaleString("zh-TW", { timeZone: "Asia/Taipei" }) }
           ]}

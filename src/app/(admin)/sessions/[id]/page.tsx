@@ -13,6 +13,12 @@ export default async function SessionPage({ params }: any) {
     }
   })
   if (!session) notFound()
+  const sessionOrder = await prisma.attendanceSession.count({
+    where: {
+      courseId: session.courseId,
+      createdAt: { lte: session.createdAt }
+    }
+  })
   const students = session.course.enrollments.map(({ student }) => ({
     id: student.id,
     studentCode: student.studentCode,
@@ -37,7 +43,10 @@ export default async function SessionPage({ params }: any) {
       <div className="page-heading">
         <div>
           <h1>{session.course.name} 點名</h1>
-          <p>第 {session.id.slice(0, 8)} 次 Session</p>
+          <p>
+            第 {sessionOrder} 次點名 ·{" "}
+            {session.officialStartTime.toLocaleString("zh-TW", { timeZone: "Asia/Taipei" })}
+          </p>
         </div>
         <span className={`badge ${session.status}`}>
           {session.status === "active" && <span className="dot" aria-hidden />}
