@@ -9,6 +9,7 @@ import { StudentManager } from "@/components/admin/StudentManager"
 import { OpenSessionForm } from "@/components/admin/OpenSessionForm"
 import { RemoveStudentFromCourseButton } from "@/components/admin/RemoveStudentFromCourseButton"
 import { ExistingStudentPicker } from "@/components/admin/ExistingStudentPicker"
+import { ArchiveCourseButton } from "@/components/admin/ArchiveCourseButton"
 
 export default async function CourseDetailPage({ params }: any) {
   const course = await prisma.course.findUnique({
@@ -20,6 +21,7 @@ export default async function CourseDetailPage({ params }: any) {
   })
   if (!course) notFound()
   const readonly = course.status === "archived"
+  const activeSession = course.sessions.find((session) => session.status === "active")
   return (
     <main className="shell">
       <div className="toolbar">
@@ -27,6 +29,7 @@ export default async function CourseDetailPage({ params }: any) {
         <Link className="btn" href={`/statistics/${course.id}`}>
           出席統計
         </Link>
+        {!readonly && <ArchiveCourseButton courseId={course.id} redirectTo="/courses" />}
       </div>
       {!readonly ? (
         <>
@@ -40,7 +43,11 @@ export default async function CourseDetailPage({ params }: any) {
               lateThresholdMinutes: course.lateThresholdMinutes
             }}
           />
-          <OpenSessionForm courseId={course.id} defaultStartTime={course.startTime} />
+          <OpenSessionForm
+            courseId={course.id}
+            defaultStartTime={course.startTime}
+            activeSessionId={activeSession?.id}
+          />
           <StudentManager courseId={course.id} />
           <ExistingStudentPicker
             courseId={course.id}

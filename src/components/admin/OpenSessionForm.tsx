@@ -14,13 +14,16 @@ function todayDateTime(time: string) {
 
 export function OpenSessionForm({
   courseId,
-  defaultStartTime
+  defaultStartTime,
+  activeSessionId
 }: {
   courseId: string
   defaultStartTime: string
+  activeSessionId?: string
 }) {
   const router = useRouter()
   const [error, setError] = useState("")
+  const [isSaving, setIsSaving] = useState(false)
   const [isPending, startTransition] = useTransition()
   const defaultOfficialStartTime = useMemo(() => todayDateTime(defaultStartTime), [defaultStartTime])
 
@@ -29,17 +32,34 @@ export function OpenSessionForm({
     setError("")
     const formData = new FormData(event.currentTarget)
     const officialStart = String(formData.get("officialStartTime") ?? "")
-    const payload = {
-      officialStartTime: new Date(officialStart).toISOString(),
-      autoExpireMinutes: Number(formData.get("autoExpireMinutes") ?? 90),
-      gracePeriodSeconds: Number(formData.get("gracePeriodSeconds") ?? 60)
+    const officialStartDate = new Date(officialStart)
+    if (!officialStart || Number.isNaN(officialStartDate.getTime())) {
+      setError("請輸入有效的官方開始時間")
+      return
     }
+    const autoExpireMinutes = Number(formData.get("autoExpireMinutes") || 90)
+    const gracePeriodSeconds = Number(formData.get("gracePeriodSeconds") || 60)
+    if (!Number.isFinite(autoExpireMinutes) || autoExpireMinutes <= 0) {
+      setError("自動逾時分鐘必須大於 0")
+      return
+    }
+    if (!Number.isFinite(gracePeriodSeconds) || gracePeriodSeconds <= 0) {
+      setError("QR 寬限秒數必須大於 0")
+      return
+    }
+    const payload = {
+      officialStartTime: officialStartDate.toISOString(),
+      autoExpireMinutes,
+      gracePeriodSeconds
+    }
+    setIsSaving(true)
     const response = await fetch(`/api/courses/${courseId}/sessions`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     })
     const body = await response.json().catch(() => ({}))
+    setIsSaving(false)
     if (!response.ok) {
       setError(body.error ?? "開啟點名失敗")
       return
@@ -50,6 +70,14 @@ export function OpenSessionForm({
   return (
     <section className="panel">
       <h2>開啟點名</h2>
+      {activeSessionId && (
+        <p>
+          此課程已有進行中的點名。{" "}
+          <button className="btn secondary" type="button" onClick={() => router.push(`/sessions/${activeSessionId}`)}>
+            前往點名頁
+          </button>
+        </p>
+      )}
       <form onSubmit={onSubmit}>
         <div className="toolbar">
           <div className="field">
@@ -70,8 +98,8 @@ export function OpenSessionForm({
             <input name="gracePeriodSeconds" type="number" min={1} defaultValue={60} required />
           </div>
         </div>
-        <button className="btn" type="submit" disabled={isPending}>
-          {isPending ? "開啟中" : "開啟點名"}
+        <button className="btn" type="submit" disabled={isPending || isSaving || Boolean(activeSessionId)}>
+          {isPending || isSaving ? "開啟中" : "開啟點名"}
         </button>
       </form>
       {error && <p style={{ color: "#b42318" }}>{error}</p>}

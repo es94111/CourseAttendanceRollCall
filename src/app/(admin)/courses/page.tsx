@@ -2,6 +2,7 @@ import Link from "next/link"
 import { prisma } from "@/lib/prisma"
 import { CourseForm } from "@/components/admin/CourseForm"
 import { DataTable } from "@/components/shared/DataTable"
+import { ArchiveCourseButton } from "@/components/admin/ArchiveCourseButton"
 
 export default async function CoursesPage() {
   const courses = await prisma.course.findMany({
@@ -22,7 +23,8 @@ export default async function CoursesPage() {
           { key: "name", header: "課程", render: (row) => <Link href={`/courses/${row.id}`}>{row.name}</Link>, sortValue: (row) => row.name },
           { key: "time", header: "時間", render: (row) => `${row.startTime}-${row.endTime}` },
           { key: "students", header: "學生", render: (row) => row._count.enrollments },
-          { key: "stats", header: "統計", render: (row) => <Link href={`/statistics/${row.id}`}>查看</Link> }
+          { key: "stats", header: "統計", render: (row) => <Link href={`/statistics/${row.id}`}>查看</Link> },
+          { key: "archive", header: "封存", render: (row) => <ArchiveCourseButton courseId={row.id} /> }
         ]}
       />
     </main>

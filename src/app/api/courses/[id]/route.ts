@@ -54,6 +54,8 @@ export async function DELETE(_request: Request, { params }: any) {
   const guard = await requireAdmin()
   if ("response" in guard) return guard.response
   try {
+    const existing = await prisma.course.findUnique({ where: { id: params.id } })
+    if (!existing) return error("課程不存在", 404)
     await prisma.course.update({ where: { id: params.id }, data: { status: "archived" } })
     return json({ message: "課程已封存" })
   } catch (cause) {
