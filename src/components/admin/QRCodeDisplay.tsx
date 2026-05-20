@@ -16,19 +16,34 @@ export function QRCodeDisplay({
 
   useEffect(() => {
     if (status !== "active") return
+    let cancelled = false
+    void fetch(`/api/sessions/${sessionId}/qrcode`)
+      .then((response) => response.json())
+      .then((data) => {
+        if (cancelled || !data.qrcodeDataUrl) return
+        setQr(data.qrcodeDataUrl)
+        setRemaining(data.remainingSeconds)
+        setTotal(data.validitySeconds ?? data.remainingSeconds)
+      })
+      .catch(() => {
+        // SSE below will keep trying to provide the QR code.
+      })
     const source = new EventSource(`/api/sessions/${sessionId}/stream`)
     source.addEventListener("qrcode_update", (event) => {
       const data = JSON.parse((event as MessageEvent).data)
       setQr(data.qrcodeDataUrl)
       setRemaining(data.remainingSeconds)
-      setTotal((prev) => Math.max(prev, data.remainingSeconds))
+      setTotal(data.validitySeconds ?? data.remainingSeconds)
     })
     source.addEventListener("session_status_changed", (event) => {
       const data = JSON.parse((event as MessageEvent).data)
       setStatus(data.newStatus)
       source.close()
     })
-    return () => source.close()
+    return () => {
+      cancelled = true
+      source.close()
+    }
   }, [sessionId, status])
 
   useEffect(() => {

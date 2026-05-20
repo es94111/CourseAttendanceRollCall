@@ -1,6 +1,5 @@
 "use client"
 
-import { signOut } from "next-auth/react"
 import { useState } from "react"
 
 export function SecureSignOutButton({
@@ -25,7 +24,7 @@ export function SecureSignOutButton({
     } catch {
       // Storage may be blocked in some private browsing contexts.
     }
-    await signOut({ redirect: false })
+    await fetch("/api/auth/secure-signout", { method: "POST" })
     window.location.assign(target)
   }
 

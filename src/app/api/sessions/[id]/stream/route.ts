@@ -8,6 +8,38 @@ function event(name: string, data: unknown) {
   return `event: ${name}\ndata: ${JSON.stringify(data)}\n\n`
 }
 
+async function attendanceCountEvent(sessionId: string) {
+  const detail = await prisma.attendanceSession.findUnique({
+    where: { id: sessionId },
+    include: {
+      course: { include: { enrollments: true } },
+      records: { include: { student: true }, orderBy: { attendedAt: "desc" }, take: 1 }
+    }
+  })
+  if (!detail) return null
+  const [onTimeCount, lateCount, totalCount] = await Promise.all([
+    prisma.attendanceRecord.count({ where: { sessionId, status: "on_time" } }),
+    prisma.attendanceRecord.count({ where: { sessionId, status: "late" } }),
+    prisma.attendanceRecord.count({ where: { sessionId } })
+  ])
+  const latest = detail.records[0]
+  return event("attendance_count", {
+    sessionId,
+    onTimeCount,
+    lateCount,
+    totalCount,
+    enrolledCount: detail.course.enrollments.length,
+    latest: latest
+      ? {
+          studentName: latest.student.name,
+          studentCode: latest.student.studentCode,
+          status: latest.status,
+          attendedAt: latest.attendedAt?.toISOString() ?? null
+        }
+      : null
+  })
+}
+
 export async function GET(request: Request, { params }: any) {
   const guard = await requireAdmin()
   if ("response" in guard) return guard.response
@@ -78,6 +110,7 @@ export async function GET(request: Request, { params }: any) {
                 qrcodeDataUrl,
                 slot: Math.floor(Date.now() / validityMs),
                 expiresAt: expiresAt.toISOString(),
+                validitySeconds: session.qrCodeValiditySeconds,
                 remainingSeconds: Math.max(0, Math.ceil((expiresAt.getTime() - Date.now()) / 1000))
               })
             )
@@ -85,41 +118,16 @@ export async function GET(request: Request, { params }: any) {
             return
           }
 
-          const detail = await prisma.attendanceSession.findUnique({
-            where: { id: params.id },
-            include: {
-              course: { include: { enrollments: true } },
-              records: { include: { student: true }, orderBy: { attendedAt: "desc" }, take: 1 }
-            }
-          })
-          if (detail) {
-            const [onTimeCount, lateCount, totalCount] = await Promise.all([
-              prisma.attendanceRecord.count({ where: { sessionId: params.id, status: "on_time" } }),
-              prisma.attendanceRecord.count({ where: { sessionId: params.id, status: "late" } }),
-              prisma.attendanceRecord.count({ where: { sessionId: params.id } })
-            ])
-            const latest = detail.records[0]
-            enqueue(
-              event("attendance_count", {
-                sessionId: params.id,
-                onTimeCount,
-                lateCount,
-                totalCount,
-                enrolledCount: detail.course.enrollments.length,
-                latest: latest
-                  ? {
-                      studentName: latest.student.name,
-                      studentCode: latest.student.studentCode,
-                      status: latest.status,
-                      attendedAt: latest.attendedAt?.toISOString() ?? null
-                    }
-                  : null
-              })
-            )
-          }
           if (!closed) {
             timeout = setTimeout(() => void sendQr(), Math.max(5, session.qrCodeValiditySeconds) * 1000)
           }
+          void attendanceCountEvent(params.id)
+            .then((payload) => {
+              if (payload) enqueue(payload)
+            })
+            .catch(() => {
+              // QR rotation should not be blocked by attendance summary refresh.
+            })
         } catch {
           close()
         }

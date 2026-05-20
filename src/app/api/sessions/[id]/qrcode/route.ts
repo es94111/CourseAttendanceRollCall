@@ -24,6 +24,7 @@ export async function GET(request: Request, { params }: any) {
       checkinUrl,
       qrcodeDataUrl: await generateQRCodeDataURL(checkinUrl),
       expiresAt: expiresAt.toISOString(),
+      validitySeconds: session.qrCodeValiditySeconds,
       remainingSeconds: Math.max(0, Math.ceil((expiresAt.getTime() - Date.now()) / 1000))
     })
   } catch (cause) {
