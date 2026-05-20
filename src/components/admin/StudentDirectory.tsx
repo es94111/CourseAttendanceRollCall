@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react"
 import { EditStudentButton } from "@/components/admin/EditStudentButton"
+import { DeleteStudentButton } from "@/components/admin/DeleteStudentButton"
 
 interface StudentRow {
   id: string
@@ -44,6 +45,7 @@ export function StudentDirectory({ students }: { students: StudentRow[] }) {
               <th>Google Email</th>
               <th>課程</th>
               <th>資料</th>
+              <th>操作</th>
             </tr>
           </thead>
           <tbody>
@@ -55,6 +57,9 @@ export function StudentDirectory({ students }: { students: StudentRow[] }) {
                 <td>{student.courses.map((course) => course.name).join("、") || "-"}</td>
                 <td>
                   <EditStudentButton student={student} />
+                </td>
+                <td>
+                  <DeleteStudentButton studentId={student.id} studentName={student.name} />
                 </td>
               </tr>
             ))}

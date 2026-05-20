@@ -56,6 +56,24 @@ export async function DELETE(_request: Request, { params }: any) {
   try {
     const existing = await prisma.course.findUnique({ where: { id: params.id } })
     if (!existing) return error("課程不存在", 404)
+    if (existing.status === "archived") {
+      await prisma.$transaction(async (tx) => {
+        const sessions = await tx.attendanceSession.findMany({
+          where: { courseId: params.id },
+          select: { id: true }
+        })
+        const sessionIds = sessions.map((session) => session.id)
+
+        if (sessionIds.length > 0) {
+          await tx.attendanceRecord.deleteMany({ where: { sessionId: { in: sessionIds } } })
+          await tx.leaveRecord.deleteMany({ where: { sessionId: { in: sessionIds } } })
+          await tx.attendanceSession.deleteMany({ where: { id: { in: sessionIds } } })
+        }
+        await tx.courseEnrollment.deleteMany({ where: { courseId: params.id } })
+        await tx.course.delete({ where: { id: params.id } })
+      })
+      return json({ message: "課程已刪除" })
+    }
     await prisma.course.update({ where: { id: params.id }, data: { status: "archived" } })
     return json({ message: "課程已封存" })
   } catch (cause) {

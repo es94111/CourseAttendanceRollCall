@@ -29,3 +29,30 @@ export async function PATCH(request: Request, { params }: any) {
     return handleRouteError(cause)
   }
 }
+
+export async function DELETE(_request: Request, { params }: any) {
+  const guard = await requireAdmin()
+  if ("response" in guard) return guard.response
+  try {
+    const student = await prisma.student.findUnique({ where: { id: params.id } })
+    if (!student) return error("學生不存在", 404)
+
+    await prisma.$transaction(async (tx) => {
+      await tx.attendanceRecord.deleteMany({ where: { studentId: params.id } })
+      await tx.leaveRecord.deleteMany({ where: { studentId: params.id } })
+      await tx.courseEnrollment.deleteMany({ where: { studentId: params.id } })
+      await tx.student.delete({ where: { id: params.id } })
+
+      if (student.userId) {
+        await tx.session.deleteMany({ where: { userId: student.userId } })
+        await tx.account.deleteMany({ where: { userId: student.userId } })
+        await tx.user.delete({ where: { id: student.userId } })
+      }
+    })
+
+    return json({ message: "學生已刪除" })
+  } catch (cause: any) {
+    if (cause?.code === "P2025") return error("學生不存在", 404)
+    return handleRouteError(cause)
+  }
+}

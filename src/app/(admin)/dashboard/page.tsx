@@ -2,9 +2,24 @@ import Link from "next/link"
 import { prisma } from "@/lib/prisma"
 
 export default async function DashboardPage() {
-  const [courseCount, activeSessions, studentCount, archivedCount] = await Promise.all([
+  const [courseCount, activeSessions, activeSessionRows, studentCount, archivedCount] = await Promise.all([
     prisma.course.count({ where: { status: "active" } }),
     prisma.attendanceSession.count({ where: { status: "active" } }),
+    prisma.attendanceSession.findMany({
+      where: { status: "active" },
+      include: {
+        course: {
+          include: {
+            sessions: {
+              select: { id: true },
+              orderBy: { createdAt: "asc" }
+            }
+          }
+        }
+      },
+      orderBy: { createdAt: "desc" },
+      take: 8
+    }),
     prisma.student.count(),
     prisma.course.count({ where: { status: "archived" } })
   ])
@@ -67,6 +82,51 @@ export default async function DashboardPage() {
             <strong className="tabular">{stat.value}</strong>
           </Link>
         ))}
+      </section>
+
+      <section className="panel">
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <h2>進行中點名</h2>
+            <p className="text-muted" style={{ marginTop: -6, marginBottom: 14 }}>
+              目前正在開放 QR Code 的課程
+            </p>
+          </div>
+          <Link className="btn secondary" href="/courses">
+            查看課程
+          </Link>
+        </div>
+        {activeSessionRows.length === 0 ? (
+          <p className="empty-state">目前沒有進行中的點名。</p>
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                <th>課程</th>
+                <th>第幾次點名</th>
+                <th>開放時間</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {activeSessionRows.map((session) => {
+                const sessionOrder = session.course.sessions.findIndex((item) => item.id === session.id) + 1
+                return (
+                  <tr key={session.id}>
+                    <td>{session.course.name}</td>
+                    <td>第 {sessionOrder} 次點名</td>
+                    <td>{session.createdAt.toLocaleString("zh-TW", { timeZone: "Asia/Taipei" })}</td>
+                    <td>
+                      <Link className="btn secondary" href={`/sessions/${session.id}`}>
+                        進入點名
+                      </Link>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        )}
       </section>
 
       <section className="panel">
