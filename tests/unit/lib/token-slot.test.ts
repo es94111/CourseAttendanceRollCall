@@ -12,6 +12,15 @@ describe("parseTokenSlot", () => {
     })
   })
 
+  it("uses configurable QR code validity seconds for expiry", () => {
+    const token = generateToken("session_1", 120_000, 60)
+    expect(parseTokenSlot(token, 60)).toEqual({
+      sessionId: "session_1",
+      slot: 2,
+      expiresAt: new Date(180_000)
+    })
+  })
+
   it("returns null for malformed tokens", () => {
     expect(parseTokenSlot("invalid")).toBeNull()
     expect(parseTokenSlot(Buffer.from("abc.def", "utf8").toString("base64url"))).toBeNull()

@@ -39,6 +39,7 @@ enum AuditEventType {
   role_change
   delete_student_data
   session_opened
+  session_settings_update
 }
 
 model User {
@@ -153,6 +154,7 @@ model AttendanceSession {
   courseId           String
   officialStartTime  DateTime
   autoExpireMinutes  Int?
+  qrCodeValiditySeconds Int       @default(15)
   gracePeriodSeconds Int           @default(60)
   status             SessionStatus @default(active)
   voidReason         String?

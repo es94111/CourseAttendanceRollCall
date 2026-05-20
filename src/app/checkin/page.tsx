@@ -10,7 +10,8 @@ function CheckinContent() {
   const params = useSearchParams()
   const token = params.get("token") ?? ""
   const sessionId = params.get("sessionId") ?? ""
-  const slot = useMemo(() => parseTokenSlot(token), [token])
+  const validitySeconds = Math.max(5, Number(params.get("validitySeconds") ?? 15) || 15)
+  const slot = useMemo(() => parseTokenSlot(token, validitySeconds), [token, validitySeconds])
   const [remaining, setRemaining] = useState(0)
   const [result, setResult] = useState<{ kind: "info" | "success" | "error"; title: string; detail: string } | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)

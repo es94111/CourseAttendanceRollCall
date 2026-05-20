@@ -41,6 +41,7 @@ export async function POST(request: Request, { params }: any) {
         courseId: params.id,
         officialStartTime: new Date(parsed.data.officialStartTime),
         autoExpireMinutes: parsed.data.autoExpireMinutes,
+        qrCodeValiditySeconds: parsed.data.qrCodeValiditySeconds,
         gracePeriodSeconds: parsed.data.gracePeriodSeconds,
         createdBy: guard.user.id
       }
@@ -52,6 +53,7 @@ export async function POST(request: Request, { params }: any) {
       target: { courseId: params.id, sessionId: session.id },
       newValue: {
         officialStartTime: parsed.data.officialStartTime,
+        qrCodeValiditySeconds: parsed.data.qrCodeValiditySeconds,
         gracePeriodSeconds: parsed.data.gracePeriodSeconds
       }
     })

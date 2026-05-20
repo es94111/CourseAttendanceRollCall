@@ -17,7 +17,12 @@ export async function POST(request: Request) {
       include: { course: true }
     })
     if (!session) return error("點名 Session 不存在", 404)
-    const tokenResult = verifyToken(parsed.data.token, session.gracePeriodSeconds)
+    const tokenResult = verifyToken(
+      parsed.data.token,
+      session.gracePeriodSeconds,
+      Date.now(),
+      session.qrCodeValiditySeconds
+    )
     if (!tokenResult.valid || tokenResult.sessionId !== parsed.data.sessionId) {
       return error("Token 無效或已過期", 400)
     }

@@ -30,7 +30,12 @@ export const studentSchema = z.object({
 export const sessionCreateSchema = z.object({
   officialStartTime: z.string().datetime({ offset: true }),
   autoExpireMinutes: z.number().int().positive().optional().nullable(),
+  qrCodeValiditySeconds: z.number().int().min(5).default(15),
   gracePeriodSeconds: z.number().int().positive().default(60)
+})
+
+export const sessionSettingsPatchSchema = z.object({
+  qrCodeValiditySeconds: z.number().int().min(5)
 })
 
 export const roleSchema = z.object({ role: z.enum(["admin", "student"]) })

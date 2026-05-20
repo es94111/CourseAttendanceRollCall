@@ -41,4 +41,11 @@ describe("HMAC QR token", () => {
 
     expect(verifyToken(token, 30).valid).toBe(true)
   })
+
+  it("uses configurable QR code validity seconds", () => {
+    const token = generateToken("session_1", 0, 60)
+
+    expect(verifyToken(token, 0, 59_000, 60).valid).toBe(true)
+    expect(verifyToken(token, 0, 61_000, 60).valid).toBe(false)
+  })
 })

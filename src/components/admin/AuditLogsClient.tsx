@@ -61,6 +61,7 @@ export function AuditLogsClient({ initialLogs, initialTotal }: { initialLogs: Au
         <select value={eventType} onChange={(event) => setEventType(event.target.value)}>
           <option value="">全部事件</option>
           <option value="session_opened">開啟點名</option>
+          <option value="session_settings_update">更新點名設定</option>
           <option value="role_change">角色變更</option>
           <option value="export_attendance">匯出</option>
           <option value="manual_attendance_override">手動補登</option>

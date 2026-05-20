@@ -1,6 +1,10 @@
 import { createHmac, timingSafeEqual } from "node:crypto"
 
-const SLOT_MS = 15_000
+const DEFAULT_QR_CODE_VALIDITY_SECONDS = 15
+
+function slotMs(qrCodeValiditySeconds = DEFAULT_QR_CODE_VALIDITY_SECONDS) {
+  return qrCodeValiditySeconds * 1000
+}
 
 function secret() {
   const value = process.env.QR_SECRET
@@ -14,16 +18,25 @@ function sign(payload: string) {
   return createHmac("sha256", secret()).update(payload).digest("hex")
 }
 
-export function currentSlot(now = Date.now()) {
-  return Math.floor(now / SLOT_MS)
+export function currentSlot(now = Date.now(), qrCodeValiditySeconds = DEFAULT_QR_CODE_VALIDITY_SECONDS) {
+  return Math.floor(now / slotMs(qrCodeValiditySeconds))
 }
 
-export function generateToken(sessionId: string, now = Date.now()) {
-  const payload = `${sessionId}:${currentSlot(now)}`
+export function generateToken(
+  sessionId: string,
+  now = Date.now(),
+  qrCodeValiditySeconds = DEFAULT_QR_CODE_VALIDITY_SECONDS
+) {
+  const payload = `${sessionId}:${currentSlot(now, qrCodeValiditySeconds)}`
   return Buffer.from(`${payload}.${sign(payload)}`, "utf8").toString("base64url")
 }
 
-export function verifyToken(token: string, gracePeriodSeconds: number, now = Date.now()) {
+export function verifyToken(
+  token: string,
+  gracePeriodSeconds: number,
+  now = Date.now(),
+  qrCodeValiditySeconds = DEFAULT_QR_CODE_VALIDITY_SECONDS
+) {
   try {
     const decoded = Buffer.from(token, "base64url").toString("utf8")
     const [payload, signature] = decoded.split(".")
@@ -40,8 +53,8 @@ export function verifyToken(token: string, gracePeriodSeconds: number, now = Dat
       return { valid: false as const }
     }
 
-    const issuedAt = slot * SLOT_MS
-    const expiresAt = issuedAt + SLOT_MS + gracePeriodSeconds * 1000
+    const issuedAt = slot * slotMs(qrCodeValiditySeconds)
+    const expiresAt = issuedAt + slotMs(qrCodeValiditySeconds) + gracePeriodSeconds * 1000
     if (now > expiresAt) return { valid: false as const, sessionId }
 
     return { valid: true as const, sessionId, slot, expiresAt: new Date(expiresAt) }

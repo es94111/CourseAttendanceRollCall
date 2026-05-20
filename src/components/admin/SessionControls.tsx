@@ -21,11 +21,13 @@ interface Counts {
 export function SessionControls({
   sessionId,
   initialStatus,
-  initialCounts
+  initialCounts,
+  initialQrCodeValiditySeconds
 }: {
   sessionId: string
   initialStatus: string
   initialCounts: Counts
+  initialQrCodeValiditySeconds: number
 }) {
   const router = useRouter()
   const { showToast } = useToast()
@@ -35,6 +37,8 @@ export function SessionControls({
   const [closeOpen, setCloseOpen] = useState(false)
   const [voidOpen, setVoidOpen] = useState(false)
   const [voidReason, setVoidReason] = useState("")
+  const [qrCodeValiditySeconds, setQrCodeValiditySeconds] = useState(String(initialQrCodeValiditySeconds))
+  const [isUpdatingSettings, setIsUpdatingSettings] = useState(false)
   const [isPending, startTransition] = useTransition()
 
   useEffect(() => {
@@ -66,6 +70,29 @@ export function SessionControls({
     }
     startTransition(() => router.refresh())
     return true
+  }
+
+  async function updateQrCodeValidity() {
+    const nextValue = Number(qrCodeValiditySeconds)
+    setError("")
+    if (!Number.isFinite(nextValue) || nextValue < 5) {
+      setError("QR Code 有效秒數必須至少 5 秒")
+      return
+    }
+    setIsUpdatingSettings(true)
+    const response = await fetch(`/api/sessions/${sessionId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ qrCodeValiditySeconds: nextValue })
+    })
+    const payload = await response.json().catch(() => ({}))
+    setIsUpdatingSettings(false)
+    if (!response.ok) {
+      setError(payload.error ?? "更新 QR Code 有效秒數失敗")
+      return
+    }
+    showToast("QR Code 有效秒數已更新", "success")
+    startTransition(() => router.refresh())
   }
 
   async function closeSession() {
@@ -117,6 +144,26 @@ export function SessionControls({
             作廢 Session
           </button>
         </div>
+      </div>
+      <div className="toolbar">
+        <div className="field">
+          <label>QR Code 有效秒數</label>
+          <input
+            type="number"
+            min={5}
+            value={qrCodeValiditySeconds}
+            disabled={finished || isUpdatingSettings}
+            onChange={(event) => setQrCodeValiditySeconds(event.target.value)}
+          />
+        </div>
+        <button
+          className="btn secondary"
+          type="button"
+          disabled={finished || isUpdatingSettings}
+          onClick={updateQrCodeValidity}
+        >
+          {isUpdatingSettings ? "更新中" : "更新秒數"}
+        </button>
       </div>
       {error && <p style={{ color: "#b42318" }}>{error}</p>}
       <Dialog title="關閉點名" open={closeOpen} onClose={() => setCloseOpen(false)}>

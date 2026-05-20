@@ -14,8 +14,15 @@ export async function GET(request: Request, { params }: any) {
   const encoder = new TextEncoder()
   const stream = new ReadableStream({
     async start(controller) {
+      let timeout: ReturnType<typeof setTimeout> | null = null
+      let closed = false
       const sendQr = async () => {
         const session = await expireSessionIfNeeded(params.id)
+        if (!session) {
+          controller.close()
+          closed = true
+          return
+        }
         if (session && session.status !== "active") {
           controller.enqueue(
             encoder.encode(
@@ -28,19 +35,20 @@ export async function GET(request: Request, { params }: any) {
             )
           )
           controller.close()
-          clearInterval(interval)
+          closed = true
           return
         }
-        const token = generateToken(params.id)
-        const expiresAt = new Date((Math.floor(Date.now() / 15_000) + 1) * 15_000)
-        const checkinUrl = buildCheckinUrl(request, params.id, token)
+        const validityMs = session.qrCodeValiditySeconds * 1000
+        const token = generateToken(params.id, Date.now(), session.qrCodeValiditySeconds)
+        const expiresAt = new Date((Math.floor(Date.now() / validityMs) + 1) * validityMs)
+        const checkinUrl = buildCheckinUrl(request, params.id, token, session.qrCodeValiditySeconds)
         controller.enqueue(
           encoder.encode(
             event("qrcode_update", {
               token,
               checkinUrl,
               qrcodeDataUrl: await generateQRCodeDataURL(checkinUrl),
-              slot: Math.floor(Date.now() / 15_000),
+              slot: Math.floor(Date.now() / validityMs),
               expiresAt: expiresAt.toISOString(),
               remainingSeconds: Math.max(0, Math.ceil((expiresAt.getTime() - Date.now()) / 1000))
             })
@@ -80,11 +88,14 @@ export async function GET(request: Request, { params }: any) {
             )
           )
         }
+        if (!closed) {
+          timeout = setTimeout(sendQr, Math.max(5, session.qrCodeValiditySeconds) * 1000)
+        }
       }
-      const interval = setInterval(sendQr, 15_000)
       await sendQr()
       request.signal.addEventListener("abort", () => {
-        clearInterval(interval)
+        closed = true
+        if (timeout) clearTimeout(timeout)
         controller.close()
       })
     }

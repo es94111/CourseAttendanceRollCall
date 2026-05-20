@@ -22,9 +22,15 @@ export function getPublicBaseUrl(request: Request) {
   return new URL(request.url).origin
 }
 
-export function buildCheckinUrl(request: Request, sessionId: string, token: string) {
+export function buildCheckinUrl(
+  request: Request,
+  sessionId: string,
+  token: string,
+  qrCodeValiditySeconds: number
+) {
   const checkinUrl = new URL("/checkin", getPublicBaseUrl(request))
   checkinUrl.searchParams.set("sessionId", sessionId)
   checkinUrl.searchParams.set("token", token)
+  checkinUrl.searchParams.set("validitySeconds", String(qrCodeValiditySeconds))
   return checkinUrl.toString()
 }

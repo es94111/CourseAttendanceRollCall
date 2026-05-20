@@ -11,6 +11,7 @@ export type AuditEventType =
   | "role_change"
   | "delete_student_data"
   | "session_opened"
+  | "session_settings_update"
 
 export interface ApiError {
   error: string

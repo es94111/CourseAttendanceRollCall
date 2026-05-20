@@ -38,9 +38,14 @@ export function OpenSessionForm({
       return
     }
     const autoExpireMinutes = Number(formData.get("autoExpireMinutes") || 90)
+    const qrCodeValiditySeconds = Number(formData.get("qrCodeValiditySeconds") || 15)
     const gracePeriodSeconds = Number(formData.get("gracePeriodSeconds") || 60)
     if (!Number.isFinite(autoExpireMinutes) || autoExpireMinutes <= 0) {
       setError("自動逾時分鐘必須大於 0")
+      return
+    }
+    if (!Number.isFinite(qrCodeValiditySeconds) || qrCodeValiditySeconds < 5) {
+      setError("QR Code 有效秒數必須至少 5 秒")
       return
     }
     if (!Number.isFinite(gracePeriodSeconds) || gracePeriodSeconds <= 0) {
@@ -50,6 +55,7 @@ export function OpenSessionForm({
     const payload = {
       officialStartTime: officialStartDate.toISOString(),
       autoExpireMinutes,
+      qrCodeValiditySeconds,
       gracePeriodSeconds
     }
     setIsSaving(true)
@@ -94,7 +100,11 @@ export function OpenSessionForm({
             <input name="autoExpireMinutes" type="number" min={1} defaultValue={90} required />
           </div>
           <div className="field">
-            <label>QR 寬限秒數</label>
+            <label>QR Code 有效秒數</label>
+            <input name="qrCodeValiditySeconds" type="number" min={5} defaultValue={15} required />
+          </div>
+          <div className="field">
+            <label>OAuth 寬限秒數</label>
             <input name="gracePeriodSeconds" type="number" min={1} defaultValue={60} required />
           </div>
         </div>
