@@ -44,6 +44,7 @@ enum AuditEventType {
   connection_access_update
   connection_access_block
   allowed_email_domains_update
+  system_setting_update
 }
 
 model User {
@@ -237,6 +238,14 @@ model AllowedEmailDomain {
   updatedAt DateTime @updatedAt
 
   @@map("allowed_email_domains")
+}
+
+model SystemSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+
+  @@map("system_settings")
 }
 
 model ConnectionAccessRule {

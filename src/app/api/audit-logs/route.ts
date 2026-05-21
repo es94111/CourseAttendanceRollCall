@@ -15,7 +15,8 @@ const ALLOWED_EVENT_TYPES = new Set([
   "session_settings_update",
   "connection_access_update",
   "connection_access_block",
-  "allowed_email_domains_update"
+  "allowed_email_domains_update",
+  "system_setting_update"
 ])
 
 function clampInt(value: string | null, fallback: number, min: number, max: number) {

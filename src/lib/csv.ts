@@ -1,6 +1,6 @@
 import { stringify } from "csv-stringify/sync"
 import { toTaipeiIso } from "@/lib/time"
-import { formatIpLocation } from "@/lib/request-ip"
+import { formatIpLocation } from "@/lib/ip-format"
 
 const FORMULA_PREFIX = /^[=+\-@\t\r]/
 

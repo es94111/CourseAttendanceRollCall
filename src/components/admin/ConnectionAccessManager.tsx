@@ -42,9 +42,11 @@ function toRules(
 }
 
 export function ConnectionAccessManager({
-  initialRules
+  initialRules,
+  initialIpShareLimit
 }: {
   initialRules: ConnectionAccessRule[]
+  initialIpShareLimit: number
 }) {
   const { showToast } = useToast()
   const [allowCountries, setAllowCountries] = useState(
@@ -199,6 +201,73 @@ export function ConnectionAccessManager({
           </button>
         </div>
       </section>
+
+      <IpShareLimitForm initialValue={initialIpShareLimit} />
     </>
+  )
+}
+
+function IpShareLimitForm({ initialValue }: { initialValue: number }) {
+  const { showToast } = useToast()
+  const [value, setValue] = useState(String(initialValue))
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState("")
+
+  async function save() {
+    setError("")
+    const parsed = Number(value)
+    if (!Number.isInteger(parsed) || parsed < 0 || parsed > 1000) {
+      setError("請輸入 0 ~ 1000 的整數（0 表示關閉此防線）")
+      return
+    }
+    setSaving(true)
+    try {
+      const response = await fetch("/api/system-settings/ip-share-limit", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ value: parsed })
+      })
+      const body = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        setError(body.error ?? "儲存失敗")
+        return
+      }
+      setValue(String(body.value))
+      showToast("已儲存同 IP 簽到上限", "success")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <section className="panel">
+      <h2>同 IP 簽到上限</h2>
+      <p className="text-muted">
+        同一場點名 Session 內，當一個 IP 已為 N 位「不同」學生完成簽到後，後續來自同 IP
+        的點名請求將被拒絕（HTTP 429），可防止學生把 QR 連結轉發給他人代簽。
+      </p>
+      <p className="text-muted">
+        設為 <strong>0</strong> 表示關閉此防線（預設）。若多數學生使用行動數據（IP 不重疊），可設
+        3~5；若教室共用 Wi-Fi NAT 出口同 IP，請依實際同時上線人數調高，否則會誤殺正常學生。
+      </p>
+      <div className="field" style={{ maxWidth: 240 }}>
+        <label>同 IP 簽到上限</label>
+        <input
+          type="number"
+          min={0}
+          max={1000}
+          step={1}
+          value={value}
+          onChange={(event) => setValue(event.target.value)}
+        />
+        <span className="hint">0 ~ 1000；0 = 關閉。</span>
+      </div>
+      {error && <p style={{ color: "#b42318" }}>{error}</p>}
+      <div className="toolbar" style={{ marginTop: 12 }}>
+        <button className="btn" type="button" disabled={saving} onClick={save}>
+          儲存
+        </button>
+      </div>
+    </section>
   )
 }

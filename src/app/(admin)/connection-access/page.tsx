@@ -1,10 +1,14 @@
 import { ConnectionAccessManager } from "@/components/admin/ConnectionAccessManager"
 import { prisma } from "@/lib/prisma"
+import { getIpShareLimit } from "@/lib/system-settings"
 
 export default async function ConnectionAccessPage() {
-  const rules = await prisma.connectionAccessRule.findMany({
-    orderBy: [{ action: "asc" }, { targetType: "asc" }, { value: "asc" }]
-  })
+  const [rules, ipShareLimit] = await Promise.all([
+    prisma.connectionAccessRule.findMany({
+      orderBy: [{ action: "asc" }, { targetType: "asc" }, { value: "asc" }]
+    }),
+    getIpShareLimit()
+  ])
 
   return (
     <main className="shell">
@@ -23,6 +27,7 @@ export default async function ConnectionAccessPage() {
           note: rule.note,
           enabled: rule.enabled
         }))}
+        initialIpShareLimit={ipShareLimit}
       />
     </main>
   )

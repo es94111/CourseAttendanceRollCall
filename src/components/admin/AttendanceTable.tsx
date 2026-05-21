@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useState, useTransition } from "react"
 import { Dialog } from "@/components/shared/Dialog"
 import { useToast } from "@/components/shared/ToastProvider"
-import { formatIpLocation } from "@/lib/request-ip"
+import { formatIpLocation } from "@/lib/ip-format"
 
 interface StudentRow {
   id: string

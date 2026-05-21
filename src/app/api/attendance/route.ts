@@ -8,6 +8,7 @@ import { normalizeEmail } from "@/lib/email"
 import { getClientIpMetadata } from "@/lib/request-ip"
 import { lookupIpinfo } from "@/lib/ipinfo"
 import { evaluateConnectionAccess } from "@/lib/connection-access"
+import { getIpShareLimit } from "@/lib/system-settings"
 
 export async function POST(request: Request) {
   const guard = await requireUser()
@@ -69,9 +70,7 @@ export async function POST(request: Request) {
       ipAsnName: ipinfo.ipAsnName
     })
     if (!access.allowed) return error(access.reason ?? "此連線來源不允許點名", 403)
-    const ipShareLimitRaw = Number(process.env.MAX_ATTENDANCE_PER_IP_PER_SESSION)
-    const ipShareLimit =
-      Number.isFinite(ipShareLimitRaw) && ipShareLimitRaw > 0 ? ipShareLimitRaw : 0
+    const ipShareLimit = await getIpShareLimit()
     if (ipShareLimit > 0 && clientIp.ipAddress) {
       const recentSameIp = await prisma.attendanceRecord.count({
         where: {

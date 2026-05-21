@@ -41,7 +41,8 @@
       "Bash(dir C:UsershongyuSynologyDrivewebCourseAttendanceRollCall *)",
       "PowerShell(npm run *)",
       "PowerShell(npx tsc --noEmit 2>&1 | Select-Object -Last 50)",
-      "PowerShell(npx tsc --noEmit 2>&1 | Select-Object -Last 30)"
+      "PowerShell(npx tsc --noEmit 2>&1 | Select-Object -Last 30)",
+      "PowerShell(npx prisma generate 2>&1 | Select-Object -Last 10)"
     ]
   }
 }

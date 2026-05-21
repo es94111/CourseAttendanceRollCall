@@ -16,6 +16,7 @@ export type AuditEventType =
   | "connection_access_update"
   | "connection_access_block"
   | "allowed_email_domains_update"
+  | "system_setting_update"
 
 export interface ApiError {
   error: string
