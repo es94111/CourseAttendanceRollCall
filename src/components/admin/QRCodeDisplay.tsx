@@ -15,6 +15,10 @@ export function QRCodeDisplay({
   const [status, setStatus] = useState(initialStatus)
 
   useEffect(() => {
+    setStatus(initialStatus)
+  }, [initialStatus])
+
+  useEffect(() => {
     if (status !== "active") return
     let cancelled = false
     void fetch(`/api/sessions/${sessionId}/qrcode`)

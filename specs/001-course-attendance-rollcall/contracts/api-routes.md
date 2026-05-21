@@ -242,6 +242,17 @@
 **權限**：admin  
 **回應 200**：`{ "message": "點名已關閉" }`
 
+### POST /api/sessions/:id/reopen
+**說明**：將已關閉或逾時自動關閉的 Session 重新開啟（`closed`/`expired` → `active`）  
+**權限**：admin  
+**回應 200**：`{ "message": "點名已重新開啟" }`  
+**錯誤**：
+- `409`：Session 已在進行中、或該課程已有其他 `active` Session
+- `400`：Session 已作廢（`voided`）無法重新開啟
+- `404`：Session 不存在  
+**稽核**：寫入 AuditLog（event_type: `session_reopened`）  
+**注意**：若原本設定 `autoExpireMinutes` 且已過期時點，重新開啟時會清除 `autoExpireMinutes`，需管理員手動關閉
+
 ### POST /api/sessions/:id/void
 **說明**：作廢 Session（非 active 狀態的 Session → `voided`）  
 **權限**：admin  

@@ -40,6 +40,7 @@ enum AuditEventType {
   delete_student_data
   delete_user
   session_opened
+  session_reopened
   session_settings_update
   connection_access_update
   connection_access_block

@@ -41,6 +41,7 @@ export function SessionControls({
   const [closeOpen, setCloseOpen] = useState(false)
   const [voidOpen, setVoidOpen] = useState(false)
   const [voidReason, setVoidReason] = useState("")
+  const [reopenOpen, setReopenOpen] = useState(false)
   const [qrCodeValiditySeconds, setQrCodeValiditySeconds] = useState(
     String(initialQrCodeValiditySeconds)
   )
@@ -127,6 +128,14 @@ export function SessionControls({
     showToast("Session 已作廢", "success")
   }
 
+  async function reopenSession() {
+    const ok = await post(`/api/sessions/${sessionId}/reopen`)
+    if (!ok) return
+    setStatus("active")
+    setReopenOpen(false)
+    showToast("點名已重新開啟", "success")
+  }
+
   const finished = status !== "active"
   const attendancePct =
     counts.enrolledCount > 0 ? Math.round((counts.totalCount / counts.enrolledCount) * 100) : 0
@@ -178,6 +187,16 @@ export function SessionControls({
           >
             關閉點名
           </button>
+          {(status === "closed" || status === "expired") && (
+            <button
+              className="btn"
+              type="button"
+              disabled={isPending}
+              onClick={() => setReopenOpen(true)}
+            >
+              重新開啟點名
+            </button>
+          )}
           <button
             className="btn danger"
             type="button"
@@ -359,6 +378,27 @@ export function SessionControls({
           </button>
           <button className="btn" type="button" disabled={isPending} onClick={closeSession}>
             確認關閉
+          </button>
+        </div>
+      </Dialog>
+
+      <Dialog title="重新開啟點名" open={reopenOpen} onClose={() => setReopenOpen(false)}>
+        <p>
+          重新開啟後 QR Code 會重新輪換，學生可再次掃描完成點名。
+          {status === "expired" &&
+            " 此 Session 原本因逾時自動關閉，重新開啟後將不再自動關閉，需由管理員手動關閉。"}
+        </p>
+        <div className="toolbar dialog-actions">
+          <button
+            className="btn secondary"
+            type="button"
+            disabled={isPending}
+            onClick={() => setReopenOpen(false)}
+          >
+            取消
+          </button>
+          <button className="btn" type="button" disabled={isPending} onClick={reopenSession}>
+            確認重新開啟
           </button>
         </div>
       </Dialog>
