@@ -69,7 +69,10 @@ export async function POST(request: Request) {
       ipAsnName: ipinfo.ipAsnName
     })
     if (!access.allowed) return error(access.reason ?? "此連線來源不允許點名", 403)
-    if (clientIp.ipAddress) {
+    const ipShareLimitRaw = Number(process.env.MAX_ATTENDANCE_PER_IP_PER_SESSION)
+    const ipShareLimit =
+      Number.isFinite(ipShareLimitRaw) && ipShareLimitRaw > 0 ? ipShareLimitRaw : 0
+    if (ipShareLimit > 0 && clientIp.ipAddress) {
       const recentSameIp = await prisma.attendanceRecord.count({
         where: {
           sessionId: session.id,
@@ -77,7 +80,7 @@ export async function POST(request: Request) {
           studentId: { not: student.id }
         }
       })
-      if (recentSameIp >= 3) {
+      if (recentSameIp >= ipShareLimit) {
         return error("此連線已為多位學生簽到，請改由本人裝置完成點名", 429)
       }
     }

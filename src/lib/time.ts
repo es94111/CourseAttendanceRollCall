@@ -18,10 +18,20 @@ export function taipeiDateTimeToDate(value: string) {
   return new Date(value)
 }
 
+const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/
+
+function safeDate(input: string): Date | null {
+  if (!DATE_ONLY.test(input)) return null
+  const d = new Date(input)
+  return Number.isFinite(d.getTime()) ? d : null
+}
+
 export function startOfTaipeiDay(value: string) {
+  if (!safeDate(value)) return undefined
   return new Date(`${value}T00:00:00+08:00`)
 }
 
 export function endOfTaipeiDay(value: string) {
+  if (!safeDate(value)) return undefined
   return new Date(`${value}T23:59:59.999+08:00`)
 }
