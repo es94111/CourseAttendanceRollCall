@@ -2,6 +2,9 @@ import { prisma } from "@/lib/prisma"
 import { error, handleRouteError, json, requireAdmin } from "@/lib/api"
 import { normalizeEmail } from "@/lib/email"
 
+const MAX_CSV_BYTES = 5 * 1024 * 1024 // 5 MB
+const MAX_CSV_ROWS = 5000
+
 function parseCsv(text: string) {
   const lines = text.split(/\r?\n/).filter(Boolean)
   const headers = lines.shift()?.split(",").map((h) => h.trim()) ?? []
@@ -24,7 +27,17 @@ export async function POST(request: Request) {
     const file = form.get("file")
     const courseId = form.get("courseId")
     if (!(file instanceof File)) return error("請上傳 CSV 檔案", 400)
+    if (file.size > MAX_CSV_BYTES) {
+      return error(`CSV 檔案過大（上限 ${MAX_CSV_BYTES / 1024 / 1024} MB）`, 413)
+    }
+    if (typeof courseId === "string" && courseId) {
+      const course = await prisma.course.findUnique({ where: { id: courseId } })
+      if (!course || course.status !== "active") return error("課程不存在或已封存", 404)
+    }
     const rows = parseCsv(await file.text())
+    if (rows.length > MAX_CSV_ROWS) {
+      return error(`CSV 列數超過上限（${MAX_CSV_ROWS}）`, 413)
+    }
     const seenCodes = new Set<string>()
     const seenEmails = new Set<string>()
     const errors: Array<{ row: number; reason: string }> = []

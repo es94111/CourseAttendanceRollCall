@@ -17,7 +17,7 @@ export function SecureSignOutButton({
 
   async function secureSignOut() {
     setIsSigningOut(true)
-    const target = new URL(returnTo, window.location.origin).toString()
+    const target = resolveSameOriginTarget(returnTo)
     try {
       window.localStorage.clear()
       window.sessionStorage.clear()
@@ -33,4 +33,16 @@ export function SecureSignOutButton({
       {isSigningOut ? "登出中" : label}
     </button>
   )
+}
+
+function resolveSameOriginTarget(returnTo: string): string {
+  const origin = window.location.origin
+  const fallback = `${origin}/login`
+  if (!returnTo.startsWith("/") || returnTo.startsWith("//")) return fallback
+  try {
+    const url = new URL(returnTo, origin)
+    return url.origin === origin ? url.toString() : fallback
+  } catch {
+    return fallback
+  }
 }

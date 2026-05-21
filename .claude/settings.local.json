@@ -37,7 +37,10 @@
       "Bash(npm ls *)",
       "Bash(npm audit *)",
       "Bash(npm view *)",
-      "Bash(gh api *)"
+      "Bash(gh api *)",
+      "Bash(dir C:UsershongyuSynologyDrivewebCourseAttendanceRollCall *)",
+      "PowerShell(npm run *)",
+      "PowerShell(npx tsc --noEmit 2>&1 | Select-Object -Last 50)"
     ]
   }
 }

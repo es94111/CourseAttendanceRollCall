@@ -52,7 +52,7 @@ export async function POST(request: Request) {
       where: { sessionId_studentId: { sessionId: session.id, studentId: student.id } }
     })
     if (existing) return error("已完成點名，不重複記錄", 409)
-    const attendedAt = tokenResult.issuedAt ?? new Date()
+    const attendedAt = new Date()
     const status = attendanceStatus(
       attendedAt,
       session.createdAt,
@@ -69,6 +69,18 @@ export async function POST(request: Request) {
       ipAsnName: ipinfo.ipAsnName
     })
     if (!access.allowed) return error(access.reason ?? "此連線來源不允許點名", 403)
+    if (clientIp.ipAddress) {
+      const recentSameIp = await prisma.attendanceRecord.count({
+        where: {
+          sessionId: session.id,
+          ipAddress: clientIp.ipAddress,
+          studentId: { not: student.id }
+        }
+      })
+      if (recentSameIp >= 3) {
+        return error("此連線已為多位學生簽到，請改由本人裝置完成點名", 429)
+      }
+    }
     const record = await prisma.attendanceRecord.create({
       data: {
         sessionId: session.id,
