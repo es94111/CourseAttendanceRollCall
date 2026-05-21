@@ -29,7 +29,13 @@ export function SecureSignOutButton({
   }
 
   return (
-    <button className={className} type="button" disabled={isSigningOut} onClick={secureSignOut} style={style}>
+    <button
+      className={className}
+      type="button"
+      disabled={isSigningOut}
+      onClick={secureSignOut}
+      style={style}
+    >
       {isSigningOut ? "登出中" : label}
     </button>
   )

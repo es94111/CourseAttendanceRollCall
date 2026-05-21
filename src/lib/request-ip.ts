@@ -9,7 +9,12 @@ function trustedProxyMode(): TrustedProxyMode {
 }
 
 function splitHeader(value: string | null): string[] {
-  return value?.split(",").map((item) => item.trim()).filter(Boolean) ?? []
+  return (
+    value
+      ?.split(",")
+      .map((item) => item.trim())
+      .filter(Boolean) ?? []
+  )
 }
 
 function validIp(value: string | null | undefined): string | null {
@@ -54,7 +59,10 @@ export function getClientIpMetadata(headers: Headers) {
   return { ipAddress: null, ipCountry: null }
 }
 
-export function formatIpLocation(countryCode: string | null | undefined, countryName?: string | null) {
+export function formatIpLocation(
+  countryCode: string | null | undefined,
+  countryName?: string | null
+) {
   if (countryName && countryCode) return `${countryName} (${countryCode})`
   if (countryName) return countryName
   if (!countryCode) return ""

@@ -7,7 +7,11 @@ const MAX_CSV_ROWS = 5000
 
 function parseCsv(text: string) {
   const lines = text.split(/\r?\n/).filter(Boolean)
-  const headers = lines.shift()?.split(",").map((h) => h.trim()) ?? []
+  const headers =
+    lines
+      .shift()
+      ?.split(",")
+      .map((h) => h.trim()) ?? []
   return lines.map((line, index) => {
     const values = line.split(",").map((v) => v.trim())
     return {

@@ -17,7 +17,7 @@ describe("attendanceRowsToCsv", () => {
     ])
 
     expect(csv).toContain("學生姓名,學號,課次日期,點名狀態,點名時間,IP 位址,IP 國家,裝置資訊")
-    expect(csv).toContain('127.0.0.1,Taiwan (TW),Vitest')
+    expect(csv).toContain("127.0.0.1,Taiwan (TW),Vitest")
     expect(csv).toContain("2026-05-19T08:00:00+08:00")
   })
 

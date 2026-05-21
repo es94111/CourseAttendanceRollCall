@@ -34,7 +34,8 @@ export async function GET(request: Request) {
     const startDate = url.searchParams.get("startDate")
     const endDate = url.searchParams.get("endDate")
     const eventTypeRaw = url.searchParams.get("eventType")
-    const eventType = eventTypeRaw && ALLOWED_EVENT_TYPES.has(eventTypeRaw) ? eventTypeRaw : undefined
+    const eventType =
+      eventTypeRaw && ALLOWED_EVENT_TYPES.has(eventTypeRaw) ? eventTypeRaw : undefined
     const where: any = {
       eventType,
       actorEmail: url.searchParams.get("actorEmail")
