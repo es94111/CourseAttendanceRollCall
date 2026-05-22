@@ -7,6 +7,16 @@ import { parseTokenSlot } from "@/lib/token-slot"
 import { attendanceStatusLabel } from "@/lib/status-label"
 import { SecureSignOutButton } from "@/components/shared/SecureSignOutButton"
 
+type CheckinInfo = {
+  courseName: string
+  sessionStatus: string
+  officialStartTime: string | null
+  attendance: {
+    status: string
+    attendedAt: string | null
+  } | null
+}
+
 function CheckinContent() {
   const params = useSearchParams()
   const token = params.get("token") ?? ""
@@ -22,10 +32,13 @@ function CheckinContent() {
     detail: string
   } | null>(null)
   const [currentEmail, setCurrentEmail] = useState<string | null>(null)
+  const [checkinInfo, setCheckinInfo] = useState<CheckinInfo | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [autoSubmitted, setAutoSubmitted] = useState(false)
   const expired = remaining <= 0
   const hasCheckinParams = Boolean(token && sessionId)
+  const completedAttendance = checkinInfo?.attendance ?? null
+  const courseName = checkinInfo?.courseName ?? "課程點名"
 
   useEffect(() => {
     const tick = () => {
@@ -41,6 +54,30 @@ function CheckinContent() {
     const interval = setInterval(tick, 1000)
     return () => clearInterval(interval)
   }, [gracePeriodSeconds, slot])
+
+  useEffect(() => {
+    if (!sessionId) return
+    let cancelled = false
+    void fetch(`/api/checkin/sessions/${encodeURIComponent(sessionId)}`)
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data: CheckinInfo | null) => {
+        if (cancelled || !data) return
+        setCheckinInfo(data)
+        if (data.attendance) {
+          setResult({
+            kind: "success",
+            title: "已完成點名",
+            detail: buildCompletionDetail(data.attendance.status, data.attendance.attendedAt)
+          })
+        }
+      })
+      .catch(() => {
+        // The QR token can still be submitted even if this display summary fails.
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [sessionId])
 
   async function submit() {
     if (!hasCheckinParams) {
@@ -74,10 +111,21 @@ function CheckinContent() {
           ? {
               kind: "success",
               title: body.message ?? "點名成功",
-              detail: `狀態：${attendanceStatusLabel(body.status)}`
+              detail: buildCompletionDetail(body.status, body.attendedAt)
             }
           : { kind: "error", title: "點名失敗", detail: body.error ?? "請重新掃描 QR Code" }
       )
+      if (response.ok) {
+        setCheckinInfo((current) => ({
+          courseName: body.courseName ?? current?.courseName ?? "課程點名",
+          sessionStatus: current?.sessionStatus ?? "active",
+          officialStartTime: current?.officialStartTime ?? null,
+          attendance: {
+            status: body.status,
+            attendedAt: body.attendedAt ?? null
+          }
+        }))
+      }
     } catch {
       setResult({ kind: "error", title: "網路異常", detail: "請重新掃描 QR Code" })
     } finally {
@@ -86,7 +134,7 @@ function CheckinContent() {
   }
 
   useEffect(() => {
-    if (!hasCheckinParams || autoSubmitted) return
+    if (!hasCheckinParams || autoSubmitted || completedAttendance) return
     let cancelled = false
     void getSession().then((session) => {
       if (cancelled || !session) return
@@ -98,7 +146,7 @@ function CheckinContent() {
       cancelled = true
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoSubmitted, hasCheckinParams, sessionId, token])
+  }, [autoSubmitted, completedAttendance, hasCheckinParams, sessionId, token])
 
   function login() {
     void signIn("google", { callbackUrl: window.location.href })
@@ -134,6 +182,18 @@ function CheckinContent() {
         </div>
 
         <section className="panel" style={{ marginTop: 0, padding: "22px 22px 24px" }}>
+          <div className="mb-5 text-center">
+            <p className="text-muted" style={{ margin: 0, fontSize: "0.8125rem" }}>
+              課程
+            </p>
+            <h1 style={{ margin: "2px 0 0", fontSize: "1.35rem" }}>{courseName}</h1>
+            {checkinInfo?.officialStartTime && (
+              <p className="text-muted" style={{ margin: "4px 0 0", fontSize: "0.875rem" }}>
+                點名時間：{formatDateTime(checkinInfo.officialStartTime)}
+              </p>
+            )}
+          </div>
+
           {/* Status header */}
           {!hasCheckinParams ? (
             <StatusHeader
@@ -366,6 +426,25 @@ function Spinner() {
       />
     </svg>
   )
+}
+
+function buildCompletionDetail(status: string | null | undefined, attendedAt: string | null | undefined) {
+  const parts = [`狀態：${attendanceStatusLabel(status)}`]
+  if (attendedAt) parts.push(`簽到時間：${formatDateTime(attendedAt)}`)
+  return parts.join(" · ")
+}
+
+function formatDateTime(value: string) {
+  return new Intl.DateTimeFormat("zh-TW", {
+    timeZone: "Asia/Taipei",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false
+  }).format(new Date(value))
 }
 
 export default function CheckinPage() {
