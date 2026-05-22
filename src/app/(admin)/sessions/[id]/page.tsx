@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { notFound } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { QRCodeDisplay } from "@/components/admin/QRCodeDisplay"
@@ -60,6 +61,14 @@ export default async function SessionPage({ params }: any) {
                 ? "已作廢"
                 : session.status}
         </span>
+      </div>
+      <div className="toolbar">
+        <p className="text-muted" style={{ margin: 0 }}>
+          投影點名時可使用獨立 QRCode 展示頁，避免顯示管理後台。
+        </p>
+        <Link className="btn secondary" href={`/sessions/${session.id}/display`} target="_blank">
+          開啟 QRCode 展示頁
+        </Link>
       </div>
       <QRCodeDisplay sessionId={session.id} initialStatus={session.status} />
       <SessionControls

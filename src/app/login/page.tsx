@@ -32,7 +32,7 @@ export default async function LoginPage({
     }
     const domains = await prisma.allowedEmailDomain.findMany({ select: { domain: true } })
     const authorizationParams = domains.length === 1 ? { hd: domains[0].domain } : undefined
-    await signIn("google", { redirectTo: "/dashboard" }, authorizationParams)
+    await signIn("google", { redirectTo: "/post-login" }, authorizationParams)
   }
 
   return (

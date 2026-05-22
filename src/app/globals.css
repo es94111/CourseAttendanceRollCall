@@ -733,6 +733,82 @@ tbody tr:last-child td {
 }
 
 /* ===========================================================
+   QR display page
+   =========================================================== */
+.display-page {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: clamp(16px, 3vw, 28px);
+  padding: clamp(18px, 4vw, 44px);
+  background:
+    radial-gradient(circle at top left, rgba(13, 148, 136, 0.14), transparent 34rem),
+    linear-gradient(180deg, #ffffff 0%, var(--color-primary-50) 100%);
+}
+
+.display-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.display-header h1 {
+  font-size: clamp(2rem, 3vw, 3.25rem);
+  letter-spacing: 0;
+  margin-bottom: 0.2em;
+}
+
+.display-header p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: clamp(1rem, 1.5vw, 1.25rem);
+}
+
+.display-eyebrow {
+  margin-bottom: 6px !important;
+  color: var(--color-primary-700) !important;
+  font-size: 0.875rem !important;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.display-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.display-qr-stage {
+  display: grid;
+  place-items: center;
+  min-height: 0;
+}
+
+.display-qr-stage .qr-panel {
+  width: min(760px, 100%);
+  margin: 0;
+  padding: clamp(22px, 4vw, 44px);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+}
+
+.display-qr-stage .qr-panel img {
+  width: min(58vh, 560px, 100%);
+  max-width: 560px;
+}
+
+.display-note {
+  margin: 0;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: clamp(0.9375rem, 1.4vw, 1.125rem);
+}
+
+/* ===========================================================
    Navigation header
    =========================================================== */
 .app-header {
