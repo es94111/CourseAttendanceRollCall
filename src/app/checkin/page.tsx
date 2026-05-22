@@ -4,6 +4,7 @@ import { Suspense, useEffect, useMemo, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { getSession, signIn } from "next-auth/react"
 import { parseTokenSlot } from "@/lib/token-slot"
+import { attendanceStatusLabel } from "@/lib/status-label"
 import { SecureSignOutButton } from "@/components/shared/SecureSignOutButton"
 
 function CheckinContent() {
@@ -70,7 +71,11 @@ function CheckinContent() {
       }
       setResult(
         response.ok
-          ? { kind: "success", title: body.message ?? "點名成功", detail: `狀態：${body.status}` }
+          ? {
+              kind: "success",
+              title: body.message ?? "點名成功",
+              detail: `狀態：${attendanceStatusLabel(body.status)}`
+            }
           : { kind: "error", title: "點名失敗", detail: body.error ?? "請重新掃描 QR Code" }
       )
     } catch {

@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation"
 import { QRCodeDisplay } from "@/components/admin/QRCodeDisplay"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { sessionStatusLabel } from "@/lib/status-label"
 
 export default async function SessionDisplayPage({ params }: any) {
   const sessionUser = await auth()
@@ -33,21 +34,13 @@ export default async function SessionDisplayPage({ params }: any) {
         </div>
         <span className={`badge ${session.status}`}>
           {session.status === "active" && <span className="dot" aria-hidden />}
-          {session.status === "active"
-            ? "進行中"
-            : session.status === "closed"
-              ? "已關閉"
-              : session.status === "voided"
-                ? "已作廢"
-                : session.status}
+          {sessionStatusLabel(session.status)}
         </span>
       </header>
 
       <section className="display-qr-stage" aria-label="QRCode 展示區">
         <QRCodeDisplay sessionId={session.id} initialStatus={session.status} />
       </section>
-
-      <p className="display-note">學生掃描後會進入手機點名頁，不會看到管理後台。</p>
     </main>
   )
 }

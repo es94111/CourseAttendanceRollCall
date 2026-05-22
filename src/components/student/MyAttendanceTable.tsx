@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import { attendanceStatusLabel } from "@/lib/status-label"
 
 interface DetailRow {
   sessionId: string
@@ -100,7 +101,9 @@ export function MyAttendanceTable({ rows }: { rows: AttendanceSummaryRow[] }) {
                       <tr key={detail.sessionId}>
                         <td>{detail.date}</td>
                         <td>
-                          <span className="badge">{detail.status}</span>
+                          <span className={`badge ${detail.status}`}>
+                            {attendanceStatusLabel(detail.status)}
+                          </span>
                         </td>
                         <td>{detail.attendedAt ?? "-"}</td>
                       </tr>
