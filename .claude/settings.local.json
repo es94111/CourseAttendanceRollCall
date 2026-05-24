@@ -56,7 +56,9 @@
       "Bash(git diff *)",
       "Bash(echo \"TSC=$?\")",
       "Bash(npx @tailwindcss/upgrade@latest --force)",
-      "Bash(echo \"BUILD=$?\")"
+      "Bash(echo \"BUILD=$?\")",
+      "Bash(rm prisma-tree.tmp.json)",
+      "Bash([ -d \".next/standalone/node_modules/$pkg\" ])"
     ]
   }
 }

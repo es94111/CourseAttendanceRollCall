@@ -33,8 +33,12 @@ const nextConfig: NextConfig = {
       "./node_modules/confbox/**",
       "./node_modules/exsolve/**",
       "./node_modules/chokidar/**",
+      "./node_modules/readdirp/**",
       "./node_modules/pkg-types/**",
       "./node_modules/perfect-debounce/**",
+      "./node_modules/destr/**",
+      "./node_modules/fast-check/**",
+      "./node_modules/pure-rand/**",
       "./node_modules/@standard-schema/spec/**"
     ]
   },
