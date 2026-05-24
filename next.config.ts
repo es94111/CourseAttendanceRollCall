@@ -16,9 +16,26 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/**/*": [
       "./prisma/**/*",
-      "./node_modules/prisma/build/**/*",
-      "./node_modules/prisma/package.json",
-      "./node_modules/@prisma/engines/**/*"
+      "./prisma.config.ts",
+      "./node_modules/prisma/**",
+      "./node_modules/@prisma/**",
+      "./node_modules/effect/**",
+      "./node_modules/c12/**",
+      "./node_modules/empathic/**",
+      "./node_modules/deepmerge-ts/**",
+      "./node_modules/dotenv/**",
+      "./node_modules/rc9/**",
+      "./node_modules/defu/**",
+      "./node_modules/jiti/**",
+      "./node_modules/giget/**",
+      "./node_modules/ohash/**",
+      "./node_modules/pathe/**",
+      "./node_modules/confbox/**",
+      "./node_modules/exsolve/**",
+      "./node_modules/chokidar/**",
+      "./node_modules/pkg-types/**",
+      "./node_modules/perfect-debounce/**",
+      "./node_modules/@standard-schema/spec/**"
     ]
   },
   async headers() {
