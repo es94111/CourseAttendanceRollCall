@@ -10,7 +10,8 @@ import { ExistingStudentPicker } from "@/components/admin/ExistingStudentPicker"
 import { ArchiveCourseButton } from "@/components/admin/ArchiveCourseButton"
 import { CourseStudentTable } from "@/components/admin/CourseStudentTable"
 
-export default async function CourseDetailPage({ params }: any) {
+export default async function CourseDetailPage(props: any) {
+  const params = await props.params;
   const course = await prisma.course.findUnique({
     where: { id: params.id },
     include: {

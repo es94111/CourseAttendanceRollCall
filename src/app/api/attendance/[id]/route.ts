@@ -3,7 +3,8 @@ import { error, handleRouteError, json, parseJson, requireAdmin } from "@/lib/ap
 import { manualAttendanceSchema } from "@/lib/validation"
 import { writeAuditLog } from "@/lib/audit"
 
-export async function PUT(request: Request, { params }: any) {
+export async function PUT(request: Request, props: any) {
+  const params = await props.params;
   const guard = await requireAdmin()
   if ("response" in guard) return guard.response
   const parsed = await parseJson(request, manualAttendanceSchema)

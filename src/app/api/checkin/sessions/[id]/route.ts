@@ -5,7 +5,8 @@ import { prisma } from "@/lib/prisma"
 import { expireSessionIfNeeded } from "@/lib/session-expiry"
 import { toTaipeiIso } from "@/lib/time"
 
-export async function GET(_request: Request, { params }: any) {
+export async function GET(_request: Request, props: any) {
+  const params = await props.params;
   try {
     await expireSessionIfNeeded(params.id)
     const session = await prisma.attendanceSession.findUnique({

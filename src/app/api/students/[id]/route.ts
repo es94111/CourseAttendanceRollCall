@@ -3,7 +3,8 @@ import { error, handleRouteError, json, parseJson, requireAdmin } from "@/lib/ap
 import { studentSchema } from "@/lib/validation"
 import { normalizeEmail } from "@/lib/email"
 
-export async function PATCH(request: Request, { params }: any) {
+export async function PATCH(request: Request, props: any) {
+  const params = await props.params;
   const guard = await requireAdmin()
   if ("response" in guard) return guard.response
   const parsed = await parseJson(request, studentSchema)
@@ -30,7 +31,8 @@ export async function PATCH(request: Request, { params }: any) {
   }
 }
 
-export async function DELETE(_request: Request, { params }: any) {
+export async function DELETE(_request: Request, props: any) {
+  const params = await props.params;
   const guard = await requireAdmin()
   if ("response" in guard) return guard.response
   try {

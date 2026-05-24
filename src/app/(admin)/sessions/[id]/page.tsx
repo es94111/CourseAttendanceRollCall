@@ -5,7 +5,8 @@ import { QRCodeDisplay } from "@/components/admin/QRCodeDisplay"
 import { AttendanceTable } from "@/components/admin/AttendanceTable"
 import { SessionControls } from "@/components/admin/SessionControls"
 
-export default async function SessionPage({ params }: any) {
+export default async function SessionPage(props: any) {
+  const params = await props.params;
   const session = await prisma.attendanceSession.findUnique({
     where: { id: params.id },
     include: {

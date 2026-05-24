@@ -3,7 +3,8 @@ import { handleRouteError, json, requireAdmin } from "@/lib/api"
 import { calculateStats } from "@/lib/attendance-stats"
 import { endOfTaipeiDay, startOfTaipeiDay } from "@/lib/time"
 
-export async function GET(request: Request, { params }: any) {
+export async function GET(request: Request, props: any) {
+  const params = await props.params;
   const guard = await requireAdmin()
   if ("response" in guard) return guard.response
   try {

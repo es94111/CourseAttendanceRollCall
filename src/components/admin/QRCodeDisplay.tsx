@@ -13,10 +13,11 @@ export function QRCodeDisplay({
   const [remaining, setRemaining] = useState(0)
   const [total, setTotal] = useState(0)
   const [status, setStatus] = useState(initialStatus)
-
-  useEffect(() => {
+  const [prevInitialStatus, setPrevInitialStatus] = useState(initialStatus)
+  if (prevInitialStatus !== initialStatus) {
+    setPrevInitialStatus(initialStatus)
     setStatus(initialStatus)
-  }, [initialStatus])
+  }
 
   useEffect(() => {
     if (status !== "active") return

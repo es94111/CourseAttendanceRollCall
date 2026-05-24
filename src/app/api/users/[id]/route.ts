@@ -2,7 +2,8 @@ import { prisma } from "@/lib/prisma"
 import { error, handleRouteError, json, requireAdmin } from "@/lib/api"
 import { writeAuditLog } from "@/lib/audit"
 
-export async function DELETE(_request: Request, { params }: any) {
+export async function DELETE(_request: Request, props: any) {
+  const params = await props.params;
   const guard = await requireAdmin()
   if ("response" in guard) return guard.response
   if (guard.user.id === params.id) return error("不可刪除自己", 400)

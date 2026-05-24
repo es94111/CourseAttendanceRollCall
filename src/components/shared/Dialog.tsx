@@ -43,7 +43,7 @@ export function Dialog({
             type="button"
             onClick={onClose}
             aria-label="關閉對話視窗"
-            className="inline-grid place-items-center shrink-0 rounded-md text-[color:var(--color-text-muted)] hover:bg-[color:var(--color-bg-muted)] hover:text-[color:var(--color-text)] transition-colors"
+            className="inline-grid place-items-center shrink-0 rounded-md text-(--color-text-muted) hover:bg-(--color-bg-muted) hover:text-(--color-text) transition-colors"
             style={{ width: 32, height: 32 }}
           >
             <svg

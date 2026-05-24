@@ -4,7 +4,8 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { sessionStatusLabel } from "@/lib/status-label"
 
-export default async function SessionDisplayPage({ params }: any) {
+export default async function SessionDisplayPage(props: any) {
+  const params = await props.params;
   const sessionUser = await auth()
   if (!sessionUser?.user || sessionUser.user.role !== "admin") redirect("/login")
 

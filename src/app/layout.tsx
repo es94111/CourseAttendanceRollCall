@@ -17,7 +17,7 @@ export const viewport: Viewport = {
 
 function BlockedPage({ reason }: { reason: string }) {
   return (
-    <main className="min-h-dvh grid place-items-center px-4 py-10 bg-gradient-to-b from-primary-50 via-paper to-paper">
+    <main className="min-h-dvh grid place-items-center px-4 py-10 bg-linear-to-b from-primary-50 via-paper to-paper">
       <section className="panel w-full max-w-md" style={{ marginTop: 0, padding: "28px 24px" }}>
         <div className="flex items-start gap-3">
           <span className="inline-grid place-items-center w-11 h-11 rounded-full bg-warning/15 text-[#92400e] shrink-0">

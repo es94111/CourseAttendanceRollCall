@@ -3,7 +3,8 @@ import { prisma } from "@/lib/prisma"
 import { error, handleRouteError, json, parseJson, requireAdmin } from "@/lib/api"
 import { writeAuditLog } from "@/lib/audit"
 
-export async function POST(request: Request, { params }: any) {
+export async function POST(request: Request, props: any) {
+  const params = await props.params;
   const guard = await requireAdmin()
   if ("response" in guard) return guard.response
   const parsed = await parseJson(request, z.object({ reason: z.string().trim().min(1) }))

@@ -3,7 +3,8 @@ import { coursePatchSchema } from "@/lib/validation"
 import { error, handleRouteError, json, parseJson, requireAdmin } from "@/lib/api"
 import { serializeCourse } from "@/lib/serializers"
 
-export async function GET(_request: Request, { params }: any) {
+export async function GET(_request: Request, props: any) {
+  const params = await props.params;
   const guard = await requireAdmin()
   if ("response" in guard) return guard.response
   try {
@@ -32,7 +33,8 @@ export async function GET(_request: Request, { params }: any) {
   }
 }
 
-export async function PUT(request: Request, { params }: any) {
+export async function PUT(request: Request, props: any) {
+  const params = await props.params;
   const guard = await requireAdmin()
   if ("response" in guard) return guard.response
   const parsed = await parseJson(request, coursePatchSchema)
@@ -50,7 +52,8 @@ export async function PUT(request: Request, { params }: any) {
   }
 }
 
-export async function DELETE(_request: Request, { params }: any) {
+export async function DELETE(_request: Request, props: any) {
+  const params = await props.params;
   const guard = await requireAdmin()
   if ("response" in guard) return guard.response
   try {

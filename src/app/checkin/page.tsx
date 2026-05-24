@@ -158,10 +158,10 @@ function CheckinContent() {
   const inGracePeriod = expired && acceptedRemaining > 0
 
   return (
-    <main className="min-h-dvh grid place-items-start sm:place-items-center px-4 py-6 bg-gradient-to-b from-primary-50 via-paper to-paper">
+    <main className="min-h-dvh grid place-items-start sm:place-items-center px-4 py-6 bg-linear-to-b from-primary-50 via-paper to-paper">
       <div className="w-full max-w-md">
         <div className="flex items-center justify-center gap-2 mb-5">
-          <span className="inline-grid place-items-center w-9 h-9 rounded-xl bg-gradient-to-br from-primary-600 to-primary-300 text-white shadow-card">
+          <span className="inline-grid place-items-center w-9 h-9 rounded-xl bg-linear-to-br from-primary-600 to-primary-300 text-white shadow-card">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="18"

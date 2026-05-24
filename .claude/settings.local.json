@@ -44,7 +44,19 @@
       "PowerShell(npx tsc --noEmit 2>&1 | Select-Object -Last 30)",
       "PowerShell(npx prisma generate 2>&1 | Select-Object -Last 10)",
       "Bash(npx --no-install prisma generate)",
-      "Bash(npx --no-install next lint)"
+      "Bash(npx --no-install next lint)",
+      "Bash(npm outdated *)",
+      "Bash(echo \"EXITCODE=$?\")",
+      "Bash(echo \"TSC_EXIT=$?\")",
+      "Bash(echo \"LINT_EXIT=$?\")",
+      "Bash(npm test *)",
+      "Bash(echo \"TEST_EXIT=$?\")",
+      "Bash(echo \"BUILD_EXIT=$?\")",
+      "Bash(npx @next/codemod@latest next-async-request-api . --force)",
+      "Bash(git diff *)",
+      "Bash(echo \"TSC=$?\")",
+      "Bash(npx @tailwindcss/upgrade@latest --force)",
+      "Bash(echo \"BUILD=$?\")"
     ]
   }
 }

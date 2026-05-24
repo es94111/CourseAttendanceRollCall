@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useState, useTransition } from "react"
+
 import { Dialog } from "@/components/shared/Dialog"
 import { useToast } from "@/components/shared/ToastProvider"
 import { formatIpLocation } from "@/lib/ip-format"
@@ -36,6 +37,11 @@ export function AttendanceTable({
   const { showToast } = useToast()
   const [error, setError] = useState("")
   const [rows, setRows] = useState(records)
+  const [prevRecords, setPrevRecords] = useState(records)
+  if (prevRecords !== records) {
+    setPrevRecords(records)
+    setRows(records)
+  }
   const [overrideTarget, setOverrideTarget] = useState<{
     student: StudentRow
     status: string
@@ -47,10 +53,6 @@ export function AttendanceTable({
     () => new Map(rows.map((record) => [record.studentId, record])),
     [rows]
   )
-
-  useEffect(() => {
-    setRows(records)
-  }, [records])
 
   async function refreshRecords() {
     const response = await fetch(`/api/sessions/${sessionId}`)
