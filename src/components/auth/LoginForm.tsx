@@ -61,18 +61,8 @@ export function LoginForm({
       widgetIdRef.current = window.turnstile.render(containerRef.current, {
         sitekey: turnstileSiteKey,
         callback: () => setTokenReady(true),
-        "error-callback": () => {
-          setTokenReady(false)
-          if (widgetIdRef.current && window.turnstile) {
-            window.turnstile.reset(widgetIdRef.current)
-          }
-        },
-        "expired-callback": () => {
-          setTokenReady(false)
-          if (widgetIdRef.current && window.turnstile) {
-            window.turnstile.reset(widgetIdRef.current)
-          }
-        },
+        "error-callback": resetWidget,
+        "expired-callback": resetWidget,
         action: "login",
         appearance: "always",
         retry: "auto",
@@ -114,7 +104,7 @@ export function LoginForm({
         widgetIdRef.current = null
       }
     }
-  }, [turnstileSiteKey])
+  }, [turnstileSiteKey, resetWidget])
 
   useEffect(() => {
     if (tokenReady && pendingSubmit && formRef.current) {
