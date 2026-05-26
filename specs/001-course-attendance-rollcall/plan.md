@@ -12,7 +12,7 @@
 
 ## 技術背景（Technical Context）
 
-**語言／版本**：TypeScript 5.x + Node.js 20 LTS（Next.js 要求）
+**語言／版本**：TypeScript 6.x + Node.js 24 LTS（Next.js 16 要求）
 
 **主要依賴**：
 - `next`（最新版，App Router）

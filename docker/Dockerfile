@@ -1,9 +1,9 @@
-FROM node:20-alpine AS deps
+FROM node:24-alpine AS deps
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 
-FROM node:20-alpine AS builder
+FROM node:24-alpine AS builder
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 ARG DATABASE_URL
@@ -28,7 +28,7 @@ RUN npm run build
 
 # Isolated install: only prisma CLI + its transitive deps.
 # Avoids missing modules (e.g. `effect`) when cherry-picking from the main node_modules.
-FROM node:20-alpine AS prisma-cli
+FROM node:24-alpine AS prisma-cli
 WORKDIR /prisma-cli
 RUN apk add --no-cache jq
 COPY package.json ./
@@ -37,7 +37,7 @@ RUN PRISMA_VERSION=$(jq -r '.devDependencies.prisma // .dependencies.prisma' pac
  && echo '{"name":"prisma-cli-isolated","version":"0.0.0","private":true}' > package.json \
  && npm install --no-package-lock --no-fund --no-audit prisma@${PRISMA_VERSION}
 
-FROM node:20-alpine AS runner
+FROM node:24-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
