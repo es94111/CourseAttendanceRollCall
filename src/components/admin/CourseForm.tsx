@@ -23,7 +23,8 @@ export function CourseForm({ course }: { course?: CourseFormValue }) {
     setError("")
     setMessage("")
 
-    const formData = new FormData(event.currentTarget)
+    const form = event.currentTarget
+    const formData = new FormData(form)
     const payload = {
       name: String(formData.get("name") ?? "").trim(),
       dayOfWeek: Number(formData.get("dayOfWeek")),
@@ -50,7 +51,7 @@ export function CourseForm({ course }: { course?: CourseFormValue }) {
       setMessage(course?.id ? "課程已更新" : "課程已新增")
     }
 
-    if (!course?.id) event.currentTarget.reset()
+    if (!course?.id) form.reset()
     startTransition(() => router.refresh())
   }
 
@@ -81,7 +82,12 @@ export function CourseForm({ course }: { course?: CourseFormValue }) {
         </div>
         <div className="field">
           <label>遲到分鐘</label>
-          <input name="lateThresholdMinutes" type="number" min={0} defaultValue={course?.lateThresholdMinutes ?? 0} />
+          <input
+            name="lateThresholdMinutes"
+            type="number"
+            min={0}
+            defaultValue={course?.lateThresholdMinutes ?? 0}
+          />
         </div>
       </div>
       <button className="btn" type="submit" disabled={isPending}>
