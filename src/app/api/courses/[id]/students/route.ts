@@ -5,7 +5,7 @@ import { normalizeEmail } from "@/lib/email"
 
 const addStudentSchema = z.object({
   studentId: z.string().min(1).optional(),
-  studentCode: z.string().trim().min(1).optional(),
+  studentCode: z.string().trim().optional().or(z.literal("")),
   name: z.string().trim().min(1).optional(),
   googleEmail: z.string().trim().email("Google Email 格式不符").optional().or(z.literal(""))
 })
