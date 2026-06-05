@@ -7,7 +7,7 @@ import { RemoveStudentFromCourseButton } from "@/components/admin/RemoveStudentF
 
 interface CourseStudentRow {
   id: string
-  studentCode: string
+  studentCode: string | null
   name: string
   googleEmail: string | null
 }
@@ -27,12 +27,12 @@ export function CourseStudentTable({
     const normalized = query.trim().toLowerCase()
     return students
       .filter((student) =>
-        [student.studentCode, student.name, student.googleEmail ?? ""].join(" ").toLowerCase().includes(normalized)
+        [student.studentCode ?? "", student.name, student.googleEmail ?? ""].join(" ").toLowerCase().includes(normalized)
       )
       .sort((a, b) => {
         if (sortKey === "name") return a.name.localeCompare(b.name, "zh-Hant")
         if (sortKey === "email") return (a.googleEmail ?? "").localeCompare(b.googleEmail ?? "")
-        return a.studentCode.localeCompare(b.studentCode)
+        return (a.studentCode ?? "").localeCompare(b.studentCode ?? "")
       })
   }, [query, sortKey, students])
 
@@ -63,7 +63,7 @@ export function CourseStudentTable({
           <tbody>
             {rows.map((student) => (
               <tr key={student.id}>
-                <td>{student.studentCode}</td>
+                <td>{student.studentCode ?? "-"}</td>
                 <td>{student.name}</td>
                 <td>{student.googleEmail ?? "-"}</td>
                 <td>{readonly ? "-" : <EditStudentButton student={student} />}</td>

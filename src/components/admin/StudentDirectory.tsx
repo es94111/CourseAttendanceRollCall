@@ -6,7 +6,7 @@ import { DeleteStudentButton } from "@/components/admin/DeleteStudentButton"
 
 interface StudentRow {
   id: string
-  studentCode: string
+  studentCode: string | null
   name: string
   googleEmail: string | null
   courses: Array<{ id: string; name: string }>
@@ -18,7 +18,7 @@ export function StudentDirectory({ students }: { students: StudentRow[] }) {
   const rows = useMemo(() => {
     const normalized = query.trim().toLowerCase()
     return students.filter((student) => {
-      const matches = [student.studentCode, student.name, student.googleEmail ?? "", ...student.courses.map((course) => course.name)]
+      const matches = [student.studentCode ?? "", student.name, student.googleEmail ?? "", ...student.courses.map((course) => course.name)]
         .join(" ")
         .toLowerCase()
         .includes(normalized)
@@ -51,7 +51,7 @@ export function StudentDirectory({ students }: { students: StudentRow[] }) {
           <tbody>
             {rows.map((student) => (
               <tr key={student.id}>
-                <td>{student.studentCode}</td>
+                <td>{student.studentCode ?? "-"}</td>
                 <td>{student.name}</td>
                 <td>{student.googleEmail ?? "-"}</td>
                 <td>{student.courses.map((course) => course.name).join("、") || "-"}</td>

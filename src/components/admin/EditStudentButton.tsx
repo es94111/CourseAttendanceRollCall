@@ -6,7 +6,7 @@ import { Dialog } from "@/components/shared/Dialog"
 
 interface StudentInput {
   id: string
-  studentCode: string
+  studentCode: string | null
   name: string
   googleEmail: string | null
 }
@@ -52,7 +52,7 @@ export function EditStudentButton({ student }: { student: StudentInput }) {
         <form onSubmit={onSubmit}>
           <div className="field">
             <label>學號</label>
-            <input name="studentCode" defaultValue={student.studentCode} required />
+            <input name="studentCode" defaultValue={student.studentCode ?? ""} />
           </div>
           <div className="field">
             <label>姓名</label>
@@ -61,6 +61,9 @@ export function EditStudentButton({ student }: { student: StudentInput }) {
           <div className="field">
             <label>Google Email</label>
             <input name="googleEmail" type="email" defaultValue={student.googleEmail ?? ""} />
+            <p className="text-muted" style={{ margin: "6px 0 0", fontSize: "0.8125rem" }}>
+              清空 Email 並儲存即可解除 Google 帳號綁定。
+            </p>
           </div>
           {error && <p style={{ color: "#b42318" }}>{error}</p>}
           <div className="toolbar dialog-actions">

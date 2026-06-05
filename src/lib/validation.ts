@@ -24,7 +24,7 @@ export const coursePatchSchema = courseBaseSchema
   )
 
 export const studentSchema = z.object({
-  studentCode: z.string().trim().min(1, "學號必填"),
+  studentCode: z.string().trim().optional().or(z.literal("")),
   name: z.string().trim().min(1, "姓名必填"),
   googleEmail: z.string().trim().email("Google Email 格式不符").optional().or(z.literal(""))
 })
@@ -47,7 +47,11 @@ export const sessionSettingsPatchSchema = z.object({
 })
 
 export const roleSchema = z.object({ role: z.enum(["admin", "student"]) })
-export const attendanceSchema = z.object({ token: z.string().min(1), sessionId: z.string().min(1) })
+export const attendanceSchema = z.object({
+  token: z.string().min(1),
+  sessionId: z.string().min(1),
+  studentName: z.string().trim().min(1).optional()
+})
 export const leaveSchema = z.object({
   studentId: z.string().min(1),
   sessionId: z.string().min(1),

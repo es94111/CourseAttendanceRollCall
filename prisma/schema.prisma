@@ -45,6 +45,8 @@ enum AuditEventType {
   connection_access_block
   allowed_email_domains_update
   system_setting_update
+  student_email_bind
+  student_email_unbind
 }
 
 model User {
@@ -108,7 +110,7 @@ model VerificationToken {
 
 model Student {
   id          String   @id @default(cuid())
-  studentCode String   @unique
+  studentCode String?  @unique
   name        String
   googleEmail String?  @unique
   userId      String?  @unique

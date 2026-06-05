@@ -26,7 +26,10 @@ const eventLabels: Record<string, string> = {
   session_settings_update: "更新點名設定",
   connection_access_update: "更新連線限制",
   connection_access_block: "封鎖連線",
-  allowed_email_domains_update: "更新 Google 登入網域"
+  allowed_email_domains_update: "更新 Google 登入網域",
+  system_setting_update: "更新系統設定",
+  student_email_bind: "綁定學生 Email",
+  student_email_unbind: "解除學生 Email 綁定"
 }
 
 const targetLabels: Record<string, string> = {
@@ -38,6 +41,7 @@ const targetLabels: Record<string, string> = {
   sessionId: "點名 Session ID",
   studentId: "學生 ID",
   studentCode: "學號",
+  studentName: "學生姓名",
   attendanceId: "點名記錄 ID",
   attendanceRecordId: "點名記錄 ID",
   recordId: "點名記錄 ID",
@@ -87,6 +91,10 @@ function formatTarget(log: AuditLogRow) {
       return "手動調整一筆點名記錄"
     case "delete_student_data":
       return target.studentCode ? `刪除學號 ${target.studentCode} 的學生個資` : "刪除學生個資"
+    case "student_email_bind":
+      return `綁定學生「${target.studentName ?? target.studentId ?? "未知"}」的 Google Email`
+    case "student_email_unbind":
+      return `解除學生「${target.studentName ?? target.studentId ?? "未知"}」的 Google Email 綁定`
     case "delete_user":
       return `刪除使用者 ${target.userEmail ?? "未知"}（角色 ${target.userRole ?? "未知"}）`
     case "export_attendance": {

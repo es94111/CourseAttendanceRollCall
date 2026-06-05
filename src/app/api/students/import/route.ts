@@ -48,25 +48,25 @@ export async function POST(request: Request) {
     let successCount = 0
 
     for (const row of rows) {
-      if (!row.studentCode || !row.name) {
-        errors.push({ row: row.row, reason: "學號與姓名為必填" })
+      if (!row.name) {
+        errors.push({ row: row.row, reason: "姓名為必填" })
         continue
       }
       if (row.googleEmail && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(row.googleEmail)) {
         errors.push({ row: row.row, reason: "Google Email 格式不符" })
         continue
       }
-      if (seenCodes.has(row.studentCode) || (row.googleEmail && seenEmails.has(row.googleEmail))) {
+      if ((row.studentCode && seenCodes.has(row.studentCode)) || (row.googleEmail && seenEmails.has(row.googleEmail))) {
         errors.push({ row: row.row, reason: "CSV 檔案內含重複資料" })
         continue
       }
-      seenCodes.add(row.studentCode)
+      if (row.studentCode) seenCodes.add(row.studentCode)
       if (row.googleEmail) seenEmails.add(row.googleEmail)
       try {
         await prisma.$transaction(async (tx) => {
           const student = await tx.student.create({
             data: {
-              studentCode: row.studentCode,
+              studentCode: row.studentCode || null,
               name: row.name,
               googleEmail: row.googleEmail || null
             }

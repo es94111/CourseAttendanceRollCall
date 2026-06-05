@@ -29,7 +29,11 @@ export async function POST(request: Request) {
   if ("response" in parsed) return parsed.response
   try {
     const student = await prisma.student.create({
-      data: { ...parsed.data, googleEmail: normalizeEmail(parsed.data.googleEmail) }
+      data: {
+        studentCode: parsed.data.studentCode || null,
+        name: parsed.data.name,
+        googleEmail: normalizeEmail(parsed.data.googleEmail)
+      }
     })
     return json(student, { status: 201 })
   } catch (cause: any) {

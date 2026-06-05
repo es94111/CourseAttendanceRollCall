@@ -5,7 +5,7 @@ import { Dialog } from "@/components/shared/Dialog"
 
 interface StatRow {
   studentId: string
-  studentCode: string
+  studentCode: string | null
   name: string
   onTimeCount: number
   lateCount: number
@@ -150,7 +150,7 @@ export function StatisticsPanel({
         <tbody>
           {filteredRows.map((row) => (
             <tr key={row.studentId}>
-              <td>{row.studentCode}</td>
+              <td>{row.studentCode ?? "-"}</td>
               <td>{row.name}</td>
               <td>{row.onTimeCount}</td>
               <td>{row.lateCount}</td>

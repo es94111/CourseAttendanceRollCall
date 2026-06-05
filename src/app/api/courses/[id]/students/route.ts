@@ -47,24 +47,24 @@ export async function POST(request: Request, props: any) {
     let studentId = parsed.data.studentId
 
     if (!studentId) {
-      if (!parsed.data.studentCode || !parsed.data.name) {
-        return error("新增學生需要學號與姓名", 400)
+      if (!parsed.data.name) {
+        return error("新增學生需要姓名", 400)
       }
+      const studentCode = parsed.data.studentCode || null
       const googleEmail = normalizeEmail(parsed.data.googleEmail)
-      const existing = await prisma.student.findFirst({
-        where: {
-          OR: [
-            { studentCode: parsed.data.studentCode },
-            ...(googleEmail ? [{ googleEmail }] : [])
-          ]
-        }
-      })
+      const existingCriteria = [
+        ...(studentCode ? [{ studentCode }] : []),
+        ...(googleEmail ? [{ googleEmail }] : [])
+      ]
+      const existing = existingCriteria.length
+        ? await prisma.student.findFirst({ where: { OR: existingCriteria } })
+        : null
       if (existing) {
         studentId = existing.id
       } else {
         const student = await prisma.student.create({
           data: {
-            studentCode: parsed.data.studentCode,
+            studentCode,
             name: parsed.data.name,
             googleEmail
           }
@@ -82,7 +82,7 @@ export async function POST(request: Request, props: any) {
     })
     return json({ message: "學生已加入課程" }, { status: 201 })
   } catch (cause: any) {
-    if (cause?.code === "P2002") return error("相同課程中學號重複", 400)
+    if (cause?.code === "P2002") return error("學號或 Google Email 已存在", 400)
     return handleRouteError(cause)
   }
 }

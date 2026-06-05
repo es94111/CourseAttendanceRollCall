@@ -12,7 +12,7 @@ interface Counts {
   enrolledCount: number
   latest?: {
     studentName: string
-    studentCode: string
+    studentCode: string | null
     status: string
     attendedAt: string | null
   } | null
@@ -315,7 +315,7 @@ export function SessionControls({
             <div className="text-sm" style={{ color: "var(--color-text)" }}>
               <strong>{counts.latest.studentName}</strong>
               <span className="text-muted" style={{ marginLeft: 6, fontSize: "0.8125rem" }}>
-                {counts.latest.studentCode}
+                {counts.latest.studentCode ?? "-"}
               </span>
             </div>
             {counts.latest.attendedAt && (

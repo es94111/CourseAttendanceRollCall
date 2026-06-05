@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState, useTransition } from "react"
 
 interface StudentOption {
   id: string
-  studentCode: string
+  studentCode: string | null
   name: string
   googleEmail: string | null
 }
@@ -66,7 +66,7 @@ export function ExistingStudentPicker({
           <option value="">選擇學生</option>
           {options.map((student) => (
             <option key={student.id} value={student.id}>
-              {student.studentCode} {student.name} {student.googleEmail ? `(${student.googleEmail})` : ""}
+              {student.studentCode ? `${student.studentCode} ` : ""}{student.name} {student.googleEmail ? `(${student.googleEmail})` : ""}
             </option>
           ))}
         </select>

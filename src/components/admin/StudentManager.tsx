@@ -47,15 +47,15 @@ export function StudentManager({ courseId }: { courseId: string }) {
       <form ref={formRef} onSubmit={onSubmit}>
         <div className="toolbar">
           <div className="field">
-            <label>學號</label>
-            <input name="studentCode" required />
+            <label>學號（選填）</label>
+            <input name="studentCode" />
           </div>
           <div className="field">
             <label>姓名</label>
             <input name="name" required />
           </div>
           <div className="field">
-            <label>Google Email</label>
+            <label>Google Email（選填）</label>
             <input name="googleEmail" type="email" />
           </div>
         </div>
@@ -64,6 +64,7 @@ export function StudentManager({ courseId }: { courseId: string }) {
         </button>
       </form>
       {message && <p>{message}</p>}
+      <p className="text-muted">可只填姓名；學生第一次掃 QR Code 時會用姓名綁定 Google Email。</p>
       {error && <p style={{ color: "#b42318" }}>{error}</p>}
     </section>
   )

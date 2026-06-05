@@ -35,6 +35,8 @@ function CheckinContent() {
   const [checkinInfo, setCheckinInfo] = useState<CheckinInfo | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [autoSubmitted, setAutoSubmitted] = useState(false)
+  const [requiresStudentName, setRequiresStudentName] = useState(false)
+  const [studentName, setStudentName] = useState("")
   const expired = remaining <= 0
   const hasCheckinParams = Boolean(token && sessionId)
   const completedAttendance = checkinInfo?.attendance ?? null
@@ -88,13 +90,21 @@ function CheckinContent() {
       })
       return
     }
+    if (requiresStudentName && !studentName.trim()) {
+      setResult({
+        kind: "error",
+        title: "請輸入姓名",
+        detail: "第一次簽到需要用課程名單中的姓名綁定 Google 帳號。"
+      })
+      return
+    }
     setIsSubmitting(true)
     setResult(null)
     try {
       const response = await fetch("/api/attendance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, sessionId })
+        body: JSON.stringify({ token, sessionId, studentName: studentName.trim() || undefined })
       })
       const body = await response.json()
       if (response.status === 401) {
@@ -115,7 +125,9 @@ function CheckinContent() {
             }
           : { kind: "error", title: "點名失敗", detail: body.error ?? "請重新掃描 QR Code" }
       )
+      setRequiresStudentName(Boolean(body.requiresStudentName))
       if (response.ok) {
+        setRequiresStudentName(false)
         setCheckinInfo((current) => ({
           courseName: body.courseName ?? current?.courseName ?? "課程點名",
           sessionStatus: current?.sessionStatus ?? "active",
@@ -253,6 +265,20 @@ function CheckinContent() {
                 returnTo={`/checkin?sessionId=${encodeURIComponent(sessionId)}&token=${encodeURIComponent(token)}&validitySeconds=${validitySeconds}&gracePeriodSeconds=${gracePeriodSeconds}`}
                 style={{ minHeight: 36, width: "100%" }}
               />
+            </div>
+          )}
+          {requiresStudentName && result?.kind !== "success" && (
+            <div className="field mt-4">
+              <label>姓名</label>
+              <input
+                value={studentName}
+                onChange={(event) => setStudentName(event.target.value)}
+                placeholder="請輸入課程名單上的姓名"
+                autoComplete="name"
+              />
+              <p className="text-muted" style={{ margin: "6px 0 0", fontSize: "0.8125rem" }}>
+                系統只會在本課程中找到唯一且尚未綁定 Email 的同名學生時完成綁定。
+              </p>
             </div>
           )}
           <div className="mt-5 grid gap-2">

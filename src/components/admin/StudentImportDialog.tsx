@@ -43,6 +43,7 @@ export function StudentImportDialog({ courseId }: { courseId?: string }) {
   return (
     <div className="panel">
       <h2>CSV 匯入學生</h2>
+      <p className="text-muted">CSV 欄位需包含「姓名」；「學號」與「Google Email」可留空。</p>
       <div className="toolbar">
         <input type="file" accept=".csv,text/csv" onChange={(event) => setFile(event.target.files?.[0] ?? null)} />
         <button className="btn" type="button" disabled={isUploading || isPending} onClick={upload}>

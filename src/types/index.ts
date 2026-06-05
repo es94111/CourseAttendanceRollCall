@@ -18,6 +18,8 @@ export type AuditEventType =
   | "connection_access_block"
   | "allowed_email_domains_update"
   | "system_setting_update"
+  | "student_email_bind"
+  | "student_email_unbind"
 
 export interface ApiError {
   error: string
@@ -37,7 +39,7 @@ export interface CourseResponse {
 
 export interface StudentResponse {
   id: string
-  studentCode: string
+  studentCode: string | null
   name: string
   googleEmail: string | null
   isGoogleLinked: boolean
@@ -45,7 +47,7 @@ export interface StudentResponse {
 
 export interface AttendanceStatsResponse {
   studentId: string
-  studentCode: string
+  studentCode: string | null
   name: string
   onTimeCount: number
   lateCount: number

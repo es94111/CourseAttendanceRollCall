@@ -9,7 +9,7 @@ import { formatIpLocation } from "@/lib/ip-format"
 
 interface StudentRow {
   id: string
-  studentCode: string
+  studentCode: string | null
   name: string
 }
 
@@ -169,7 +169,7 @@ export function AttendanceTable({
             const record = recordByStudent.get(student.id)
             return (
               <tr key={student.id}>
-                <td>{student.studentCode}</td>
+                <td>{student.studentCode ?? "-"}</td>
                 <td>{student.name}</td>
                 <td>
                   <span className={`badge ${record?.status ?? "absent"}`}>

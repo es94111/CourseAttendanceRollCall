@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma"
 import { error, handleRouteError, json, parseJson, requireAdmin } from "@/lib/api"
 import { studentSchema } from "@/lib/validation"
 import { normalizeEmail } from "@/lib/email"
+import { writeAuditLog } from "@/lib/audit"
 
 export async function PATCH(request: Request, props: any) {
   const params = await props.params;
@@ -12,17 +13,28 @@ export async function PATCH(request: Request, props: any) {
   try {
     const existing = await prisma.student.findUnique({ where: { id: params.id } })
     if (!existing) return error("學生不存在", 404)
+    const studentCode = parsed.data.studentCode || null
     const googleEmail = normalizeEmail(parsed.data.googleEmail)
-    const userId = existing.googleEmail === googleEmail ? existing.userId : null
+    const userId = googleEmail && existing.googleEmail === googleEmail ? existing.userId : null
     const student = await prisma.student.update({
       where: { id: params.id },
       data: {
-        studentCode: parsed.data.studentCode,
+        studentCode,
         name: parsed.data.name,
         googleEmail,
         userId
       }
     })
+    if ((existing.googleEmail || existing.userId) && !googleEmail) {
+      await writeAuditLog({
+        eventType: "student_email_unbind",
+        actorId: guard.user.id,
+        actorEmail: guard.user.email ?? "",
+        target: { studentId: existing.id, studentCode: existing.studentCode, studentName: existing.name },
+        oldValue: { googleEmail: existing.googleEmail, userId: existing.userId },
+        newValue: { googleEmail: null, userId: null }
+      })
+    }
     return json(student)
   } catch (cause: any) {
     if (cause?.code === "P2002") return error("學號或 Google Email 已存在", 409)
