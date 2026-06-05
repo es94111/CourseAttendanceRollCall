@@ -7,6 +7,8 @@ import { Dialog } from "@/components/shared/Dialog"
 import { useToast } from "@/components/shared/ToastProvider"
 import { formatIpLocation } from "@/lib/ip-format"
 
+const leaveReasonOptions = ["病假", "事假", "公假", "喪假", "家庭因素", "交通延誤"]
+
 interface StudentRow {
   id: string
   studentCode: string | null
@@ -254,9 +256,27 @@ export function AttendanceTable({
       </Dialog>
       <Dialog title="新增請假記錄" open={leaveTarget !== null} onClose={() => setLeaveTarget(null)}>
         <p>為 {leaveTarget?.name} 新增請假記錄。</p>
+        <div className="toolbar" style={{ marginBottom: 12 }}>
+          {leaveReasonOptions.map((option) => (
+            <button
+              key={option}
+              className="btn secondary"
+              type="button"
+              disabled={isPending}
+              onClick={() => setReason(option)}
+            >
+              {option}
+            </button>
+          ))}
+        </div>
         <div className="field">
-          <label>請假原因</label>
-          <textarea rows={4} value={reason} onChange={(event) => setReason(event.target.value)} />
+          <label>請假原因，可自行修改或補充</label>
+          <textarea
+            rows={4}
+            value={reason}
+            placeholder="選擇上方常用原因，或直接輸入自訂原因"
+            onChange={(event) => setReason(event.target.value)}
+          />
         </div>
         <div className="toolbar dialog-actions">
           <button
