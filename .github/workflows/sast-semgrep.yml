@@ -1,0 +1,38 @@
+# private repo 免費 SAST(取代 CodeQL)。Semgrep OSS 引擎 + 公開規則集,
+# 不需 SEMGREP_APP_TOKEN,結果印在 log。
+name: Semgrep (SAST)
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  schedule:
+    - cron: "0 2 * * 1"   # 每週一 10:00 Asia/Taipei
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  semgrep:
+    name: Scan
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Run Semgrep
+        # --error: 有發現就讓 CI 失敗;首次導入太吵可先拿掉(純報告),
+        # 或用 .semgrepignore / baseline 只擋新增問題。
+        run: |
+          semgrep scan \
+            --config p/default \
+            --config p/security-audit \
+            --config p/secrets \
+            --config p/javascript \
+            --config p/typescript \
+            --config p/react \
+            --config p/owasp-top-ten \
+            --error \
+            --metrics off

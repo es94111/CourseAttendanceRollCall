@@ -58,7 +58,31 @@
       "Bash(npx @tailwindcss/upgrade@latest --force)",
       "Bash(echo \"BUILD=$?\")",
       "Bash(rm prisma-tree.tmp.json)",
-      "Bash([ -d \".next/standalone/node_modules/$pkg\" ])"
+      "Bash([ -d \".next/standalone/node_modules/$pkg\" ])",
+      "Bash(npm -v)",
+      "Bash(npm ping *)",
+      "Bash(git ls-remote *)",
+      "Bash(git fsck *)",
+      "Bash(git fetch *)",
+      "Bash(git update-ref *)",
+      "Bash(git status *)",
+      "Bash(gh --version)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(npm update *)",
+      "Bash(npx prisma *)",
+      "Bash(npx tsc *)",
+      "Bash(echo \"EXIT:$?\")",
+      "Read(//tmp/**)",
+      "Bash(rm -rf .next)",
+      "Bash(git push *)",
+      "Read(//c/Users/user/.claude/skills/secret-scan/templates/**)",
+      "Bash(dir \"C:\\\\Users\\\\user\\\\.claude\\\\skills\\\\secret-scan\\\\templates\")",
+      "Bash(git -C \"D:\\\\SynologyDrive\\\\web\\\\CourseAttendanceRollCall\" log --all --diff-filter=A --name-only -- '.next' 'dist' 'build' 'coverage')",
+      "Bash(git *)",
+      "Bash(gh release *)",
+      "Bash(gh auth *)",
+      "Bash(gh repo *)"
     ]
   }
 }
