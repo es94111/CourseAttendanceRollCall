@@ -42,12 +42,18 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV TZ=Asia/Taipei
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-COPY --from=builder /app/prisma ./prisma
-COPY --from=prisma-cli /prisma-cli/node_modules /app/.prisma-cli/node_modules
-RUN mkdir -p logs
+# Global npm CLI is never invoked at runtime (CMD only runs `node server.js`,
+# and startup-migrate.ts calls the prisma JS entrypoint directly), so drop it
+# to remove its bundled deps from the image.
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
+RUN addgroup -S nodejs && adduser -S nextjs -G nodejs
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+COPY --from=prisma-cli --chown=nextjs:nodejs /prisma-cli/node_modules /app/.prisma-cli/node_modules
+RUN mkdir -p logs && chown nextjs:nodejs logs
+USER nextjs
 EXPOSE 3000
 # Migrations now run automatically via Next.js instrumentation hook (src/instrumentation.ts)
 # on server boot, so no entrypoint shim is needed.
