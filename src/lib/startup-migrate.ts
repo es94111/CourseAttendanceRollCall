@@ -3,7 +3,6 @@ import path from "node:path"
 import { existsSync } from "node:fs"
 
 declare global {
-  // eslint-disable-next-line no-var
   var __rollcallMigrated: Promise<void> | undefined
 }
 
