@@ -41,21 +41,47 @@ export function StudentImportDialog({ courseId }: { courseId?: string }) {
   }
 
   return (
-    <div className="panel">
-      <h2>CSV 匯入學生</h2>
-      <p className="text-muted">CSV 欄位需包含「姓名」；「學號」與「Google Email」可留空。</p>
-      <div className="toolbar">
-        <input type="file" accept=".csv,text/csv" onChange={(event) => setFile(event.target.files?.[0] ?? null)} />
-        <button className="btn" type="button" disabled={isUploading || isPending} onClick={upload}>
-          {isUploading || isPending ? "匯入中" : "匯入 CSV"}
-        </button>
-      </div>
-      {error && <p style={{ color: "#b42318" }}>{error}</p>}
-      {result && (
+    <section className="panel roster-tool-card">
+      <div className="panel-header">
         <div>
-          <div className="toolbar">
-            <span className="badge">成功 {result.successCount}</span>
-            <span className="badge">略過 {result.skipCount}</span>
+          <p className="section-kicker">批次處理</p>
+          <h2>CSV 匯入學生</h2>
+          <p>適合一次加入整班名單，重複資料會自動略過。</p>
+        </div>
+      </div>
+      <label className="file-drop" htmlFor={`student-csv-${courseId ?? "all"}`}>
+        <span className="file-drop-icon" aria-hidden>
+          CSV
+        </span>
+        <span>
+          <strong>{file ? file.name : "選擇 CSV 檔案"}</strong>
+          <small>必須包含「姓名」；未填 Google Email 的學生需由管理員補齊後才能簽到</small>
+        </span>
+        <input
+          id={`student-csv-${courseId ?? "all"}`}
+          type="file"
+          accept=".csv,text/csv"
+          onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+        />
+      </label>
+      <button
+        className="btn roster-tool-action"
+        type="button"
+        disabled={isUploading || isPending || !file}
+        onClick={upload}
+      >
+        {isUploading || isPending ? "匯入中…" : "開始匯入"}
+      </button>
+      {error && (
+        <p className="inline-feedback error" role="alert">
+          {error}
+        </p>
+      )}
+      {result && (
+        <div className="import-result">
+          <div className="flex gap-2 flex-wrap">
+            <span className="badge success">成功 {result.successCount}</span>
+            <span className="badge muted">略過 {result.skipCount}</span>
           </div>
           {result.errors.length > 0 ? (
             <table>
@@ -75,10 +101,10 @@ export function StudentImportDialog({ courseId }: { courseId?: string }) {
               </tbody>
             </table>
           ) : (
-            <p>所有資料列皆已成功匯入。</p>
+            <p className="inline-feedback success">所有資料列皆已成功匯入。</p>
           )}
         </div>
       )}
-    </div>
+    </section>
   )
 }

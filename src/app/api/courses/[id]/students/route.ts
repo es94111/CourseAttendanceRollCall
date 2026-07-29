@@ -4,10 +4,16 @@ import { error, handleRouteError, json, parseJson, requireAdmin } from "@/lib/ap
 import { normalizeEmail } from "@/lib/email"
 
 const addStudentSchema = z.object({
-  studentId: z.string().min(1).optional(),
-  studentCode: z.string().trim().optional().or(z.literal("")),
-  name: z.string().trim().min(1).optional(),
-  googleEmail: z.string().trim().email("Google Email 格式不符").optional().or(z.literal(""))
+  studentId: z.string().min(1).max(64, "學生 ID 過長").optional(),
+  studentCode: z.string().trim().max(64, "學號過長").optional().or(z.literal("")),
+  name: z.string().trim().min(1).max(120, "姓名過長").optional(),
+  googleEmail: z
+    .string()
+    .trim()
+    .max(254, "Google Email 過長")
+    .email("Google Email 格式不符")
+    .optional()
+    .or(z.literal(""))
 })
 
 export async function GET(_request: Request, props: any) {

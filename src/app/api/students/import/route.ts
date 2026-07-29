@@ -1,8 +1,13 @@
 import { prisma } from "@/lib/prisma"
 import { error, handleRouteError, json, requireAdmin } from "@/lib/api"
 import { normalizeEmail } from "@/lib/email"
+import {
+  assertMultipartRequest,
+  RequestSecurityError
+} from "@/lib/request-security"
 
 const MAX_CSV_BYTES = 5 * 1024 * 1024 // 5 MB
+const MAX_UPLOAD_BYTES = MAX_CSV_BYTES + 512 * 1024
 const MAX_CSV_ROWS = 5000
 
 function parseCsv(text: string) {
@@ -27,6 +32,7 @@ export async function POST(request: Request) {
   const guard = await requireAdmin()
   if ("response" in guard) return guard.response
   try {
+    assertMultipartRequest(request, MAX_UPLOAD_BYTES)
     const form = await request.formData()
     const file = form.get("file")
     const courseId = form.get("courseId")
@@ -50,6 +56,18 @@ export async function POST(request: Request) {
     for (const row of rows) {
       if (!row.name) {
         errors.push({ row: row.row, reason: "姓名為必填" })
+        continue
+      }
+      if (row.name.length > 120) {
+        errors.push({ row: row.row, reason: "姓名過長" })
+        continue
+      }
+      if (row.studentCode && row.studentCode.length > 64) {
+        errors.push({ row: row.row, reason: "學號過長" })
+        continue
+      }
+      if (row.googleEmail && row.googleEmail.length > 254) {
+        errors.push({ row: row.row, reason: "Google Email 過長" })
         continue
       }
       if (row.googleEmail && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(row.googleEmail)) {
@@ -85,6 +103,7 @@ export async function POST(request: Request) {
 
     return json({ successCount, skipCount: errors.length, errors })
   } catch (cause) {
+    if (cause instanceof RequestSecurityError) return error(cause.message, cause.status)
     return handleRouteError(cause)
   }
 }

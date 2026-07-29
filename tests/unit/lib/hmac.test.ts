@@ -59,4 +59,20 @@ describe("HMAC QR token", () => {
     expect(verifyToken(token, 0, 19_499, 10).valid).toBe(true)
     expect(verifyToken(token, 0, 19_501, 10).valid).toBe(false)
   })
+
+  it("rejects tokens issued too far in the future", () => {
+    const token = generateToken("session_1", 60_000)
+
+    expect(verifyToken(token, 60, 0).valid).toBe(false)
+  })
+
+  it("rejects oversized token input before decoding", () => {
+    expect(verifyToken("a".repeat(1025), 60).valid).toBe(false)
+  })
+
+  it("requires a QR secret of at least 32 bytes", () => {
+    vi.stubEnv("QR_SECRET", "too-short")
+
+    expect(() => generateToken("session_1")).toThrow(/at least 32 bytes/)
+  })
 })

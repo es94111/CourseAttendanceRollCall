@@ -1,32 +1,34 @@
 import Link from "next/link"
 import { prisma } from "@/lib/prisma"
+import { PageHeader } from "@/components/shared/PageHeader"
 
 function formatTaipeiDateTime(date: Date) {
   return date.toLocaleString("zh-TW", { timeZone: "Asia/Taipei", hour12: false })
 }
 
 export default async function DashboardPage() {
-  const [courseCount, activeSessions, activeSessionRows, studentCount, archivedCount] = await Promise.all([
-    prisma.course.count({ where: { status: "active" } }),
-    prisma.attendanceSession.count({ where: { status: "active" } }),
-    prisma.attendanceSession.findMany({
-      where: { status: "active" },
-      include: {
-        course: {
-          include: {
-            sessions: {
-              select: { id: true },
-              orderBy: { createdAt: "asc" }
+  const [courseCount, activeSessions, activeSessionRows, studentCount, archivedCount] =
+    await Promise.all([
+      prisma.course.count({ where: { status: "active" } }),
+      prisma.attendanceSession.count({ where: { status: "active" } }),
+      prisma.attendanceSession.findMany({
+        where: { status: "active" },
+        include: {
+          course: {
+            include: {
+              sessions: {
+                select: { id: true },
+                orderBy: { createdAt: "asc" }
+              }
             }
           }
-        }
-      },
-      orderBy: { createdAt: "desc" },
-      take: 8
-    }),
-    prisma.student.count(),
-    prisma.course.count({ where: { status: "archived" } })
-  ])
+        },
+        orderBy: { createdAt: "desc" },
+        take: 8
+      }),
+      prisma.student.count(),
+      prisma.course.count({ where: { status: "archived" } })
+    ])
 
   const stats: Array<{
     label: string
@@ -42,20 +44,18 @@ export default async function DashboardPage() {
 
   return (
     <main className="shell">
-      <div className="page-heading">
-        <div>
-          <h1>總覽</h1>
-          <p>快速掌握目前課程與點名狀態</p>
-        </div>
-        <div className="toolbar" style={{ gap: 8 }}>
-          <Link className="btn secondary" href="/students">
-            管理學生
-          </Link>
-          <Link className="btn" href="/courses">
-            管理課程
-          </Link>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow="日常工作"
+        title={`嗨，今天也準備好點名了`}
+        description="先查看進行中的點名；若要開始新點名，請從對應課程進入。"
+      >
+        <Link className="btn secondary" href="/students">
+          管理學生
+        </Link>
+        <Link className="btn" href="/courses">
+          前往課程
+        </Link>
+      </PageHeader>
 
       <section className="stat-grid">
         {stats.map((stat) => (
@@ -88,7 +88,7 @@ export default async function DashboardPage() {
         ))}
       </section>
 
-      <section className="panel">
+      <section className="panel data-panel">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
             <h2>進行中點名</h2>
@@ -101,40 +101,52 @@ export default async function DashboardPage() {
           </Link>
         </div>
         {activeSessionRows.length === 0 ? (
-          <p className="empty-state">目前沒有進行中的點名。</p>
+          <div className="empty-state compact">
+            <span className="empty-icon" aria-hidden>
+              ✓
+            </span>
+            <h2>目前沒有進行中的點名</h2>
+            <p>需要開始時，先前往課程並確認點名時間。</p>
+            <Link className="btn" href="/courses">
+              選擇課程
+            </Link>
+          </div>
         ) : (
-          <table>
-            <thead>
-              <tr>
-                <th>課程</th>
-                <th>第幾次點名</th>
-                <th>開放時間</th>
-                <th>結束時間</th>
-                <th>操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              {activeSessionRows.map((session) => {
-                const sessionOrder = session.course.sessions.findIndex((item) => item.id === session.id) + 1
-                const closeAt = session.autoExpireMinutes
-                  ? new Date(session.createdAt.getTime() + session.autoExpireMinutes * 60_000)
-                  : null
-                return (
-                  <tr key={session.id}>
-                    <td>{session.course.name}</td>
-                    <td>第 {sessionOrder} 次點名</td>
-                    <td>{formatTaipeiDateTime(session.createdAt)}</td>
-                    <td>{closeAt ? formatTaipeiDateTime(closeAt) : "未設定"}</td>
-                    <td>
-                      <Link className="btn secondary" href={`/sessions/${session.id}`}>
-                        進入點名
-                      </Link>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+          <div className="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>課程</th>
+                  <th>第幾次點名</th>
+                  <th>開放時間</th>
+                  <th>結束時間</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {activeSessionRows.map((session) => {
+                  const sessionOrder =
+                    session.course.sessions.findIndex((item) => item.id === session.id) + 1
+                  const closeAt = session.autoExpireMinutes
+                    ? new Date(session.createdAt.getTime() + session.autoExpireMinutes * 60_000)
+                    : null
+                  return (
+                    <tr key={session.id}>
+                      <td>{session.course.name}</td>
+                      <td>第 {sessionOrder} 次點名</td>
+                      <td>{formatTaipeiDateTime(session.createdAt)}</td>
+                      <td>{closeAt ? formatTaipeiDateTime(closeAt) : "未設定"}</td>
+                      <td>
+                        <Link className="btn secondary" href={`/sessions/${session.id}`}>
+                          進入點名
+                        </Link>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
 

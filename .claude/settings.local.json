@@ -82,7 +82,16 @@
       "Bash(git *)",
       "Bash(gh release *)",
       "Bash(gh auth *)",
-      "Bash(gh repo *)"
+      "Bash(gh repo *)",
+      "Bash(docker --version)",
+      "Bash(docker build *)",
+      "Bash(echo \"SEMGREP_EXIT=$?\")",
+      "Bash(echo \"TRIVY_EXIT=$?\")",
+      "Bash(echo \"DOCKERCI_EXIT=$?\")",
+      "Bash(gh pr *)"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "claude-flow"
+  ]
 }

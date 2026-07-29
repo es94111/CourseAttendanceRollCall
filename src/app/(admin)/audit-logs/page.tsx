@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import { AuditLogsClient } from "@/components/admin/AuditLogsClient"
 import { serializeAuditLogs } from "@/lib/audit-log-display"
+import { PageHeader } from "@/components/shared/PageHeader"
 
 export default async function AuditLogsPage() {
   const [logs, total] = await Promise.all([
@@ -9,11 +10,12 @@ export default async function AuditLogsPage() {
   ])
   return (
     <main className="shell">
-      <h1>稽核日誌</h1>
-      <AuditLogsClient
-        initialTotal={total}
-        initialLogs={await serializeAuditLogs(logs)}
+      <PageHeader
+        eyebrow="系統管理"
+        title="稽核日誌"
+        description="追蹤管理操作與重要狀態變更，供問題調查與安全稽核使用。"
       />
+      <AuditLogsClient initialTotal={total} initialLogs={await serializeAuditLogs(logs)} />
     </main>
   )
 }
