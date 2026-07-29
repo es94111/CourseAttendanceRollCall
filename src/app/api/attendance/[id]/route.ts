@@ -4,7 +4,7 @@ import { manualAttendanceSchema } from "@/lib/validation"
 import { writeAuditLog } from "@/lib/audit"
 
 export async function PUT(request: Request, props: any) {
-  const params = await props.params;
+  const params = await props.params
   const guard = await requireAdmin()
   if ("response" in guard) return guard.response
   const parsed = await parseJson(request, manualAttendanceSchema)
@@ -51,7 +51,11 @@ export async function PUT(request: Request, props: any) {
       eventType: "manual_attendance_override",
       actorId: guard.user.id,
       actorEmail: guard.user.email ?? "",
-      target: { attendanceRecordId: record.id },
+      target: {
+        attendanceRecordId: record.id,
+        sessionId: record.sessionId,
+        studentId: record.studentId
+      },
       oldValue: existing,
       newValue: record,
       reason: parsed.data.reason

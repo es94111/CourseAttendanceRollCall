@@ -802,6 +802,66 @@ tbody tr:last-child td {
   color: var(--color-text);
 }
 
+.audit-log-table {
+  margin-top: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: #ffffff;
+}
+
+.audit-log-table table {
+  min-width: 1080px;
+}
+
+.audit-log-summary {
+  min-width: 340px;
+  line-height: 1.55;
+}
+
+.detail-grid > .audit-detail-summary {
+  border-left: 4px solid var(--color-primary);
+  background: var(--color-primary-50);
+}
+
+.audit-detail-summary strong {
+  display: block;
+  margin-top: 6px;
+  color: var(--color-primary-900);
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.audit-detail-table {
+  margin-top: 8px;
+  table-layout: fixed;
+}
+
+.audit-detail-table th,
+.audit-detail-table td {
+  padding: 10px 12px;
+  overflow-wrap: anywhere;
+}
+
+.audit-detail-table tbody th {
+  width: 28%;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-align: left;
+  vertical-align: top;
+}
+
+.audit-detail-table tbody tr:last-child th {
+  border-bottom: 0;
+}
+
+.audit-identifier {
+  color: var(--color-text-muted);
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.75rem;
+}
+
 .attendance-cards {
   display: grid;
   gap: 14px;
