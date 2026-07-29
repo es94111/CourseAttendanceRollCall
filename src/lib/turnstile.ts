@@ -7,19 +7,29 @@ export interface TurnstileVerifyResult {
   errorCodes?: string[]
 }
 
+function getTurnstileConfig() {
+  const siteKey = process.env.TURNSTILE_SITE_KEY?.trim() || null
+  const secretKey = process.env.TURNSTILE_SECRET_KEY?.trim() || null
+  if (Boolean(siteKey) !== Boolean(secretKey)) {
+    throw new Error("TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY must be configured together")
+  }
+  return { siteKey, secretKey }
+}
+
 export function isTurnstileEnabled(): boolean {
-  return Boolean(process.env.TURNSTILE_SECRET_KEY && process.env.TURNSTILE_SITE_KEY)
+  const { siteKey, secretKey } = getTurnstileConfig()
+  return Boolean(siteKey && secretKey)
 }
 
 export function getTurnstileSiteKey(): string | null {
-  return process.env.TURNSTILE_SITE_KEY?.trim() || null
+  return getTurnstileConfig().siteKey
 }
 
 export async function verifyTurnstileToken(
   token: string | null | undefined,
   remoteIp?: string | null
 ): Promise<TurnstileVerifyResult> {
-  const secret = process.env.TURNSTILE_SECRET_KEY
+  const { secretKey: secret } = getTurnstileConfig()
   if (!secret) {
     return { success: true }
   }

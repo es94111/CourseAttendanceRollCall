@@ -11,14 +11,27 @@ export async function DELETE(request: Request, props: any) {
     if (url.searchParams.get("confirmed") !== "true") return error("需二次確認刪除個資", 400)
     const student = await prisma.student.findUnique({ where: { id: params.id } })
     if (!student) return error("學生不存在", 404)
-    if (student.userId) await prisma.user.delete({ where: { id: student.userId } })
-    await prisma.student.update({
-      where: { id: params.id },
-      data: { googleEmail: null, userId: null, name: "已刪除個資" }
-    })
-    await prisma.attendanceRecord.updateMany({
-      where: { studentId: params.id },
-      data: { ipAddress: null, ipCountry: null, ipCountryName: null, userAgent: null }
+    if (student.userId === guard.user.id) return error("不可透過學生資料刪除自己的管理員帳號", 400)
+    if (student.userId) {
+      const linkedUser = await prisma.user.findUnique({
+        where: { id: student.userId },
+        select: { role: true }
+      })
+      if (linkedUser?.role === "admin") {
+        const adminCount = await prisma.user.count({ where: { role: "admin" } })
+        if (adminCount <= 1) return error("系統至少需保留 1 位管理員，無法刪除", 409)
+      }
+    }
+    await prisma.$transaction(async (tx) => {
+      if (student.userId) await tx.user.delete({ where: { id: student.userId } })
+      await tx.student.update({
+        where: { id: params.id },
+        data: { googleEmail: null, userId: null, name: "已刪除個資" }
+      })
+      await tx.attendanceRecord.updateMany({
+        where: { studentId: params.id },
+        data: { ipAddress: null, ipCountry: null, ipCountryName: null, userAgent: null }
+      })
     })
     await writeAuditLog({
       eventType: "delete_student_data",

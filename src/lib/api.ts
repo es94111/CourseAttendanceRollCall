@@ -4,6 +4,11 @@ import { ZodError, type ZodSchema } from "zod"
 import { auth } from "@/lib/auth"
 import { logger } from "@/lib/logger"
 import { checkConnectionAccess } from "@/lib/connection-access"
+import {
+  hasTrustedRequestOrigin,
+  readBoundedJsonBody,
+  RequestSecurityError
+} from "@/lib/request-security"
 
 export function json(data: unknown, init?: ResponseInit) {
   return NextResponse.json(data, init)
@@ -14,7 +19,11 @@ export function error(message: string, status = 400) {
 }
 
 export async function requireUser() {
-  const access = await checkConnectionAccess(await headers())
+  const requestHeaders = await headers()
+  if (!hasTrustedRequestOrigin(requestHeaders)) {
+    return { response: error("請求來源驗證失敗", 403) as NextResponse }
+  }
+  const access = await checkConnectionAccess(requestHeaders)
   if (!access.allowed) return { response: error(access.reason ?? "此連線來源已被封鎖", 403) as NextResponse }
   const session = await auth()
   if (!session?.user?.id) return { response: error("請先登入", 401) as NextResponse }
@@ -30,9 +39,12 @@ export async function requireAdmin() {
 
 export async function parseJson<T>(request: Request, schema: ZodSchema<T>) {
   try {
-    const body = await request.json()
+    const body = await readBoundedJsonBody(request)
     return { data: schema.parse(body) }
   } catch (cause) {
+    if (cause instanceof RequestSecurityError) {
+      return { response: error(cause.message, cause.status) }
+    }
     if (cause instanceof ZodError) {
       return { response: error(cause.issues[0]?.message ?? "資料格式錯誤", 400) }
     }

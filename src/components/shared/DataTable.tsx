@@ -7,7 +7,7 @@ interface Column<T> {
 
 export function DataTable<T>({ rows, columns }: { rows: T[]; columns: Column<T>[] }) {
   return (
-    <div>
+    <div className="table-scroll">
       <table>
         <thead>
           <tr>

@@ -7,7 +7,10 @@ export async function POST(request: Request, props: any) {
   const params = await props.params;
   const guard = await requireAdmin()
   if ("response" in guard) return guard.response
-  const parsed = await parseJson(request, z.object({ reason: z.string().trim().min(1) }))
+  const parsed = await parseJson(
+    request,
+    z.object({ reason: z.string().trim().min(1).max(500, "原因過長") })
+  )
   if ("response" in parsed) return parsed.response
   try {
     const session = await prisma.attendanceSession.findUnique({ where: { id: params.id } })

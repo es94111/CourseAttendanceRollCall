@@ -41,32 +41,59 @@ export function MyAttendanceTable({ rows }: { rows: AttendanceSummaryRow[] }) {
 
   return (
     <>
-      <section className="panel toolbar">
-        <input placeholder="搜尋課程" value={courseQuery} onChange={(event) => setCourseQuery(event.target.value)} />
-        <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
-          <option value="all">全部</option>
-          <option value="low">低出席率</option>
-          <option value="absent">有缺席</option>
-          <option value="late">有遲到</option>
-        </select>
+      <section className="panel attendance-filter">
+        <div className="search-field">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-4-4" />
+          </svg>
+          <label className="sr-only" htmlFor="attendance-course-search">
+            搜尋課程
+          </label>
+          <input
+            id="attendance-course-search"
+            type="search"
+            placeholder="搜尋課程"
+            value={courseQuery}
+            onChange={(event) => setCourseQuery(event.target.value)}
+          />
+        </div>
+        <div className="filter-select">
+          <label htmlFor="attendance-status-filter">顯示</label>
+          <select
+            id="attendance-status-filter"
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+          >
+            <option value="all">全部課程</option>
+            <option value="low">出席率低於 80%</option>
+            <option value="absent">有缺席</option>
+            <option value="late">有遲到</option>
+          </select>
+        </div>
       </section>
       {filteredRows.length === 0 ? (
         <div className="empty-state">沒有符合條件的出席記錄</div>
       ) : (
         <div className="attendance-cards">
           {filteredRows.map((row) => (
-            <section className="panel" key={row.courseId}>
-              <div className="toolbar">
+            <section className="panel attendance-course-card" key={row.courseId}>
+              <div className="attendance-card-header">
                 <div>
                   <h2>{row.courseName}</h2>
-                  <span className="badge">出席率 {row.attendanceRate}%</span>
+                  <p className="text-muted">共 {row.details.length} 次點名紀錄</p>
+                </div>
+                <div className={`attendance-rate ${row.attendanceRate < 80 ? "warning" : ""}`}>
+                  <strong>{row.attendanceRate}%</strong>
+                  <span>出席率</span>
                 </div>
                 <button
                   className="btn secondary"
                   type="button"
+                  aria-expanded={expanded === row.courseId}
                   onClick={() => setExpanded(expanded === row.courseId ? null : row.courseId)}
                 >
-                  {expanded === row.courseId ? "收合明細" : "展開明細"}
+                  {expanded === row.courseId ? "收合明細" : "查看明細"}
                 </button>
               </div>
               <div className="stat-grid compact">
@@ -88,28 +115,30 @@ export function MyAttendanceTable({ rows }: { rows: AttendanceSummaryRow[] }) {
                 </div>
               </div>
               {expanded === row.courseId && (
-                <table>
-                  <thead>
-                    <tr>
-                      <th>課次時間</th>
-                      <th>狀態</th>
-                      <th>點名時間</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {row.details.map((detail) => (
-                      <tr key={detail.sessionId}>
-                        <td>{detail.date}</td>
-                        <td>
-                          <span className={`badge ${detail.status}`}>
-                            {attendanceStatusLabel(detail.status)}
-                          </span>
-                        </td>
-                        <td>{detail.attendedAt ?? "-"}</td>
+                <div className="table-scroll attendance-details">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>課次時間</th>
+                        <th>狀態</th>
+                        <th>點名時間</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {row.details.map((detail) => (
+                        <tr key={detail.sessionId}>
+                          <td>{detail.date}</td>
+                          <td>
+                            <span className={`badge ${detail.status}`}>
+                              {attendanceStatusLabel(detail.status)}
+                            </span>
+                          </td>
+                          <td>{detail.attendedAt ?? "-"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </section>
           ))}

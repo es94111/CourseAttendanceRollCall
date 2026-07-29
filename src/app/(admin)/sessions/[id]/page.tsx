@@ -4,9 +4,10 @@ import { prisma } from "@/lib/prisma"
 import { QRCodeDisplay } from "@/components/admin/QRCodeDisplay"
 import { AttendanceTable } from "@/components/admin/AttendanceTable"
 import { SessionControls } from "@/components/admin/SessionControls"
+import { PageHeader } from "@/components/shared/PageHeader"
 
 export default async function SessionPage(props: any) {
-  const params = await props.params;
+  const params = await props.params
   const session = await prisma.attendanceSession.findUnique({
     where: { id: params.id },
     include: {
@@ -44,14 +45,16 @@ export default async function SessionPage(props: any) {
   }
   return (
     <main className="shell">
-      <div className="page-heading">
-        <div>
-          <h1>{session.course.name} 點名</h1>
-          <p>
-            第 {sessionOrder} 次點名 ·{" "}
-            {session.officialStartTime.toLocaleString("zh-TW", { timeZone: "Asia/Taipei" })}
-          </p>
-        </div>
+      <PageHeader
+        eyebrow="即時點名"
+        title={`${session.course.name} · 第 ${sessionOrder} 次`}
+        description={`官方開始時間 ${session.officialStartTime.toLocaleString("zh-TW", {
+          timeZone: "Asia/Taipei",
+          hour12: false
+        })}`}
+        backHref={`/courses/${session.courseId}`}
+        backLabel="返回課程"
+      >
         <span className={`badge ${session.status}`}>
           {session.status === "active" && <span className="dot" aria-hidden />}
           {session.status === "active"
@@ -62,26 +65,30 @@ export default async function SessionPage(props: any) {
                 ? "已作廢"
                 : session.status}
         </span>
-      </div>
-      <div className="toolbar">
-        <p className="text-muted" style={{ margin: 0 }}>
-          投影點名時可使用獨立 QRCode 展示頁，避免顯示管理後台。
-        </p>
         <Link className="btn secondary" href={`/sessions/${session.id}/display`} target="_blank">
-          開啟 QRCode 展示頁
+          開啟投影模式 ↗
         </Link>
+      </PageHeader>
+
+      <div className="session-workspace-grid">
+        <QRCodeDisplay sessionId={session.id} initialStatus={session.status} />
+        <SessionControls
+          sessionId={session.id}
+          initialStatus={session.status}
+          initialCounts={initialCounts}
+          initialQrCodeValiditySeconds={session.qrCodeValiditySeconds}
+          sessionOpenedAt={session.createdAt.toISOString()}
+          autoExpireMinutes={session.autoExpireMinutes}
+        />
       </div>
-      <QRCodeDisplay sessionId={session.id} initialStatus={session.status} />
-      <SessionControls
-        sessionId={session.id}
-        initialStatus={session.status}
-        initialCounts={initialCounts}
-        initialQrCodeValiditySeconds={session.qrCodeValiditySeconds}
-        sessionOpenedAt={session.createdAt.toISOString()}
-        autoExpireMinutes={session.autoExpireMinutes}
-      />
-      <section className="panel">
-        <h2>點名記錄</h2>
+      <section className="panel data-panel">
+        <div className="panel-header">
+          <div>
+            <h2>學生點名記錄</h2>
+            <p>資料會即時更新；需要補登、請假或修正狀態時，請從每列右側操作。</p>
+          </div>
+          <span className="count-badge">{students.length} 位學生</span>
+        </div>
         <AttendanceTable sessionId={session.id} records={records} students={students} />
       </section>
     </main>

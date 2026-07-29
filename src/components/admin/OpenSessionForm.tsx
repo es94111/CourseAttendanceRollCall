@@ -25,7 +25,10 @@ export function OpenSessionForm({
   const [error, setError] = useState("")
   const [isSaving, setIsSaving] = useState(false)
   const [isPending, startTransition] = useTransition()
-  const defaultOfficialStartTime = useMemo(() => todayDateTime(defaultStartTime), [defaultStartTime])
+  const defaultOfficialStartTime = useMemo(
+    () => todayDateTime(defaultStartTime),
+    [defaultStartTime]
+  )
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -74,45 +77,127 @@ export function OpenSessionForm({
   }
 
   return (
-    <section className="panel">
-      <h2>開啟點名</h2>
-      {activeSessionId && (
-        <p>
-          此課程已有進行中的點名。{" "}
-          <button className="btn secondary" type="button" onClick={() => router.push(`/sessions/${activeSessionId}`)}>
-            前往點名頁
+    <section className="panel session-launcher">
+      <div className="panel-header">
+        <div>
+          <h2>{activeSessionId ? "點名正在進行" : "設定點名時間"}</h2>
+          <p>
+            {activeSessionId
+              ? "學生目前仍可掃描 QR Code，請回到點名頁查看即時人數。"
+              : "遲到時間會以「官方開始時間」為基準，不受建立 QR Code 的時間影響。"}
+          </p>
+        </div>
+        {activeSessionId && (
+          <span className="badge active">
+            <span className="dot" aria-hidden />
+            進行中
+          </span>
+        )}
+      </div>
+
+      {activeSessionId ? (
+        <div className="live-session-callout">
+          <span className="live-session-icon" aria-hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="3" width="7" height="7" />
+              <rect x="14" y="3" width="7" height="7" />
+              <rect x="3" y="14" width="7" height="7" />
+              <path d="M14 14h3v3M21 21h-3v-3M14 21h.01" />
+            </svg>
+          </span>
+          <div>
+            <strong>此課程已有進行中的點名</strong>
+            <p>同一門課同時間只能有一個點名 Session。</p>
+          </div>
+          <button
+            className="btn accent"
+            type="button"
+            onClick={() => router.push(`/sessions/${activeSessionId}`)}
+          >
+            回到即時點名
           </button>
-        </p>
-      )}
-      <form onSubmit={onSubmit}>
-        <div className="toolbar">
-          <div className="field">
-            <label>官方開始時間</label>
+        </div>
+      ) : (
+        <form onSubmit={onSubmit}>
+          <div className="field session-time-field">
+            <label htmlFor="official-start-time">官方開始時間</label>
             <input
+              id="official-start-time"
               name="officialStartTime"
               type="datetime-local"
               defaultValue={defaultOfficialStartTime}
               required
             />
+            <span className="hint">請確認日期與時間正確；建立後仍可關閉或作廢本次點名。</span>
           </div>
-          <div className="field">
-            <label>自動逾時分鐘</label>
-            <input name="autoExpireMinutes" type="number" min={1} defaultValue={90} required />
-          </div>
-          <div className="field">
-            <label>QR Code 有效秒數</label>
-            <input name="qrCodeValiditySeconds" type="number" min={5} defaultValue={15} required />
-          </div>
-          <div className="field">
-            <label>OAuth 寬限秒數</label>
-            <input name="gracePeriodSeconds" type="number" min={1} defaultValue={60} required />
-          </div>
+
+          <details className="advanced-settings">
+            <summary>
+              進階設定
+              <span>一般情況可使用預設值</span>
+            </summary>
+            <div className="form-grid">
+              <div className="field">
+                <label htmlFor="auto-expire-minutes">自動關閉</label>
+                <div className="input-suffix">
+                  <input
+                    id="auto-expire-minutes"
+                    name="autoExpireMinutes"
+                    type="number"
+                    min={1}
+                    defaultValue={90}
+                    required
+                  />
+                  <span>分鐘</span>
+                </div>
+              </div>
+              <div className="field">
+                <label htmlFor="qr-validity-seconds">QR Code 輪換</label>
+                <div className="input-suffix">
+                  <input
+                    id="qr-validity-seconds"
+                    name="qrCodeValiditySeconds"
+                    type="number"
+                    min={5}
+                    defaultValue={15}
+                    required
+                  />
+                  <span>秒</span>
+                </div>
+              </div>
+              <div className="field">
+                <label htmlFor="grace-period-seconds">登入寬限</label>
+                <div className="input-suffix">
+                  <input
+                    id="grace-period-seconds"
+                    name="gracePeriodSeconds"
+                    type="number"
+                    min={1}
+                    defaultValue={60}
+                    required
+                  />
+                  <span>秒</span>
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <button
+            className="btn accent launch-button"
+            type="submit"
+            disabled={isPending || isSaving}
+          >
+            {isPending || isSaving ? "正在建立 QR Code…" : "建立並顯示 QR Code"}
+          </button>
+        </form>
+      )}
+
+      {error && (
+        <div className="status-card error" role="alert">
+          <strong>無法開啟點名</strong>
+          <p style={{ margin: 0 }}>{error}</p>
         </div>
-        <button className="btn" type="submit" disabled={isPending || isSaving || Boolean(activeSessionId)}>
-          {isPending || isSaving ? "開啟中" : "開啟點名"}
-        </button>
-      </form>
-      {error && <p style={{ color: "#b42318" }}>{error}</p>}
+      )}
     </section>
   )
 }

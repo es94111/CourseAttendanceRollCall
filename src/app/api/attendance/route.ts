@@ -46,43 +46,20 @@ export async function POST(request: Request) {
     if (!access.allowed) return error(access.reason ?? "此連線來源不允許點名", 403)
     const userEmail = normalizeEmail(guard.user.email)
     if (!userEmail) return error("Google 帳號缺少 Email，無法點名", 400)
-    let shouldWriteBindAudit = false
-    let student = userEmail
-      ? await prisma.student.findFirst({
-          where: {
-            OR: [
-              { userId: guard.user.id },
-              { googleEmail: { equals: userEmail, mode: "insensitive" } }
-            ]
-          }
-        })
-      : null
-
-    if (!student) {
-      if (!parsed.data.studentName) {
-        return json(
-          { error: "找不到對應學生記錄，請輸入姓名完成首次綁定", requiresStudentName: true },
-          { status: 404 }
-        )
+    const student = await prisma.student.findFirst({
+      where: {
+        OR: [
+          { userId: guard.user.id },
+          { googleEmail: { equals: userEmail, mode: "insensitive" } }
+        ]
       }
-      const matches = await prisma.courseEnrollment.findMany({
-        where: {
-          courseId: session.courseId,
-          student: {
-            name: { equals: parsed.data.studentName, mode: "insensitive" },
-            googleEmail: null,
-            userId: null
-          }
-        },
-        include: { student: true },
-        take: 2
-      })
-      if (matches.length === 0) return error("此課程找不到尚未綁定的同名學生", 404)
-      if (matches.length > 1) return error("此課程有多位同名學生，請聯絡管理員補充學號或 Email", 409)
-      student = matches[0].student
-      shouldWriteBindAudit = true
+    })
+    if (!student) {
+      return error("Google 帳號尚未綁定學生資料，請聯絡課程管理員", 404)
     }
-    if (!student) return error("找不到對應學生記錄", 404)
+    if (student.googleEmail && normalizeEmail(student.googleEmail) !== userEmail) {
+      return error("Google 帳號與學生資料不一致，請聯絡課程管理員", 409)
+    }
 
     const enrollment = await prisma.courseEnrollment.findUnique({
       where: { studentId_courseId: { studentId: student.id, courseId: session.courseId } }
@@ -114,11 +91,26 @@ export async function POST(request: Request) {
         return error("此連線已為多位學生簽到，請改由本人裝置完成點名", 429)
       }
     }
+    let shouldWriteBindAudit = false
     if (!student.userId || student.googleEmail !== userEmail) {
-      await prisma.student.update({
-        where: { id: student.id },
+      const claimed = await prisma.student.updateMany({
+        where: {
+          id: student.id,
+          AND: [
+            { OR: [{ userId: null }, { userId: guard.user.id }] },
+            {
+              OR: [
+                { googleEmail: null },
+                { googleEmail: { equals: userEmail, mode: "insensitive" } }
+              ]
+            }
+          ]
+        },
         data: { userId: guard.user.id, googleEmail: userEmail }
       })
+      if (claimed.count !== 1) {
+        return error("學生資料已綁定其他帳號，請聯絡課程管理員", 409)
+      }
       shouldWriteBindAudit = true
     }
 

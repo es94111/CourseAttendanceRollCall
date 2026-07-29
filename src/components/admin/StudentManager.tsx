@@ -42,30 +42,49 @@ export function StudentManager({ courseId }: { courseId: string }) {
   }
 
   return (
-    <section className="panel">
-      <h2>新增學生</h2>
-      <form ref={formRef} onSubmit={onSubmit}>
-        <div className="toolbar">
-          <div className="field">
-            <label>學號（選填）</label>
-            <input name="studentCode" />
-          </div>
-          <div className="field">
-            <label>姓名</label>
-            <input name="name" required />
-          </div>
-          <div className="field">
-            <label>Google Email（選填）</label>
-            <input name="googleEmail" type="email" />
-          </div>
+    <section className="panel roster-tool-card">
+      <div className="panel-header">
+        <div>
+          <p className="section-kicker">單筆新增</p>
+          <h2>新增學生</h2>
+          <p>名單中還沒有這位學生時使用。</p>
         </div>
-        <button className="btn" type="submit" disabled={isPending || isSaving}>
-          {isPending || isSaving ? "新增中" : "新增並加入課程"}
+      </div>
+      <form ref={formRef} onSubmit={onSubmit}>
+        <div className="field">
+          <label htmlFor="new-student-code">學號（選填）</label>
+          <input id="new-student-code" name="studentCode" placeholder="例如：S113001" />
+        </div>
+        <div className="field">
+          <label htmlFor="new-student-name">姓名</label>
+          <input id="new-student-name" name="name" placeholder="課程名單上的姓名" required />
+        </div>
+        <div className="field">
+          <label htmlFor="new-student-email">Google Email（選填）</label>
+          <input
+            id="new-student-email"
+            name="googleEmail"
+            type="email"
+            placeholder="未綁定可先留空"
+          />
+        </div>
+        <button className="btn roster-tool-action" type="submit" disabled={isPending || isSaving}>
+          {isPending || isSaving ? "新增中…" : "新增並加入課程"}
         </button>
       </form>
-      {message && <p>{message}</p>}
-      <p className="text-muted">可只填姓名；學生第一次掃 QR Code 時會用姓名綁定 Google Email。</p>
-      {error && <p style={{ color: "#b42318" }}>{error}</p>}
+      <p className="tool-hint">
+        尚未填寫 Google Email 的學生無法簽到；請由管理員先完成帳號綁定，避免身分被冒用。
+      </p>
+      {message && (
+        <p className="inline-feedback success" role="status">
+          {message}
+        </p>
+      )}
+      {error && (
+        <p className="inline-feedback error" role="alert">
+          {error}
+        </p>
+      )}
     </section>
   )
 }

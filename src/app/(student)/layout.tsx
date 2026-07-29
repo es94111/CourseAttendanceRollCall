@@ -9,24 +9,25 @@ export default async function StudentLayout({ children }: { children: React.Reac
   const displayName = session.user.name ?? session.user.email ?? "同學"
 
   return (
-    <div>
-      <header className="app-header">
+    <div className="student-frame">
+      <header className="app-header student-app-header">
         <nav className="nav" aria-label="學生導覽">
           <Link href="/my-attendance" className="brand">
             <span className="brand-mark" aria-hidden>
-              CA
+              ✓
             </span>
-            學生出席
+            <span>
+              <strong>課程點名</strong>
+              <small>學生專區</small>
+            </span>
           </Link>
-          <div className="links">
-            <Link href="/my-attendance">我的出席記錄</Link>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-muted" style={{ fontSize: "0.875rem" }}>
-              {displayName}
+          <div className="student-account">
+            <span>
+              <strong>{displayName}</strong>
+              <small>已登入</small>
             </span>
             <SecureSignOutButton
-              label="安全登出"
+              label="登出"
               style={{ minHeight: 36, padding: "0 12px", fontSize: "0.875rem" }}
             />
           </div>

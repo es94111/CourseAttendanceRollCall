@@ -1,9 +1,10 @@
 import { prisma } from "@/lib/prisma"
 import { calculateStats } from "@/lib/attendance-stats"
 import { StatisticsPanel } from "@/components/admin/StatisticsPanel"
+import { PageHeader } from "@/components/shared/PageHeader"
 
 export default async function StatisticsPage(props: any) {
-  const params = await props.params;
+  const params = await props.params
   const course = await prisma.course.findUnique({
     where: { id: params.courseId },
     include: {
@@ -24,7 +25,13 @@ export default async function StatisticsPage(props: any) {
     })) ?? []
   return (
     <main className="shell">
-      <h1>{course?.name ?? "課程"} 出席統計</h1>
+      <PageHeader
+        eyebrow="課程分析"
+        title={`${course?.name ?? "課程"} 出席統計`}
+        description={`彙整 ${course?.sessions.filter((session) => session.status !== "voided").length ?? 0} 次有效點名，快速找出遲到與缺席情況。`}
+        backHref={course ? `/courses/${course.id}` : "/courses"}
+        backLabel="返回課程"
+      />
       <StatisticsPanel
         courseId={params.courseId}
         initialRows={rows.map((row) => ({
@@ -37,7 +44,9 @@ export default async function StatisticsPage(props: any) {
           absentCount: row.absentCount,
           attendanceRate: row.attendanceRate
         }))}
-        initialTotalSessions={course?.sessions.filter((session) => session.status !== "voided").length ?? 0}
+        initialTotalSessions={
+          course?.sessions.filter((session) => session.status !== "voided").length ?? 0
+        }
       />
     </main>
   )

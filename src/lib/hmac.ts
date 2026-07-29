@@ -7,9 +7,12 @@ function slotMs(qrCodeValiditySeconds = DEFAULT_QR_CODE_VALIDITY_SECONDS) {
 }
 
 function secret() {
-  const value = process.env.QR_SECRET
+  const value = process.env.QR_SECRET?.trim()
   if (!value) {
     throw new Error("QR_SECRET is required")
+  }
+  if (Buffer.byteLength(value, "utf8") < 32) {
+    throw new Error("QR_SECRET must be at least 32 bytes")
   }
   return value
 }
@@ -38,8 +41,12 @@ export function verifyToken(
   qrCodeValiditySeconds = DEFAULT_QR_CODE_VALIDITY_SECONDS
 ) {
   try {
+    if (!token || token.length > 1024) return { valid: false as const }
     const decoded = Buffer.from(token, "base64url").toString("utf8")
-    const [payload, signature] = decoded.split(".")
+    if (Buffer.byteLength(decoded, "utf8") > 768) return { valid: false as const }
+    const tokenParts = decoded.split(".")
+    if (tokenParts.length !== 2) return { valid: false as const }
+    const [payload, signature] = tokenParts
     if (!payload || !signature) return { valid: false as const }
 
     const parts = payload.split(":")
@@ -57,6 +64,7 @@ export function verifyToken(
 
     const isIssuedAtPayload = parts.length >= 3 && Number.isInteger(payloadValiditySeconds)
     const issuedAt = isIssuedAtPayload ? timeValue : timeValue * slotMs(qrCodeValiditySeconds)
+    if (issuedAt > now + 30_000) return { valid: false as const, sessionId }
     const expiresAt = issuedAt + slotMs(qrCodeValiditySeconds) + gracePeriodSeconds * 1000
     if (now > expiresAt) return { valid: false as const, sessionId }
 
