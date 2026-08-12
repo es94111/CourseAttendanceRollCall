@@ -55,7 +55,10 @@ export function StudentImportDialog({ courseId }: { courseId?: string }) {
         </span>
         <span>
           <strong>{file ? file.name : "選擇 CSV 檔案"}</strong>
-          <small>必須包含「姓名」；未填 Google Email 的學生需由管理員補齊後才能簽到</small>
+          <small>
+            必須包含「姓名」；未填 Google Email
+            的學生於同課程姓名唯一時可自動綁定，若同名需由管理員補齊 Google Email 後才能簽到
+          </small>
         </span>
         <input
           id={`student-csv-${courseId ?? "all"}`}

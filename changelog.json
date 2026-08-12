@@ -1,6 +1,22 @@
 {
-  "currentVersion": "0.6.0",
+  "currentVersion": "0.7.0",
   "releases": [
+    {
+      "version": "0.7.0",
+      "date": "2026-08-12",
+      "title": "點名重新支援依姓名自動綁定學生帳號",
+      "type": "new",
+      "changes": [
+        {
+          "tag": "warning",
+          "text": "系統重新開放依姓名自動綁定 Google 帳號的功能，若學生將顯示名稱改為他人姓名，仍有被冒用綁定的風險，建議管理者優先於匯入名單時填妥 Google Email，並定期查看稽核紀錄確認綁定情形。"
+        },
+        {
+          "tag": "new",
+          "text": "學生首次用 Google 帳號點名時，若管理者尚未預先填寫其 Google Email，系統會嘗試以 Google 帳號顯示名稱比對該課程尚未綁定的學生名單，僅在唯一吻合時自動完成綁定，避免手動處理卡關。"
+        }
+      ]
+    },
     {
       "version": "0.6.0",
       "date": "2026-07-29",

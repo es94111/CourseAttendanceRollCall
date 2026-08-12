@@ -46,14 +46,30 @@ export async function POST(request: Request) {
     if (!access.allowed) return error(access.reason ?? "此連線來源不允許點名", 403)
     const userEmail = normalizeEmail(guard.user.email)
     if (!userEmail) return error("Google 帳號缺少 Email，無法點名", 400)
-    const student = await prisma.student.findFirst({
+    let student = await prisma.student.findFirst({
       where: {
-        OR: [
-          { userId: guard.user.id },
-          { googleEmail: { equals: userEmail, mode: "insensitive" } }
-        ]
+        OR: [{ userId: guard.user.id }, { googleEmail: { equals: userEmail, mode: "insensitive" } }]
       }
     })
+    if (!student) {
+      // Admin didn't preset a googleEmail for this student. Fall back to matching
+      // the Google account's display name against unbound roster entries in this
+      // course, but only when the match is unambiguous (exactly one candidate).
+      const displayName = guard.user.name?.trim()
+      if (displayName) {
+        const nameCandidates = await prisma.student.findMany({
+          where: {
+            userId: null,
+            googleEmail: null,
+            name: { equals: displayName, mode: "insensitive" },
+            enrollments: { some: { courseId: session.courseId } }
+          }
+        })
+        if (nameCandidates.length === 1) {
+          student = nameCandidates[0]
+        }
+      }
+    }
     if (!student) {
       return error("Google 帳號尚未綁定學生資料，請聯絡課程管理員", 404)
     }
@@ -119,7 +135,11 @@ export async function POST(request: Request) {
         eventType: "student_email_bind",
         actorId: guard.user.id,
         actorEmail: userEmail,
-        target: { studentId: student.id, studentCode: student.studentCode, studentName: student.name },
+        target: {
+          studentId: student.id,
+          studentCode: student.studentCode,
+          studentName: student.name
+        },
         oldValue: { googleEmail: student.googleEmail, userId: student.userId },
         newValue: {
           googleEmail: userEmail,
