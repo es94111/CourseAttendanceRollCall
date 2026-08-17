@@ -23,8 +23,8 @@ jobs:
         run: |
           npx --yes npm-check-updates@latest -u --target latest
           npm install
-      - name: Confirm no direct npm dependency is outdated
-        run: npm outdated --depth=0
+      - name: Confirm no further direct upgrade is available
+        run: npx --yes npm-check-updates@latest --target latest --errorLevel 2
       - name: Lint
         run: npm run lint
       - name: Tests
