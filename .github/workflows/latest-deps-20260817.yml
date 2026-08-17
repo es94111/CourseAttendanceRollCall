@@ -45,9 +45,11 @@ jobs:
           const expected6 = cp.execFileSync('npm',['view','@typescript/typescript6','version'],{encoding:'utf8'}).trim();
           if (!pkg.devDependencies['@typescript/native'].includes(expected7)) throw new Error('TS7 alias is not current');
           if (!pkg.devDependencies.typescript.includes(expected6)) throw new Error('TS6 compatibility API is not current');
+          const installed6 = require('typescript/package.json').version;
+          if (installed6 !== expected6) throw new Error(`Installed TS6 compatibility API ${installed6} != ${expected6}`);
+          console.log(`TypeScript compatibility API: ${installed6}`);
           NODE
           npx tsc --version
-          npx tsc6 --version
       - name: Lint
         run: npm run lint
       - name: Tests
