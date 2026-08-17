@@ -19,12 +19,35 @@ jobs:
         with:
           node-version: 24
           cache: npm
-      - name: Upgrade all direct npm dependencies to latest stable
+      - name: Upgrade direct dependencies and install TS7 side-by-side
         run: |
           npx --yes npm-check-updates@latest -u --target latest
+          node - <<'NODE'
+          const fs = require('fs');
+          const cp = require('child_process');
+          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          const ts7 = cp.execFileSync('npm', ['view', 'typescript', 'version'], {encoding:'utf8'}).trim();
+          const ts6 = cp.execFileSync('npm', ['view', '@typescript/typescript6', 'version'], {encoding:'utf8'}).trim();
+          pkg.devDependencies.typescript = `npm:@typescript/typescript6@^${ts6}`;
+          pkg.devDependencies['@typescript/native'] = `npm:typescript@^${ts7}`;
+          fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+          NODE
           npm install
-      - name: Confirm no further direct upgrade is available
-        run: npx --yes npm-check-updates@latest --target latest --errorLevel 2
+      - name: Confirm all ordinary direct dependencies are current
+        run: npx --yes npm-check-updates@latest --target latest --reject typescript,@typescript/native --errorLevel 2
+      - name: Confirm compiler and tooling compatibility packages are current
+        run: |
+          node - <<'NODE'
+          const cp = require('child_process');
+          const fs = require('fs');
+          const pkg = JSON.parse(fs.readFileSync('package.json','utf8'));
+          const expected7 = cp.execFileSync('npm',['view','typescript','version'],{encoding:'utf8'}).trim();
+          const expected6 = cp.execFileSync('npm',['view','@typescript/typescript6','version'],{encoding:'utf8'}).trim();
+          if (!pkg.devDependencies['@typescript/native'].includes(expected7)) throw new Error('TS7 alias is not current');
+          if (!pkg.devDependencies.typescript.includes(expected6)) throw new Error('TS6 compatibility API is not current');
+          NODE
+          npx tsc --version
+          npx tsc6 --version
       - name: Lint
         run: npm run lint
       - name: Tests
@@ -38,5 +61,5 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git rm .github/workflows/latest-deps-20260817.yml
           git add package.json package-lock.json .npmrc
-          git commit -m "chore(deps): upgrade all dependencies to latest stable"
+          git commit -m "chore(deps): run TypeScript 7 with current tooling compatibility API"
           git push origin HEAD:chore/latest-deps-20260817
