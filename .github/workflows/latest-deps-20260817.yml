@@ -1,0 +1,42 @@
+name: Validate latest dependencies
+
+on:
+  push:
+    branches: [chore/latest-deps-20260817]
+    paths: [.github/workflows/latest-deps-20260817.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  update-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: chore/latest-deps-20260817
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - name: Upgrade all direct npm dependencies to latest stable
+        run: |
+          npx --yes npm-check-updates@latest -u --target latest
+          npm install
+      - name: Confirm no direct npm dependency is outdated
+        run: npm outdated --depth=0
+      - name: Lint
+        run: npm run lint
+      - name: Tests
+        run: npm test
+      - name: Production build
+        run: npm run build
+      - name: Commit validated dependency update
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/latest-deps-20260817.yml
+          git add package.json package-lock.json .npmrc
+          git commit -m "chore(deps): upgrade all dependencies to latest stable"
+          git push origin HEAD:chore/latest-deps-20260817
