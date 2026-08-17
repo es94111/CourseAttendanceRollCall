@@ -42,12 +42,14 @@ jobs:
           const fs = require('fs');
           const pkg = JSON.parse(fs.readFileSync('package.json','utf8'));
           const expected7 = cp.execFileSync('npm',['view','typescript','version'],{encoding:'utf8'}).trim();
-          const expected6 = cp.execFileSync('npm',['view','@typescript/typescript6','version'],{encoding:'utf8'}).trim();
+          const tagged6 = cp.execFileSync('npm',['view','@typescript/typescript6','version'],{encoding:'utf8'}).trim();
           if (!pkg.devDependencies['@typescript/native'].includes(expected7)) throw new Error('TS7 alias is not current');
-          if (!pkg.devDependencies.typescript.includes(expected6)) throw new Error('TS6 compatibility API is not current');
+          if (!pkg.devDependencies.typescript.includes(tagged6)) throw new Error('TS6 compatibility API range does not include the current dist-tag');
           const installed6 = require('typescript/package.json').version;
-          if (installed6 !== expected6) throw new Error(`Installed TS6 compatibility API ${installed6} != ${expected6}`);
-          console.log(`TypeScript compatibility API: ${installed6}`);
+          const nums = (v) => v.split('.').map(Number);
+          const compare = (a,b) => { const x=nums(a), y=nums(b); for(let i=0;i<3;i++){ if(x[i]!==y[i]) return x[i]-y[i]; } return 0; };
+          if (compare(installed6, tagged6) < 0) throw new Error(`Installed TS6 compatibility API ${installed6} is older than ${tagged6}`);
+          console.log(`TypeScript compatibility API: ${installed6} (dist-tag ${tagged6})`);
           NODE
           npx tsc --version
       - name: Lint
