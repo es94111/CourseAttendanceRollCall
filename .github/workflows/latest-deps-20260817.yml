@@ -26,10 +26,13 @@ jobs:
           const fs = require('fs');
           const cp = require('child_process');
           const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-          const ts7 = cp.execFileSync('npm', ['view', 'typescript', 'version'], {encoding:'utf8'}).trim();
-          const ts6 = cp.execFileSync('npm', ['view', '@typescript/typescript6', 'version'], {encoding:'utf8'}).trim();
+          const view = (name) => cp.execFileSync('npm', ['view', name, 'version'], {encoding:'utf8'}).trim();
+          const ts7 = view('typescript');
+          const ts6 = view('@typescript/typescript6');
+          const testingDom = view('@testing-library/dom');
           pkg.devDependencies.typescript = `npm:@typescript/typescript6@^${ts6}`;
           pkg.devDependencies['@typescript/native'] = `npm:typescript@^${ts7}`;
+          pkg.devDependencies['@testing-library/dom'] = `^${testingDom}`;
           fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
           NODE
           npm install
