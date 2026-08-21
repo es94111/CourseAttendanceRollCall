@@ -21,7 +21,7 @@ export function DeleteStudentButton({
     setError("")
     setIsDeleting(true)
     try {
-      const response = await fetch(`/api/students/${studentId}`, { method: "DELETE" })
+      const response = await fetch(`/api/students/${studentId}?confirmed=true`, { method: "DELETE" })
       const body = await response.json().catch(() => ({}))
       if (!response.ok) {
         setError(body.error ?? "刪除學生失敗")
