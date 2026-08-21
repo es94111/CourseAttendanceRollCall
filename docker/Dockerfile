@@ -34,7 +34,8 @@ RUN apk add --no-cache jq
 COPY package.json ./
 RUN PRISMA_VERSION=$(jq -r '.devDependencies.prisma // .dependencies.prisma' package.json) \
  && echo "Installing prisma@${PRISMA_VERSION}" \
- && echo '{"name":"prisma-cli-isolated","version":"0.0.0","private":true}' > package.json \
+ && jq '{name:"prisma-cli-isolated",version:"0.0.0",private:true,overrides:.overrides}' package.json > isolated.json \
+ && mv isolated.json package.json \
  && npm install --no-package-lock --no-fund --no-audit prisma@${PRISMA_VERSION}
 
 FROM node:24-alpine AS runner
