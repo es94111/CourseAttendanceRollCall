@@ -74,6 +74,14 @@ export default async function LoginPage({
               <p style={{ margin: 0 }}>系統已清除錯誤連結，請重新選擇正確的 Google 帳號登入。</p>
             </div>
           )}
+          {error === "connection-blocked" && (
+            <div className="status-card error">
+              <strong>此連線來源已被封鎖</strong>
+              <p style={{ margin: 0 }}>
+                你的網路位置不在系統允許的範圍內，若有疑問請聯絡課程管理員。
+              </p>
+            </div>
+          )}
           {error === "turnstile-failed" && (
             <div className="status-card error">
               <strong>機器人驗證未通過</strong>

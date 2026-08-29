@@ -1,12 +1,19 @@
 import { auth } from "@/lib/auth"
 import { normalizeEmail } from "@/lib/email"
 import { error, handleRouteError, json } from "@/lib/api"
+import { hasTrustedRequestOrigin } from "@/lib/request-security"
+import { checkConnectionAccess } from "@/lib/connection-access"
 import { prisma } from "@/lib/prisma"
 import { expireSessionIfNeeded } from "@/lib/session-expiry"
 import { toTaipeiIso } from "@/lib/time"
 
 export async function GET(_request: Request, props: any) {
   const params = await props.params;
+  if (!hasTrustedRequestOrigin(_request.headers)) {
+    return error("請求來源驗證失敗", 403)
+  }
+  const access = await checkConnectionAccess(_request.headers, `/api/checkin/sessions/${params.id}`)
+  if (!access.allowed) return error(access.reason ?? "此連線來源已被封鎖", 403)
   try {
     await expireSessionIfNeeded(params.id)
     const session = await prisma.attendanceSession.findUnique({

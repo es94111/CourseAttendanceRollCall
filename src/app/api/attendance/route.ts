@@ -51,10 +51,13 @@ export async function POST(request: Request) {
         OR: [{ userId: guard.user.id }, { googleEmail: { equals: userEmail, mode: "insensitive" } }]
       }
     })
+    let matchedByName = false
     if (!student) {
-      // Admin didn't preset a googleEmail for this student. Fall back to matching
-      // the Google account's display name against unbound roster entries in this
-      // course, but only when the match is unambiguous (exactly one candidate).
+      // Deliberate design: admins may not preset googleEmail, so allow binding
+      // by matching the Google account's display name against unbound roster
+      // entries in this course — but only when the match is unambiguous
+      // (exactly one candidate). Guarded below: binding is claim-based with
+      // audit tagging, and only reaches entries no other account holds.
       const displayName = guard.user.name?.trim()
       if (displayName) {
         const nameCandidates = await prisma.student.findMany({
@@ -67,6 +70,7 @@ export async function POST(request: Request) {
         })
         if (nameCandidates.length === 1) {
           student = nameCandidates[0]
+          matchedByName = true
         }
       }
     }
@@ -108,7 +112,9 @@ export async function POST(request: Request) {
       }
     }
     let shouldWriteBindAudit = false
+    let bindMethod: "email" | "name_match" = "email"
     if (!student.userId || student.googleEmail !== userEmail) {
+      bindMethod = matchedByName ? "name_match" : "email"
       const claimed = await prisma.student.updateMany({
         where: {
           id: student.id,
@@ -138,12 +144,14 @@ export async function POST(request: Request) {
         target: {
           studentId: student.id,
           studentCode: student.studentCode,
-          studentName: student.name
+          studentName: student.name,
+          bindMethod
         },
         oldValue: { googleEmail: student.googleEmail, userId: student.userId },
         newValue: {
           googleEmail: userEmail,
           userId: guard.user.id,
+          bindMethod,
           ipAddress: clientIp.ipAddress,
           ipCountry,
           ipCountryName: ipinfo.ipCountryName,

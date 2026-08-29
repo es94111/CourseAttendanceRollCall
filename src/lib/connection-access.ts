@@ -142,6 +142,17 @@ function ruleMatches(rule: { targetType: string; value: string }, identity: Conn
   return false
 }
 
+/**
+ * Every rule type depends on IP-derived data: IP/CIDR rules compare the
+ * request IP, country rules come from CF headers, ASN rules from an ipinfo
+ * lookup. When the client IP cannot be determined (TRUSTED_PROXY_MODE=none,
+ * or a direct origin hit in cloudflare mode), none of them can be evaluated
+ * reliably, so any non-empty rule set requires a client IP.
+ */
+export function connectionAccessRequiresClientIp(rules: { targetType: string }[]) {
+  return rules.length > 0
+}
+
 function describeRuleTarget(rule: { targetType: string; value: string }) {
   if (rule.targetType === "country") return `國家 ${rule.value}`
   if (rule.targetType === "asn") return `ASN ${rule.value}`
@@ -150,6 +161,19 @@ function describeRuleTarget(rule: { targetType: string; value: string }) {
 
 export async function evaluateConnectionAccess(identity: ConnectionIdentity) {
   const rules = await prisma.connectionAccessRule.findMany({ where: { enabled: true } })
+
+  // Fail closed: when the client IP is unknown, no rule type can be evaluated
+  // reliably (IP rules have nothing to compare, country/ASN data is absent) —
+  // neither block rules nor allow-list matching can be trusted, so reject
+  // rather than silently skip.
+  if (!identity.ipAddress && rules.length > 0) {
+    return {
+      allowed: false,
+      reason: "無法識別此連線的來源 IP，無法套用連線來源規則，請檢查 TRUSTED_PROXY_MODE 與反向代理設定",
+      rule: null
+    }
+  }
+
   const blockRule = rules.find((rule) => rule.action === "block" && ruleMatches(rule, identity))
   if (blockRule) {
     return {

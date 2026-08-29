@@ -30,21 +30,23 @@ describe("getClientIpMetadata", () => {
         "x-forwarded-for": "198.51.100.8, 172.70.1.2"
       })
 
-      // falls back to rightmost forwarded entry (the trusted proxy's observation)
+      // No trustworthy source: the forged x-forwarded-for must not be used.
       expect(getClientIpMetadata(headers)).toEqual({
-        ipAddress: "172.70.1.2",
+        ipAddress: null,
         ipCountry: null
       })
     })
 
-    it("falls back to the rightmost x-forwarded-for entry when CF header is missing", () => {
+    it("does not fall back to x-forwarded-for when the CF header is missing", () => {
       const headers = new Headers({
         "x-forwarded-for": "198.51.100.8, 172.70.1.2"
       })
 
-      // Rightmost is what the immediate trusted proxy set — left side is attacker-controllable.
+      // A direct hit on the origin bypasses Cloudflare; x-forwarded-for is
+      // attacker-controllable there, so treating it as the client IP would
+      // let requests forge their way past IP/country block rules.
       expect(getClientIpMetadata(headers)).toEqual({
-        ipAddress: "172.70.1.2",
+        ipAddress: null,
         ipCountry: null
       })
     })

@@ -53,7 +53,8 @@ const targetLabels: Record<string, string> = {
   ipAsnName: "ASN 名稱",
   userAgent: "瀏覽器",
   path: "路徑",
-  matchedRule: "命中規則"
+  matchedRule: "命中規則",
+  bindMethod: "綁定方式"
 }
 
 const valueLabels: Record<string, string> = {
@@ -64,7 +65,8 @@ const valueLabels: Record<string, string> = {
   status: "點名狀態",
   attendedAt: "點名時間",
   isManual: "記錄方式",
-  googleEmail: "Google Email"
+  googleEmail: "Google Email",
+  bindMethod: "綁定方式"
 }
 
 const targetDisplayKeys = new Set(["courseName", "sessionLabel", "userDisplay", "studentDisplay"])
@@ -110,6 +112,10 @@ function formatValue(key: string, value: unknown, missingLabel = "—") {
   if (value === null || value === undefined || value === "") return missingLabel
   if (key === "status") return attendanceStatusLabel(String(value))
   if (key === "isManual") return value ? "手動補登／調整" : "系統點名"
+  if (key === "bindMethod") {
+    if (value === "name_match") return "Google 顯示名稱比對"
+    if (value === "email") return "Email 設定"
+  }
   if (key === "role") {
     if (value === "admin") return "管理員"
     if (value === "student") return "學生"
@@ -174,8 +180,11 @@ export function formatAuditDescription(log: AuditLogRow) {
       return manualAttendanceDescription(log, target)
     case "delete_student_data":
       return target.studentCode ? `刪除學號 ${target.studentCode} 的學生個資` : "刪除學生個資"
-    case "student_email_bind":
-      return `綁定學生「${target.studentName ?? target.studentId ?? "未知"}」的 Google Email`
+    case "student_email_bind": {
+      const method =
+        target.bindMethod === "name_match" ? "（以 Google 顯示名稱自動比對）" : ""
+      return `綁定學生「${target.studentName ?? target.studentId ?? "未知"}」的 Google Email${method}`
+    }
     case "student_email_unbind":
       return `解除學生「${target.studentName ?? target.studentId ?? "未知"}」的 Google Email 綁定`
     case "delete_user":

@@ -43,17 +43,17 @@ export function getClientIpMetadata(headers: Headers) {
 
   if (mode === "cloudflare") {
     const cfIp = validIp(headers.get("cf-connecting-ip"))
-    if (cfIp) {
-      return { ipAddress: cfIp, ipCountry: normalizeCountryCode(headers.get("cf-ipcountry")) }
-    }
+    // Only Cloudflare's own header is trustworthy in this mode. Falling back to
+    // x-forwarded-for would let a client that bypasses Cloudflare (direct hit on
+    // the origin) forge its IP and evade IP/country block rules and the
+    // per-IP check-in share limit.
+    if (!cfIp) return { ipAddress: null, ipCountry: null }
+    return { ipAddress: cfIp, ipCountry: normalizeCountryCode(headers.get("cf-ipcountry")) }
   }
 
   const forwarded = rightmostForwarded(headers)
   if (forwarded) {
-    return {
-      ipAddress: forwarded,
-      ipCountry: mode === "cloudflare" ? normalizeCountryCode(headers.get("cf-ipcountry")) : null
-    }
+    return { ipAddress: forwarded, ipCountry: null }
   }
 
   return { ipAddress: null, ipCountry: null }

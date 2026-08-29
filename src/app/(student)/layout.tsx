@@ -1,11 +1,19 @@
 import Link from "next/link"
+import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 import { auth } from "@/lib/auth"
+import { checkConnectionAccess } from "@/lib/connection-access"
 import { SecureSignOutButton } from "@/components/shared/SecureSignOutButton"
 
 export default async function StudentLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()
   if (!session?.user || session.user.role !== "student") redirect("/login")
+
+  // Keep SSR pages under the same connection rules as the API routes.
+  const requestHeaders = await headers()
+  const access = await checkConnectionAccess(requestHeaders, "/(student)")
+  if (!access.allowed) redirect("/login?error=connection-blocked")
+
   const displayName = session.user.name ?? session.user.email ?? "同學"
 
   return (

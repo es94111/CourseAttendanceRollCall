@@ -1,6 +1,8 @@
+import { headers } from "next/headers"
 import { notFound, redirect } from "next/navigation"
 import { QRCodeDisplay } from "@/components/admin/QRCodeDisplay"
 import { auth } from "@/lib/auth"
+import { checkConnectionAccess } from "@/lib/connection-access"
 import { prisma } from "@/lib/prisma"
 import { sessionStatusLabel } from "@/lib/status-label"
 
@@ -8,6 +10,12 @@ export default async function SessionDisplayPage(props: any) {
   const params = await props.params;
   const sessionUser = await auth()
   if (!sessionUser?.user || sessionUser.user.role !== "admin") redirect("/login")
+
+  // This page streams live check-in tokens; keep it under the same
+  // connection rules as the API that issues them.
+  const requestHeaders = await headers()
+  const access = await checkConnectionAccess(requestHeaders, "/sessions/display")
+  if (!access.allowed) redirect("/login?error=connection-blocked")
 
   const session = await prisma.attendanceSession.findUnique({
     where: { id: params.id },
