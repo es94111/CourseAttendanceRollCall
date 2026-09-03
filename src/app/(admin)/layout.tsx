@@ -1,8 +1,8 @@
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
+import { AdminNavigation } from "@/components/shared/AdminNavigation"
 import { auth } from "@/lib/auth"
 import { checkConnectionAccess } from "@/lib/connection-access"
-import { AdminNavigation } from "@/components/shared/AdminNavigation"
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()

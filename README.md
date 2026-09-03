@@ -2,7 +2,7 @@
 
 以 Next.js（App Router）打造的全端課程點名系統。管理員可建立課程、匯入學生名單、開啟動態 QR Code 點名 Session；學生使用 Google 帳號掃描 QR Code 完成點名。系統自動統計出席率，並支援含 PII 警告的 CSV 匯出與雙軌稽核日誌。
 
-> **目前版本**：0.7.3（開發中）
+> **目前版本**：0.7.4（開發中）
 > **版本歷程**：[changelog.json](./changelog.json)
 > **功能規格**：[specs/001-course-attendance-rollcall/spec.md](./specs/001-course-attendance-rollcall/spec.md)
 > **實作計畫**：[specs/001-course-attendance-rollcall/plan.md](./specs/001-course-attendance-rollcall/plan.md)
@@ -27,6 +27,7 @@
 | 即時推送 | Server-Sent Events（SSE） |
 | UI | Tailwind CSS + shadcn/ui |
 | 測試 | Vitest + Testing Library + supertest |
+| 程式碼檢查與排版 | Biome |
 | 日誌 | Winston（每日輪轉的結構化 JSON 檔案） |
 | 部署 | Docker（本地 docker-compose；正式環境 Zeabur 或雲端 VPS） |
 
@@ -80,7 +81,9 @@ npm run dev
 npm run dev               # 啟動開發伺服器
 npm run build             # 正式環境建置
 npm run start             # 啟動正式版本
-npm run lint              # 執行 ESLint
+npm run lint              # 執行 Biome 檢查
+npm run format            # 自動排版程式碼
+npm run check             # 檢查 + 排版檢查（CI 使用）
 npm run test              # 執行 Vitest 全部測試
 npm run test:watch        # 監看模式
 npm run prisma:generate   # 重新產生 Prisma Client

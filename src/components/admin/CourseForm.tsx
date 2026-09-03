@@ -105,7 +105,6 @@ export function CourseForm({ course }: { course?: CourseFormValue }) {
                 name="name"
                 defaultValue={course?.name ?? ""}
                 placeholder="例如：網頁程式設計"
-                autoFocus={!isEditing}
                 required
               />
               <span className="hint">使用學生熟悉的正式課名，掃描點名時也會顯示。</span>
@@ -118,7 +117,7 @@ export function CourseForm({ course }: { course?: CourseFormValue }) {
                 defaultValue={course?.dayOfWeek ?? 1}
               >
                 {["日", "一", "二", "三", "四", "五", "六"].map((label, index) => (
-                  <option key={index} value={index}>
+                  <option key={label} value={index}>
                     星期{label}
                   </option>
                 ))}
@@ -191,7 +190,7 @@ export function CourseForm({ course }: { course?: CourseFormValue }) {
 
 function PlusIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
       <path d="M12 5v14M5 12h14" strokeLinecap="round" />
     </svg>
   )
@@ -199,7 +198,7 @@ function PlusIcon() {
 
 function EditIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
       <path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4z" />
     </svg>
   )

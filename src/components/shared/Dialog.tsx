@@ -29,6 +29,7 @@ export function Dialog({
   if (!open) return null
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: backdrop 點擊關閉對話框為刻意的 UI 行為
     <div className="dialog-backdrop" role="presentation" onMouseDown={onClose}>
       <section
         className="dialog"

@@ -1,11 +1,11 @@
-import { prisma } from "@/lib/prisma"
 import { error, handleRouteError, json, parseJson, requireAdmin } from "@/lib/api"
-import { sessionCreateSchema } from "@/lib/validation"
 import { writeAuditLog } from "@/lib/audit"
+import { prisma } from "@/lib/prisma"
 import { toTaipeiIso } from "@/lib/time"
+import { sessionCreateSchema } from "@/lib/validation"
 
 export async function GET(_request: Request, props: any) {
-  const params = await props.params;
+  const params = await props.params
   const guard = await requireAdmin()
   if ("response" in guard) return guard.response
   try {
@@ -26,14 +26,14 @@ export async function GET(_request: Request, props: any) {
 }
 
 export async function POST(request: Request, props: any) {
-  const params = await props.params;
+  const params = await props.params
   const guard = await requireAdmin()
   if ("response" in guard) return guard.response
   const parsed = await parseJson(request, sessionCreateSchema)
   if ("response" in parsed) return parsed.response
   try {
     const course = await prisma.course.findUnique({ where: { id: params.id } })
-    if (!course || course.status !== "active") return error("課程不存在或已封存", 404)
+    if (course?.status !== "active") return error("課程不存在或已封存", 404)
     const active = await prisma.attendanceSession.findFirst({
       where: { courseId: params.id, status: "active" }
     })

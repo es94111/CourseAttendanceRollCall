@@ -1,11 +1,11 @@
-import { prisma } from "@/lib/prisma"
 import { error, handleRouteError, json, parseJson, requireAdmin } from "@/lib/api"
-import { studentSchema } from "@/lib/validation"
-import { normalizeEmail } from "@/lib/email"
 import { writeAuditLog } from "@/lib/audit"
+import { normalizeEmail } from "@/lib/email"
+import { prisma } from "@/lib/prisma"
+import { studentSchema } from "@/lib/validation"
 
 export async function PATCH(request: Request, props: any) {
-  const params = await props.params;
+  const params = await props.params
   const guard = await requireAdmin()
   if ("response" in guard) return guard.response
   const parsed = await parseJson(request, studentSchema)
@@ -30,7 +30,11 @@ export async function PATCH(request: Request, props: any) {
         eventType: "student_email_unbind",
         actorId: guard.user.id,
         actorEmail: guard.user.email ?? "",
-        target: { studentId: existing.id, studentCode: existing.studentCode, studentName: existing.name },
+        target: {
+          studentId: existing.id,
+          studentCode: existing.studentCode,
+          studentName: existing.name
+        },
         oldValue: { googleEmail: existing.googleEmail, userId: existing.userId },
         newValue: { googleEmail: null, userId: null }
       })
@@ -44,7 +48,7 @@ export async function PATCH(request: Request, props: any) {
 }
 
 export async function DELETE(request: Request, props: any) {
-  const params = await props.params;
+  const params = await props.params
   const guard = await requireAdmin()
   if ("response" in guard) return guard.response
   try {

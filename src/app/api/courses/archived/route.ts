@@ -1,5 +1,5 @@
-import { prisma } from "@/lib/prisma"
 import { handleRouteError, json, requireAdmin } from "@/lib/api"
+import { prisma } from "@/lib/prisma"
 import { serializeCourse } from "@/lib/serializers"
 
 export async function GET() {

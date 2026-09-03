@@ -1,11 +1,11 @@
 "use client"
 
-import { Suspense, useEffect, useMemo, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { getSession, signIn } from "next-auth/react"
-import { parseTokenSlot } from "@/lib/token-slot"
-import { attendanceStatusLabel } from "@/lib/status-label"
+import { Suspense, useEffect, useMemo, useState } from "react"
 import { SecureSignOutButton } from "@/components/shared/SecureSignOutButton"
+import { attendanceStatusLabel } from "@/lib/status-label"
+import { parseTokenSlot } from "@/lib/token-slot"
 
 type CheckinInfo = {
   courseName: string
@@ -133,6 +133,7 @@ function CheckinContent() {
     }
   }
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: submit 為閉包函式，僅應在掃描參數變動時自動提交
   useEffect(() => {
     if (!hasCheckinParams || autoSubmitted || completedAttendance) return
     let cancelled = false
@@ -145,7 +146,6 @@ function CheckinContent() {
     return () => {
       cancelled = true
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoSubmitted, completedAttendance, hasCheckinParams, sessionId, token])
 
   function login() {
@@ -346,6 +346,7 @@ function StatusHeader({
             strokeWidth="2.5"
             strokeLinecap="round"
             strokeLinejoin="round"
+            aria-hidden
           >
             <path d="M20 6L9 17l-5-5" />
           </svg>
@@ -360,6 +361,7 @@ function StatusHeader({
             strokeWidth="2.2"
             strokeLinecap="round"
             strokeLinejoin="round"
+            aria-hidden
           >
             <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
             <path d="M12 9v4" />
@@ -376,6 +378,7 @@ function StatusHeader({
             strokeWidth="2.2"
             strokeLinecap="round"
             strokeLinejoin="round"
+            aria-hidden
           >
             <circle cx="12" cy="12" r="10" />
             <path d="M12 16v-4" />
@@ -392,6 +395,7 @@ function StatusHeader({
             strokeWidth="2.2"
             strokeLinecap="round"
             strokeLinejoin="round"
+            aria-hidden
           >
             <rect x="3" y="3" width="7" height="7" />
             <rect x="14" y="3" width="7" height="7" />
@@ -428,7 +432,10 @@ function Spinner() {
   )
 }
 
-function buildCompletionDetail(status: string | null | undefined, attendedAt: string | null | undefined) {
+function buildCompletionDetail(
+  status: string | null | undefined,
+  attendedAt: string | null | undefined
+) {
   const parts = [`狀態：${attendanceStatusLabel(status)}`]
   if (attendedAt) parts.push(`簽到時間：${formatDateTime(attendedAt)}`)
   return parts.join(" · ")

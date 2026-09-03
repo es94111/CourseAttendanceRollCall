@@ -1,8 +1,8 @@
 import Link from "next/link"
-import { prisma } from "@/lib/prisma"
-import { DataTable } from "@/components/shared/DataTable"
 import { DeleteArchivedCourseButton } from "@/components/admin/DeleteArchivedCourseButton"
+import { DataTable } from "@/components/shared/DataTable"
 import { PageHeader } from "@/components/shared/PageHeader"
+import { prisma } from "@/lib/prisma"
 
 export default async function ArchivedCoursesPage() {
   const courses = await prisma.course.findMany({ where: { status: "archived" } })

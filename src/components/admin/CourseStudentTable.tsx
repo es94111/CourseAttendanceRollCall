@@ -27,7 +27,10 @@ export function CourseStudentTable({
     const normalized = query.trim().toLowerCase()
     return students
       .filter((student) =>
-        [student.studentCode ?? "", student.name, student.googleEmail ?? ""].join(" ").toLowerCase().includes(normalized)
+        [student.studentCode ?? "", student.name, student.googleEmail ?? ""]
+          .join(" ")
+          .toLowerCase()
+          .includes(normalized)
       )
       .sort((a, b) => {
         if (sortKey === "name") return a.name.localeCompare(b.name, "zh-Hant")
@@ -39,8 +42,15 @@ export function CourseStudentTable({
   return (
     <div>
       <div className="toolbar">
-        <input placeholder="搜尋學號、姓名、Email" value={query} onChange={(event) => setQuery(event.target.value)} />
-        <select value={sortKey} onChange={(event) => setSortKey(event.target.value as typeof sortKey)}>
+        <input
+          placeholder="搜尋學號、姓名、Email"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+        />
+        <select
+          value={sortKey}
+          onChange={(event) => setSortKey(event.target.value as typeof sortKey)}
+        >
           <option value="code">依學號排序</option>
           <option value="name">依姓名排序</option>
           <option value="email">依 Email 排序</option>
@@ -67,7 +77,13 @@ export function CourseStudentTable({
                 <td>{student.name}</td>
                 <td>{student.googleEmail ?? "-"}</td>
                 <td>{readonly ? "-" : <EditStudentButton student={student} />}</td>
-                <td>{readonly ? "-" : <RemoveStudentFromCourseButton courseId={courseId} studentId={student.id} />}</td>
+                <td>
+                  {readonly ? (
+                    "-"
+                  ) : (
+                    <RemoveStudentFromCourseButton courseId={courseId} studentId={student.id} />
+                  )}
+                </td>
                 <td>{readonly ? "-" : <DeleteStudentDataButton studentId={student.id} />}</td>
               </tr>
             ))}

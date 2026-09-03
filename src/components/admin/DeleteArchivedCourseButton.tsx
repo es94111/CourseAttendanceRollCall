@@ -47,7 +47,8 @@ export function DeleteArchivedCourseButton({
       {error && <span style={{ color: "#b42318", marginLeft: 8 }}>{error}</span>}
       <Dialog title="刪除封存課程" open={confirmOpen} onClose={() => setConfirmOpen(false)}>
         <p>
-          確定要永久刪除「{courseName}」？此操作會刪除課程、點名 Session、點名紀錄、請假紀錄與選課關聯，無法復原。
+          確定要永久刪除「{courseName}」？此操作會刪除課程、點名
+          Session、點名紀錄、請假紀錄與選課關聯，無法復原。
         </p>
         <div className="toolbar dialog-actions">
           <button
@@ -58,7 +59,12 @@ export function DeleteArchivedCourseButton({
           >
             取消
           </button>
-          <button className="btn danger" type="button" disabled={isDeleting || isPending} onClick={deleteCourse}>
+          <button
+            className="btn danger"
+            type="button"
+            disabled={isDeleting || isPending}
+            onClick={deleteCourse}
+          >
             確認刪除
           </button>
         </div>

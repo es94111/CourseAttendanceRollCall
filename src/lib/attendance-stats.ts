@@ -28,16 +28,14 @@ export function calculateStats(sessions: SessionLike[], records: RecordLike[]) {
 
   for (const record of records) {
     if (!sessionIds.has(record.sessionId)) continue
-    const current =
-      byStudent.get(record.studentId) ??
-      {
-        studentId: record.studentId,
-        onTimeCount: 0,
-        lateCount: 0,
-        leaveCount: 0,
-        absentCount: 0,
-        attendanceRate: 0
-      }
+    const current = byStudent.get(record.studentId) ?? {
+      studentId: record.studentId,
+      onTimeCount: 0,
+      lateCount: 0,
+      leaveCount: 0,
+      absentCount: 0,
+      attendanceRate: 0
+    }
     if (record.status === "on_time") current.onTimeCount += 1
     if (record.status === "late") current.lateCount += 1
     if (record.status === "leave") current.leaveCount += 1

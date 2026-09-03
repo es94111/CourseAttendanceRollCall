@@ -39,17 +39,32 @@ export function ArchiveCourseButton({
 
   return (
     <span>
-      <button className="btn secondary" type="button" disabled={isSaving || isPending} onClick={() => setConfirmOpen(true)}>
+      <button
+        className="btn secondary"
+        type="button"
+        disabled={isSaving || isPending}
+        onClick={() => setConfirmOpen(true)}
+      >
         {isSaving || isPending ? "封存中" : "封存課程"}
       </button>
       {error && <span style={{ color: "#b42318", marginLeft: 8 }}>{error}</span>}
       <Dialog title="封存課程" open={confirmOpen} onClose={() => setConfirmOpen(false)}>
         <p>封存後課程會變成唯讀，不能再開啟新的點名。確定要封存此課程？</p>
         <div className="toolbar dialog-actions">
-          <button className="btn secondary" type="button" disabled={isSaving || isPending} onClick={() => setConfirmOpen(false)}>
+          <button
+            className="btn secondary"
+            type="button"
+            disabled={isSaving || isPending}
+            onClick={() => setConfirmOpen(false)}
+          >
             取消
           </button>
-          <button className="btn" type="button" disabled={isSaving || isPending} onClick={archiveCourse}>
+          <button
+            className="btn"
+            type="button"
+            disabled={isSaving || isPending}
+            onClick={archiveCourse}
+          >
             確認封存
           </button>
         </div>

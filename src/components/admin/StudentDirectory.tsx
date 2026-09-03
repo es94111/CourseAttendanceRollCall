@@ -1,8 +1,8 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { EditStudentButton } from "@/components/admin/EditStudentButton"
 import { DeleteStudentButton } from "@/components/admin/DeleteStudentButton"
+import { EditStudentButton } from "@/components/admin/EditStudentButton"
 
 interface StudentRow {
   id: string

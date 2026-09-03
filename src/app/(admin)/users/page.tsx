@@ -1,7 +1,7 @@
-import { auth } from "@/lib/auth"
-import { prisma } from "@/lib/prisma"
 import { UserRoleManager } from "@/components/admin/UserRoleManager"
 import { PageHeader } from "@/components/shared/PageHeader"
+import { auth } from "@/lib/auth"
+import { prisma } from "@/lib/prisma"
 
 export default async function UsersPage() {
   const session = await auth()

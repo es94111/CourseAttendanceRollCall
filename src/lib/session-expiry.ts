@@ -9,7 +9,11 @@ export async function expireSessionIfNeeded(sessionId: string) {
   return prisma.attendanceSession.update({ where: { id: sessionId }, data: { status: "expired" } })
 }
 
-export function attendanceStatus(attendedAt: Date, sessionOpenedAt: Date, lateThresholdMinutes: number) {
+export function attendanceStatus(
+  attendedAt: Date,
+  sessionOpenedAt: Date,
+  lateThresholdMinutes: number
+) {
   const lateAt = sessionOpenedAt.getTime() + lateThresholdMinutes * 60_000
   return attendedAt.getTime() <= lateAt ? "on_time" : "late"
 }

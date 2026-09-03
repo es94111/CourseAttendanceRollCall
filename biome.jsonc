@@ -1,0 +1,53 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.11/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    // *.min.js 未列在 .gitignore，需明確排除
+    "includes": ["**", "!*.min.js", "!package-lock.json"]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100
+  },
+  "javascript": {
+    "formatter": {
+      // 對應原 .prettierrc：semi:false / singleQuote:false / trailingComma:none
+      "quoteStyle": "double",
+      "semicolons": "asNeeded",
+      "trailingCommas": "none"
+    }
+  },
+  "linter": {
+    "enabled": true,
+    "domains": {
+      // 啟用 Next.js 與 React 適用規則
+      "next": "recommended",
+      "react": "recommended"
+    },
+    "rules": {
+      "preset": "recommended",
+      "suspicious": {
+        // 對應原 eslint @typescript-eslint/no-explicit-any: off
+        "noExplicitAny": "off"
+      }
+    }
+  },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
+  },
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  }
+}

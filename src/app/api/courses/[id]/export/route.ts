@@ -1,11 +1,11 @@
-import { prisma } from "@/lib/prisma"
-import { attendanceRowsToCsv } from "@/lib/csv"
 import { error, handleRouteError, requireAdmin } from "@/lib/api"
-import { endOfTaipeiDay, startOfTaipeiDay } from "@/lib/time"
 import { writeAuditLog } from "@/lib/audit"
+import { attendanceRowsToCsv } from "@/lib/csv"
+import { prisma } from "@/lib/prisma"
+import { endOfTaipeiDay, startOfTaipeiDay } from "@/lib/time"
 
 export async function GET(request: Request, props: any) {
-  const params = await props.params;
+  const params = await props.params
   const guard = await requireAdmin()
   if ("response" in guard) return guard.response
   try {
@@ -40,7 +40,12 @@ export async function GET(request: Request, props: any) {
       eventType: "export_attendance",
       actorId: guard.user.id,
       actorEmail: guard.user.email ?? "",
-      target: { courseId: params.id, startDate: startDate ?? "全部時間", endDate: endDate ?? "全部時間", total }
+      target: {
+        courseId: params.id,
+        startDate: startDate ?? "全部時間",
+        endDate: endDate ?? "全部時間",
+        total
+      }
     })
     return new Response(attendanceRowsToCsv(rows), {
       headers: {

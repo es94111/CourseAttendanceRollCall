@@ -1,10 +1,10 @@
-import { prisma } from "@/lib/prisma"
-import { coursePatchSchema } from "@/lib/validation"
 import { error, handleRouteError, json, parseJson, requireAdmin } from "@/lib/api"
+import { prisma } from "@/lib/prisma"
 import { serializeCourse } from "@/lib/serializers"
+import { coursePatchSchema } from "@/lib/validation"
 
 export async function GET(_request: Request, props: any) {
-  const params = await props.params;
+  const params = await props.params
   const guard = await requireAdmin()
   if ("response" in guard) return guard.response
   try {
@@ -34,7 +34,7 @@ export async function GET(_request: Request, props: any) {
 }
 
 export async function PUT(request: Request, props: any) {
-  const params = await props.params;
+  const params = await props.params
   const guard = await requireAdmin()
   if ("response" in guard) return guard.response
   const parsed = await parseJson(request, coursePatchSchema)
@@ -44,7 +44,8 @@ export async function PUT(request: Request, props: any) {
     const existing = await prisma.course.findUnique({ where: { id: params.id } })
     if (!existing) return error("課程不存在", 404)
     const lateThresholdChanged =
-      data.lateThresholdMinutes !== undefined && data.lateThresholdMinutes !== existing.lateThresholdMinutes
+      data.lateThresholdMinutes !== undefined &&
+      data.lateThresholdMinutes !== existing.lateThresholdMinutes
     const course = await prisma.course.update({ where: { id: params.id }, data })
     return json({ ...serializeCourse(course), lateThresholdChanged })
   } catch (cause) {
@@ -53,7 +54,7 @@ export async function PUT(request: Request, props: any) {
 }
 
 export async function DELETE(_request: Request, props: any) {
-  const params = await props.params;
+  const params = await props.params
   const guard = await requireAdmin()
   if ("response" in guard) return guard.response
   try {

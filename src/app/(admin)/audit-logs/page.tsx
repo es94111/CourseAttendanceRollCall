@@ -1,7 +1,7 @@
-import { prisma } from "@/lib/prisma"
 import { AuditLogsClient } from "@/components/admin/AuditLogsClient"
-import { serializeAuditLogs } from "@/lib/audit-log-display"
 import { PageHeader } from "@/components/shared/PageHeader"
+import { serializeAuditLogs } from "@/lib/audit-log-display"
+import { prisma } from "@/lib/prisma"
 
 export default async function AuditLogsPage() {
   const [logs, total] = await Promise.all([

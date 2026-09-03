@@ -1,7 +1,7 @@
 import { ConnectionAccessManager } from "@/components/admin/ConnectionAccessManager"
+import { PageHeader } from "@/components/shared/PageHeader"
 import { prisma } from "@/lib/prisma"
 import { getIpShareLimit } from "@/lib/system-settings"
-import { PageHeader } from "@/components/shared/PageHeader"
 
 export default async function ConnectionAccessPage() {
   const [rules, ipShareLimit] = await Promise.all([

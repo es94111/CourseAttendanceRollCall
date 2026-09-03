@@ -1,6 +1,6 @@
-import { prisma } from "@/lib/prisma"
 import { handleRouteError, json, requireAdmin } from "@/lib/api"
 import { serializeAuditLogs } from "@/lib/audit-log-display"
+import { prisma } from "@/lib/prisma"
 import { endOfTaipeiDay, startOfTaipeiDay } from "@/lib/time"
 
 const ALLOWED_EVENT_TYPES = new Set([
@@ -37,11 +37,10 @@ export async function GET(request: Request) {
     const eventTypeRaw = url.searchParams.get("eventType")
     const eventType =
       eventTypeRaw && ALLOWED_EVENT_TYPES.has(eventTypeRaw) ? eventTypeRaw : undefined
+    const actorEmail = url.searchParams.get("actorEmail") ?? undefined
     const where: any = {
       eventType,
-      actorEmail: url.searchParams.get("actorEmail")
-        ? { contains: url.searchParams.get("actorEmail")!, mode: "insensitive" }
-        : undefined,
+      actorEmail: actorEmail ? { contains: actorEmail, mode: "insensitive" } : undefined,
       createdAt:
         startDate || endDate
           ? {

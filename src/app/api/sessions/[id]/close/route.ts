@@ -1,8 +1,8 @@
-import { prisma } from "@/lib/prisma"
 import { handleRouteError, json, requireAdmin } from "@/lib/api"
+import { prisma } from "@/lib/prisma"
 
 export async function POST(_request: Request, props: any) {
-  const params = await props.params;
+  const params = await props.params
   const guard = await requireAdmin()
   if ("response" in guard) return guard.response
   try {

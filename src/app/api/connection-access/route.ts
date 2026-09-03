@@ -1,8 +1,8 @@
 import { error, handleRouteError, json, parseJson, requireAdmin } from "@/lib/api"
+import { writeAuditLog } from "@/lib/audit"
 import { normalizeConnectionAccessRule } from "@/lib/connection-access"
 import { prisma } from "@/lib/prisma"
 import { connectionAccessRulesSchema } from "@/lib/validation"
-import { writeAuditLog } from "@/lib/audit"
 
 export async function GET() {
   const guard = await requireAdmin()
@@ -23,14 +23,16 @@ export async function PUT(request: Request) {
   const parsed = await parseJson(request, connectionAccessRulesSchema)
   if ("response" in parsed) return parsed.response
   try {
-    let normalizedRules
+    let normalizedRules: ReturnType<typeof normalizeConnectionAccessRule>[]
     try {
       normalizedRules = parsed.data.rules.map(normalizeConnectionAccessRule)
     } catch (cause) {
       return error(cause instanceof Error ? cause.message : "連線規則格式錯誤", 400)
     }
     const rules = Array.from(
-      new Map(normalizedRules.map((rule) => [`${rule.action}:${rule.targetType}:${rule.value}`, rule])).values()
+      new Map(
+        normalizedRules.map((rule) => [`${rule.action}:${rule.targetType}:${rule.value}`, rule])
+      ).values()
     )
 
     const oldRules = await prisma.connectionAccessRule.findMany({

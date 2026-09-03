@@ -128,7 +128,7 @@ function NavGroup({
 
 function CheckIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" aria-hidden>
       <path d="m5 12 4 4L19 6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
@@ -146,7 +146,7 @@ function NavIcon({ name }: { name: IconName }) {
 
   if (name === "home") {
     return (
-      <svg {...common}>
+      <svg {...common} aria-hidden>
         <path d="m3 11 9-8 9 8" />
         <path d="M5 10v10h14V10M9 20v-6h6v6" />
       </svg>
@@ -154,7 +154,7 @@ function NavIcon({ name }: { name: IconName }) {
   }
   if (name === "book") {
     return (
-      <svg {...common}>
+      <svg {...common} aria-hidden>
         <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11v16H6.5A2.5 2.5 0 0 0 4 21.5z" />
         <path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H13v16h4.5a2.5 2.5 0 0 1 2.5 2.5z" />
       </svg>
@@ -162,7 +162,7 @@ function NavIcon({ name }: { name: IconName }) {
   }
   if (name === "students" || name === "users") {
     return (
-      <svg {...common}>
+      <svg {...common} aria-hidden>
         <circle cx="9" cy="8" r="3" />
         <path d="M3.5 20a5.5 5.5 0 0 1 11 0" />
         <path d="M16 5.5a3 3 0 0 1 0 5.5M17 14.5a5 5 0 0 1 3.5 4.8" />
@@ -171,7 +171,7 @@ function NavIcon({ name }: { name: IconName }) {
   }
   if (name === "shield") {
     return (
-      <svg {...common}>
+      <svg {...common} aria-hidden>
         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
         <path d="m9 12 2 2 4-4" />
       </svg>
@@ -179,7 +179,7 @@ function NavIcon({ name }: { name: IconName }) {
   }
   if (name === "mail") {
     return (
-      <svg {...common}>
+      <svg {...common} aria-hidden>
         <rect x="3" y="5" width="18" height="14" rx="2" />
         <path d="m3 7 9 6 9-6" />
       </svg>
@@ -187,14 +187,14 @@ function NavIcon({ name }: { name: IconName }) {
   }
   if (name === "history") {
     return (
-      <svg {...common}>
+      <svg {...common} aria-hidden>
         <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
         <path d="M3 3v5h5M12 7v5l3 2" />
       </svg>
     )
   }
   return (
-    <svg {...common}>
+    <svg {...common} aria-hidden>
       <path d="M3 6h18M5 6l1 15h12l1-15M9 10h6M8 3h8l1 3H7z" />
     </svg>
   )

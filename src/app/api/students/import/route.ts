@@ -1,10 +1,7 @@
-import { prisma } from "@/lib/prisma"
 import { error, handleRouteError, json, requireAdmin } from "@/lib/api"
 import { normalizeEmail } from "@/lib/email"
-import {
-  assertMultipartRequest,
-  RequestSecurityError
-} from "@/lib/request-security"
+import { prisma } from "@/lib/prisma"
+import { assertMultipartRequest, RequestSecurityError } from "@/lib/request-security"
 
 const MAX_CSV_BYTES = 5 * 1024 * 1024 // 5 MB
 const MAX_UPLOAD_BYTES = MAX_CSV_BYTES + 512 * 1024
@@ -42,7 +39,7 @@ export async function POST(request: Request) {
     }
     if (typeof courseId === "string" && courseId) {
       const course = await prisma.course.findUnique({ where: { id: courseId } })
-      if (!course || course.status !== "active") return error("課程不存在或已封存", 404)
+      if (course?.status !== "active") return error("課程不存在或已封存", 404)
     }
     const rows = parseCsv(await file.text())
     if (rows.length > MAX_CSV_ROWS) {
@@ -74,7 +71,10 @@ export async function POST(request: Request) {
         errors.push({ row: row.row, reason: "Google Email 格式不符" })
         continue
       }
-      if ((row.studentCode && seenCodes.has(row.studentCode)) || (row.googleEmail && seenEmails.has(row.googleEmail))) {
+      if (
+        (row.studentCode && seenCodes.has(row.studentCode)) ||
+        (row.googleEmail && seenEmails.has(row.googleEmail))
+      ) {
         errors.push({ row: row.row, reason: "CSV 檔案內含重複資料" })
         continue
       }

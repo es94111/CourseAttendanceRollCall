@@ -32,7 +32,9 @@ describe("HMAC QR token", () => {
   it("rejects a tampered token", () => {
     vi.setSystemTime(new Date("2026-05-19T00:00:00.000Z"))
     const token = generateToken("session_1")
-    const decoded = Buffer.from(token, "base64url").toString("utf8").replace("session_1", "session_2")
+    const decoded = Buffer.from(token, "base64url")
+      .toString("utf8")
+      .replace("session_1", "session_2")
     const tampered = Buffer.from(decoded, "utf8").toString("base64url")
 
     expect(verifyToken(tampered, 60).valid).toBe(false)

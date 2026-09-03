@@ -1,6 +1,6 @@
-import type { AuditEventType } from "@/types"
-import { prisma } from "@/lib/prisma"
 import { logger } from "@/lib/logger"
+import { prisma } from "@/lib/prisma"
+import type { AuditEventType } from "@/types"
 
 interface AuditInput {
   eventType: AuditEventType

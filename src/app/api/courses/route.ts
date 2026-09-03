@@ -1,7 +1,7 @@
-import { prisma } from "@/lib/prisma"
-import { courseSchema } from "@/lib/validation"
 import { handleRouteError, json, parseJson, requireAdmin } from "@/lib/api"
+import { prisma } from "@/lib/prisma"
 import { serializeCourse } from "@/lib/serializers"
+import { courseSchema } from "@/lib/validation"
 
 export async function GET() {
   const guard = await requireAdmin()

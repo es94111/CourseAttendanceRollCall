@@ -1,9 +1,9 @@
-import { auth } from "@/lib/auth"
-import { prisma } from "@/lib/prisma"
-import { calculateStats } from "@/lib/attendance-stats"
-import { MyAttendanceTable } from "@/components/student/MyAttendanceTable"
-import { normalizeEmail } from "@/lib/email"
 import { PageHeader } from "@/components/shared/PageHeader"
+import { MyAttendanceTable } from "@/components/student/MyAttendanceTable"
+import { calculateStats } from "@/lib/attendance-stats"
+import { auth } from "@/lib/auth"
+import { normalizeEmail } from "@/lib/email"
+import { prisma } from "@/lib/prisma"
 
 export default async function MyAttendancePage() {
   const session = await auth()

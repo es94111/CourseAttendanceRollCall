@@ -181,8 +181,7 @@ export function formatAuditDescription(log: AuditLogRow) {
     case "delete_student_data":
       return target.studentCode ? `刪除學號 ${target.studentCode} 的學生個資` : "刪除學生個資"
     case "student_email_bind": {
-      const method =
-        target.bindMethod === "name_match" ? "（以 Google 顯示名稱自動比對）" : ""
+      const method = target.bindMethod === "name_match" ? "（以 Google 顯示名稱自動比對）" : ""
       return `綁定學生「${target.studentName ?? target.studentId ?? "未知"}」的 Google Email${method}`
     }
     case "student_email_unbind":

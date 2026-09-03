@@ -1,14 +1,16 @@
-import { prisma } from "@/lib/prisma"
 import { handleRouteError, json, requireUser } from "@/lib/api"
 import { calculateStats } from "@/lib/attendance-stats"
 import { normalizeEmail } from "@/lib/email"
+import { prisma } from "@/lib/prisma"
 
 export async function GET() {
   const guard = await requireUser()
   if ("response" in guard) return guard.response
   try {
     const student = await prisma.student.findFirst({
-      where: { googleEmail: { equals: normalizeEmail(guard.user.email) ?? "", mode: "insensitive" } },
+      where: {
+        googleEmail: { equals: normalizeEmail(guard.user.email) ?? "", mode: "insensitive" }
+      },
       include: {
         enrollments: {
           include: {
@@ -23,7 +25,9 @@ export async function GET() {
       student.enrollments.map(({ course }) => {
         const stats = calculateStats(
           course.sessions,
-          student.records.filter((record) => record.sessionId && course.sessions.some((s) => s.id === record.sessionId))
+          student.records.filter(
+            (record) => record.sessionId && course.sessions.some((s) => s.id === record.sessionId)
+          )
         ).get(student.id)
         return {
           courseId: course.id,
@@ -31,7 +35,9 @@ export async function GET() {
           onTimeCount: stats?.onTimeCount ?? 0,
           lateCount: stats?.lateCount ?? 0,
           leaveCount: stats?.leaveCount ?? 0,
-          absentCount: stats?.absentCount ?? course.sessions.filter((session) => session.status !== "voided").length,
+          absentCount:
+            stats?.absentCount ??
+            course.sessions.filter((session) => session.status !== "voided").length,
           attendanceRate: stats?.attendanceRate ?? 0
         }
       })

@@ -1,7 +1,7 @@
 import { z } from "zod"
-import { prisma } from "@/lib/prisma"
 import { error, handleRouteError, json, parseJson, requireAdmin } from "@/lib/api"
 import { normalizeEmail } from "@/lib/email"
+import { prisma } from "@/lib/prisma"
 
 const addStudentSchema = z.object({
   studentId: z.string().min(1).max(64, "學生 ID 過長").optional(),
@@ -17,7 +17,7 @@ const addStudentSchema = z.object({
 })
 
 export async function GET(_request: Request, props: any) {
-  const params = await props.params;
+  const params = await props.params
   const guard = await requireAdmin()
   if ("response" in guard) return guard.response
   try {
@@ -41,14 +41,14 @@ export async function GET(_request: Request, props: any) {
 }
 
 export async function POST(request: Request, props: any) {
-  const params = await props.params;
+  const params = await props.params
   const guard = await requireAdmin()
   if ("response" in guard) return guard.response
   const parsed = await parseJson(request, addStudentSchema)
   if ("response" in parsed) return parsed.response
   try {
     const course = await prisma.course.findUnique({ where: { id: params.id } })
-    if (!course || course.status !== "active") return error("課程不存在或已封存", 404)
+    if (course?.status !== "active") return error("課程不存在或已封存", 404)
 
     let studentId = parsed.data.studentId
 

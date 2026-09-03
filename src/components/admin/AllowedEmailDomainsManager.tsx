@@ -82,8 +82,9 @@ export function AllowedEmailDomainsManager({
       <section className="panel">
         <h2>允許登入網域</h2>
         <div className="field">
-          <label>網域清單</label>
+          <label htmlFor="allowed-domains">網域清單</label>
           <textarea
+            id="allowed-domains"
             rows={10}
             placeholder={"school.edu\nalumni.school.edu"}
             value={text}

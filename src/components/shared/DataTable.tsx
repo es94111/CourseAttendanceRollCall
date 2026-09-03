@@ -5,7 +5,13 @@ interface Column<T> {
   sortValue?: (row: T) => string | number
 }
 
-export function DataTable<T>({ rows, columns }: { rows: T[]; columns: Column<T>[] }) {
+export function DataTable<T extends { id: string | number }>({
+  rows,
+  columns
+}: {
+  rows: T[]
+  columns: Column<T>[]
+}) {
   return (
     <div className="table-scroll">
       <table>
@@ -17,8 +23,8 @@ export function DataTable<T>({ rows, columns }: { rows: T[]; columns: Column<T>[
           </tr>
         </thead>
         <tbody>
-          {rows.map((row, index) => (
-            <tr key={index}>
+          {rows.map((row) => (
+            <tr key={row.id}>
               {columns.map((column) => (
                 <td key={column.key}>{column.render(row)}</td>
               ))}

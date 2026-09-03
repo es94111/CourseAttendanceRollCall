@@ -1,8 +1,8 @@
 import Link from "next/link"
-import { prisma } from "@/lib/prisma"
 import { CourseForm } from "@/components/admin/CourseForm"
 import { CourseListTable } from "@/components/admin/CourseListTable"
 import { PageHeader } from "@/components/shared/PageHeader"
+import { prisma } from "@/lib/prisma"
 
 export default async function CoursesPage() {
   const courses = await prisma.course.findMany({

@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process"
-import path from "node:path"
 import { existsSync } from "node:fs"
+import path from "node:path"
 
 declare global {
   var __rollcallMigrated: Promise<void> | undefined
@@ -30,7 +30,9 @@ async function execute(): Promise<void> {
   }
 
   const schemaPath = path.join(process.cwd(), "prisma", "schema.prisma")
-  console.log(`[startup-migrate] Running prisma migrate deploy (cli=${prismaBin}, schema=${schemaPath})...`)
+  console.log(
+    `[startup-migrate] Running prisma migrate deploy (cli=${prismaBin}, schema=${schemaPath})...`
+  )
 
   const result = spawnSync(
     process.execPath,
@@ -45,7 +47,9 @@ async function execute(): Promise<void> {
   if (result.stderr) process.stderr.write(result.stderr)
 
   if (result.error) {
-    throw new Error(`[startup-migrate] failed to start prisma migrate deploy: ${result.error.message}`)
+    throw new Error(
+      `[startup-migrate] failed to start prisma migrate deploy: ${result.error.message}`
+    )
   }
 
   if (result.status !== 0) {

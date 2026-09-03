@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest"
 import {
+  type AuditLogRow,
   auditChangeEntries,
   auditTargetEntries,
-  formatAuditDescription,
-  type AuditLogRow
+  formatAuditDescription
 } from "@/lib/audit-log-format"
 
 function manualLog(overrides: Partial<AuditLogRow> = {}): AuditLogRow {

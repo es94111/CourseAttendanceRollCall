@@ -1,8 +1,8 @@
 import { error, handleRouteError, json, parseJson, requireAdmin } from "@/lib/api"
+import { writeAuditLog } from "@/lib/audit"
 import { extractEmailDomain, normalizeEmailDomain } from "@/lib/auth-domain"
 import { prisma } from "@/lib/prisma"
 import { allowedEmailDomainsSchema } from "@/lib/validation"
-import { writeAuditLog } from "@/lib/audit"
 
 export async function GET() {
   const guard = await requireAdmin()

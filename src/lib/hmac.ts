@@ -21,7 +21,10 @@ function sign(payload: string) {
   return createHmac("sha256", secret()).update(payload).digest("hex")
 }
 
-export function currentSlot(now = Date.now(), qrCodeValiditySeconds = DEFAULT_QR_CODE_VALIDITY_SECONDS) {
+export function currentSlot(
+  now = Date.now(),
+  qrCodeValiditySeconds = DEFAULT_QR_CODE_VALIDITY_SECONDS
+) {
   return Math.floor(now / slotMs(qrCodeValiditySeconds))
 }
 
@@ -58,7 +61,10 @@ export function verifyToken(
     const expected = sign(payload)
     const expectedBytes = Buffer.from(expected, "hex")
     const actualBytes = Buffer.from(signature, "hex")
-    if (expectedBytes.length !== actualBytes.length || !timingSafeEqual(expectedBytes, actualBytes)) {
+    if (
+      expectedBytes.length !== actualBytes.length ||
+      !timingSafeEqual(expectedBytes, actualBytes)
+    ) {
       return { valid: false as const }
     }
 

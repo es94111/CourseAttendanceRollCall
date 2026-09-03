@@ -1,10 +1,10 @@
+import { handleRouteError, json, requireAdmin } from "@/lib/api"
 import { generateToken } from "@/lib/hmac"
 import { buildCheckinUrl, generateQRCodeDataURL } from "@/lib/qrcode"
-import { handleRouteError, json, requireAdmin } from "@/lib/api"
 import { expireSessionIfNeeded } from "@/lib/session-expiry"
 
 export async function GET(request: Request, props: any) {
-  const params = await props.params;
+  const params = await props.params
   const guard = await requireAdmin()
   if ("response" in guard) return guard.response
   try {

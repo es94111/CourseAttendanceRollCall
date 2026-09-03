@@ -1,12 +1,12 @@
 import { z } from "zod"
 import { handleRouteError, json, parseJson, requireAdmin } from "@/lib/api"
+import { writeAuditLog } from "@/lib/audit"
 import {
+  getIpShareLimit,
   IP_SHARE_LIMIT_KEY,
   IP_SHARE_LIMIT_MAX,
-  getIpShareLimit,
   setIpShareLimit
 } from "@/lib/system-settings"
-import { writeAuditLog } from "@/lib/audit"
 
 const schema = z.object({
   value: z.number().int().min(0).max(IP_SHARE_LIMIT_MAX)

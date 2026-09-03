@@ -1,7 +1,7 @@
-import { prisma } from "@/lib/prisma"
 import { StudentDirectory } from "@/components/admin/StudentDirectory"
 import { StudentImportDialog } from "@/components/admin/StudentImportDialog"
 import { PageHeader } from "@/components/shared/PageHeader"
+import { prisma } from "@/lib/prisma"
 
 export default async function StudentsPage() {
   const students = await prisma.student.findMany({

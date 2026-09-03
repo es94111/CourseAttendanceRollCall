@@ -1,6 +1,6 @@
 import Link from "next/link"
-import { prisma } from "@/lib/prisma"
 import { PageHeader } from "@/components/shared/PageHeader"
+import { prisma } from "@/lib/prisma"
 
 function formatTaipeiDateTime(date: Date) {
   return date.toLocaleString("zh-TW", { timeZone: "Asia/Taipei", hour12: false })
@@ -224,6 +224,7 @@ function QuickLink({
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
+          aria-hidden
         >
           {icon}
         </svg>

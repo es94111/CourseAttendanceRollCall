@@ -1,13 +1,13 @@
-import { NextResponse } from "next/server"
 import { headers } from "next/headers"
+import { NextResponse } from "next/server"
 import { ZodError, type ZodSchema } from "zod"
 import { auth } from "@/lib/auth"
-import { logger } from "@/lib/logger"
 import { checkConnectionAccess } from "@/lib/connection-access"
+import { logger } from "@/lib/logger"
 import {
   hasTrustedRequestOrigin,
-  readBoundedJsonBody,
-  RequestSecurityError
+  RequestSecurityError,
+  readBoundedJsonBody
 } from "@/lib/request-security"
 
 export function json(data: unknown, init?: ResponseInit) {
@@ -24,7 +24,8 @@ export async function requireUser() {
     return { response: error("請求來源驗證失敗", 403) as NextResponse }
   }
   const access = await checkConnectionAccess(requestHeaders)
-  if (!access.allowed) return { response: error(access.reason ?? "此連線來源已被封鎖", 403) as NextResponse }
+  if (!access.allowed)
+    return { response: error(access.reason ?? "此連線來源已被封鎖", 403) as NextResponse }
   const session = await auth()
   if (!session?.user?.id) return { response: error("請先登入", 401) as NextResponse }
   return { user: session.user }

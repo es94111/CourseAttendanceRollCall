@@ -8,7 +8,14 @@ import { useToast } from "@/components/shared/ToastProvider"
 import { formatIpLocation } from "@/lib/ip-format"
 
 const leaveReasonOptions = ["病假", "事假", "公假", "喪假", "家庭因素", "交通延誤"]
-const overrideReasonOptions = ["學生補簽", "點名誤判", "教師確認出席", "學生請假補登", "操作錯誤修正", "特殊情況調整"]
+const overrideReasonOptions = [
+  "學生補簽",
+  "點名誤判",
+  "教師確認出席",
+  "學生請假補登",
+  "操作錯誤修正",
+  "特殊情況調整"
+]
 
 interface StudentRow {
   id: string
@@ -78,6 +85,7 @@ export function AttendanceTable({
     setRows(nextRows)
   }
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: refreshRecords 為閉包，重建 EventSource 會造成連線不斷重置
   useEffect(() => {
     const source = new EventSource(`/api/sessions/${sessionId}/stream`)
     source.addEventListener("attendance_count", () => {
@@ -94,7 +102,6 @@ export function AttendanceTable({
       source.close()
       window.clearInterval(interval)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId])
 
   async function override() {
@@ -246,8 +253,9 @@ export function AttendanceTable({
           ))}
         </div>
         <div className="field">
-          <label>原因，可自行修改或補充</label>
+          <label htmlFor="override-reason">原因，可自行修改或補充</label>
           <textarea
+            id="override-reason"
             rows={4}
             value={reason}
             placeholder="選擇上方常用原因，或直接輸入自訂原因"
@@ -289,8 +297,9 @@ export function AttendanceTable({
           ))}
         </div>
         <div className="field">
-          <label>請假原因，可自行修改或補充</label>
+          <label htmlFor="leave-reason">請假原因，可自行修改或補充</label>
           <textarea
+            id="leave-reason"
             rows={4}
             value={reason}
             placeholder="選擇上方常用原因，或直接輸入自訂原因"

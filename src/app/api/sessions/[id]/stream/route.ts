@@ -1,8 +1,8 @@
-import { generateToken } from "@/lib/hmac"
-import { buildCheckinUrl, generateQRCodeDataURL } from "@/lib/qrcode"
 import { requireAdmin } from "@/lib/api"
-import { expireSessionIfNeeded } from "@/lib/session-expiry"
+import { generateToken } from "@/lib/hmac"
 import { prisma } from "@/lib/prisma"
+import { buildCheckinUrl, generateQRCodeDataURL } from "@/lib/qrcode"
+import { expireSessionIfNeeded } from "@/lib/session-expiry"
 
 function event(name: string, data: unknown) {
   return `event: ${name}\ndata: ${JSON.stringify(data)}\n\n`
@@ -41,7 +41,7 @@ async function attendanceCountEvent(sessionId: string) {
 }
 
 export async function GET(request: Request, props: any) {
-  const params = await props.params;
+  const params = await props.params
   const guard = await requireAdmin()
   if ("response" in guard) return guard.response
   const encoder = new TextEncoder()
@@ -121,7 +121,10 @@ export async function GET(request: Request, props: any) {
           }
 
           if (!closed) {
-            timeout = setTimeout(() => void sendQr(), Math.max(5, session.qrCodeValiditySeconds) * 1000)
+            timeout = setTimeout(
+              () => void sendQr(),
+              Math.max(5, session.qrCodeValiditySeconds) * 1000
+            )
           }
           void attendanceCountEvent(params.id)
             .then((payload) => {

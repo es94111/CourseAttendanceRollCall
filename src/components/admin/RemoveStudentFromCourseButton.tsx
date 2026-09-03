@@ -32,14 +32,24 @@ export function RemoveStudentFromCourseButton({
 
   return (
     <span>
-      <button className="btn secondary" type="button" disabled={isPending} onClick={() => setConfirmOpen(true)}>
+      <button
+        className="btn secondary"
+        type="button"
+        disabled={isPending}
+        onClick={() => setConfirmOpen(true)}
+      >
         {isPending ? "移除中" : "移出課程"}
       </button>
       {error && <span style={{ color: "#b42318", marginLeft: 8 }}>{error}</span>}
       <Dialog title="移出課程" open={confirmOpen} onClose={() => setConfirmOpen(false)}>
         <p>確定要將此學生從課程移除？既有點名紀錄會保留。</p>
         <div className="toolbar dialog-actions">
-          <button className="btn secondary" type="button" disabled={isPending} onClick={() => setConfirmOpen(false)}>
+          <button
+            className="btn secondary"
+            type="button"
+            disabled={isPending}
+            onClick={() => setConfirmOpen(false)}
+          >
             取消
           </button>
           <button className="btn" type="button" disabled={isPending} onClick={onClick}>

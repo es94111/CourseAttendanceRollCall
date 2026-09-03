@@ -55,7 +55,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="zh-Hant">
       <body>
-        <ToastProvider>{access.allowed ? children : <BlockedPage reason={access.reason ?? "此連線來源已被封鎖"} />}</ToastProvider>
+        <ToastProvider>
+          {access.allowed ? (
+            children
+          ) : (
+            <BlockedPage reason={access.reason ?? "此連線來源已被封鎖"} />
+          )}
+        </ToastProvider>
       </body>
     </html>
   )

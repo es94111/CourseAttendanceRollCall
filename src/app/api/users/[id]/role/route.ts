@@ -1,10 +1,10 @@
-import { prisma } from "@/lib/prisma"
 import { error, handleRouteError, json, parseJson, requireAdmin } from "@/lib/api"
-import { roleSchema } from "@/lib/validation"
 import { writeAuditLog } from "@/lib/audit"
+import { prisma } from "@/lib/prisma"
+import { roleSchema } from "@/lib/validation"
 
 export async function PUT(request: Request, props: any) {
-  const params = await props.params;
+  const params = await props.params
   const guard = await requireAdmin()
   if ("response" in guard) return guard.response
   if (guard.user.id === params.id) return error("不可修改自身角色", 400)

@@ -4,7 +4,8 @@ import { checkConnectionAccess } from "@/lib/connection-access"
 
 async function enforceAuthAccess(request: NextRequest) {
   const access = await checkConnectionAccess(request.headers, new URL(request.url).pathname)
-  if (!access.allowed) return Response.json({ error: access.reason ?? "此連線來源已被封鎖" }, { status: 403 })
+  if (!access.allowed)
+    return Response.json({ error: access.reason ?? "此連線來源已被封鎖" }, { status: 403 })
   return null
 }
 

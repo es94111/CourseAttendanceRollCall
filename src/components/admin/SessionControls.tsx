@@ -268,6 +268,10 @@ export function SessionControls({
       <div
         className="mt-3 h-2 w-full rounded-full overflow-hidden"
         style={{ background: "var(--color-primary-100)" }}
+        role="progressbar"
+        aria-valuenow={attendancePct}
+        aria-valuemin={0}
+        aria-valuemax={100}
         aria-label={`出席率 ${attendancePct}%`}
       >
         <div
@@ -307,6 +311,7 @@ export function SessionControls({
               strokeWidth="2.5"
               strokeLinecap="round"
               strokeLinejoin="round"
+              aria-hidden
             >
               <path d="M20 6L9 17l-5-5" />
             </svg>

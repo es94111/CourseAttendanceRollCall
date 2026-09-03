@@ -1,10 +1,10 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { prisma } from "@/lib/prisma"
-import { QRCodeDisplay } from "@/components/admin/QRCodeDisplay"
 import { AttendanceTable } from "@/components/admin/AttendanceTable"
+import { QRCodeDisplay } from "@/components/admin/QRCodeDisplay"
 import { SessionControls } from "@/components/admin/SessionControls"
 import { PageHeader } from "@/components/shared/PageHeader"
+import { prisma } from "@/lib/prisma"
 
 export default async function SessionPage(props: any) {
   const params = await props.params

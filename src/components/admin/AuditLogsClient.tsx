@@ -3,12 +3,12 @@
 import { useEffect, useState, useTransition } from "react"
 import { Dialog } from "@/components/shared/Dialog"
 import {
+  type AuditLogRow,
   auditChangeEntries,
   auditTargetEntries,
   eventLabel,
   formatAuditDescription,
-  formatDateTime,
-  type AuditLogRow
+  formatDateTime
 } from "@/lib/audit-log-format"
 
 export function AuditLogsClient({
@@ -50,12 +50,12 @@ export function AuditLogsClient({
     })
   }
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: load 為閉包，僅應在篩選條件變動時重新載入
   useEffect(() => {
     const handle = window.setTimeout(() => {
       void load(1)
     }, 400)
     return () => window.clearTimeout(handle)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [actorEmail])
 
   const maxPage = Math.max(1, Math.ceil(total / pageSize))

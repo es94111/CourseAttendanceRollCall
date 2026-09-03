@@ -1,7 +1,7 @@
-import { prisma } from "@/lib/prisma"
-import { calculateStats } from "@/lib/attendance-stats"
 import { StatisticsPanel } from "@/components/admin/StatisticsPanel"
 import { PageHeader } from "@/components/shared/PageHeader"
+import { calculateStats } from "@/lib/attendance-stats"
+import { prisma } from "@/lib/prisma"
 
 export default async function StatisticsPage(props: any) {
   const params = await props.params

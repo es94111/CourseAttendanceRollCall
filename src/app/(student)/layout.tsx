@@ -1,9 +1,9 @@
-import Link from "next/link"
 import { headers } from "next/headers"
+import Link from "next/link"
 import { redirect } from "next/navigation"
+import { SecureSignOutButton } from "@/components/shared/SecureSignOutButton"
 import { auth } from "@/lib/auth"
 import { checkConnectionAccess } from "@/lib/connection-access"
-import { SecureSignOutButton } from "@/components/shared/SecureSignOutButton"
 
 export default async function StudentLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()

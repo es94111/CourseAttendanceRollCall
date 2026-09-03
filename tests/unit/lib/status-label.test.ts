@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest"
-import {
-  attendanceStatusLabel,
-  courseStatusLabel,
-  sessionStatusLabel
-} from "@/lib/status-label"
+import { attendanceStatusLabel, courseStatusLabel, sessionStatusLabel } from "@/lib/status-label"
 
 describe("status labels", () => {
   it("translates attendance statuses to Traditional Chinese", () => {

@@ -1,9 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
-import {
-  getTurnstileSiteKey,
-  isTurnstileEnabled,
-  verifyTurnstileToken
-} from "@/lib/turnstile"
+import { getTurnstileSiteKey, isTurnstileEnabled, verifyTurnstileToken } from "@/lib/turnstile"
 
 afterEach(() => {
   vi.unstubAllEnvs()

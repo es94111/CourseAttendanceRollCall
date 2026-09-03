@@ -1,15 +1,15 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { prisma } from "@/lib/prisma"
-import { CourseForm } from "@/components/admin/CourseForm"
-import { StudentImportDialog } from "@/components/admin/StudentImportDialog"
-import { DataTable } from "@/components/shared/DataTable"
-import { StudentManager } from "@/components/admin/StudentManager"
-import { OpenSessionForm } from "@/components/admin/OpenSessionForm"
-import { ExistingStudentPicker } from "@/components/admin/ExistingStudentPicker"
 import { ArchiveCourseButton } from "@/components/admin/ArchiveCourseButton"
+import { CourseForm } from "@/components/admin/CourseForm"
 import { CourseStudentTable } from "@/components/admin/CourseStudentTable"
+import { ExistingStudentPicker } from "@/components/admin/ExistingStudentPicker"
+import { OpenSessionForm } from "@/components/admin/OpenSessionForm"
+import { StudentImportDialog } from "@/components/admin/StudentImportDialog"
+import { StudentManager } from "@/components/admin/StudentManager"
+import { DataTable } from "@/components/shared/DataTable"
 import { PageHeader } from "@/components/shared/PageHeader"
+import { prisma } from "@/lib/prisma"
 
 const dayLabels = ["日", "一", "二", "三", "四", "五", "六"]
 

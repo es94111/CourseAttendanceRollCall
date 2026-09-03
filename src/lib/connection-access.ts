@@ -1,9 +1,9 @@
 import { isIP } from "node:net"
+import { writeAuditLog } from "@/lib/audit"
+import { lookupIpinfo, normalizeAsn } from "@/lib/ipinfo"
+import { logger } from "@/lib/logger"
 import { prisma } from "@/lib/prisma"
 import { getClientIpMetadata } from "@/lib/request-ip"
-import { lookupIpinfo, normalizeAsn } from "@/lib/ipinfo"
-import { writeAuditLog } from "@/lib/audit"
-import { logger } from "@/lib/logger"
 
 export type ConnectionAccessAction = "allow" | "block"
 export type ConnectionAccessTargetType = "country" | "ip" | "asn"
@@ -169,7 +169,8 @@ export async function evaluateConnectionAccess(identity: ConnectionIdentity) {
   if (!identity.ipAddress && rules.length > 0) {
     return {
       allowed: false,
-      reason: "無法識別此連線的來源 IP，無法套用連線來源規則，請檢查 TRUSTED_PROXY_MODE 與反向代理設定",
+      reason:
+        "無法識別此連線的來源 IP，無法套用連線來源規則，請檢查 TRUSTED_PROXY_MODE 與反向代理設定",
       rule: null
     }
   }

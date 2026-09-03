@@ -51,23 +51,37 @@ export function EditStudentButton({ student }: { student: StudentInput }) {
       <Dialog title="編輯學生資料" open={open} onClose={() => setOpen(false)}>
         <form onSubmit={onSubmit}>
           <div className="field">
-            <label>學號</label>
-            <input name="studentCode" defaultValue={student.studentCode ?? ""} />
+            <label htmlFor="edit-student-code">學號</label>
+            <input
+              id="edit-student-code"
+              name="studentCode"
+              defaultValue={student.studentCode ?? ""}
+            />
           </div>
           <div className="field">
-            <label>姓名</label>
-            <input name="name" defaultValue={student.name} required />
+            <label htmlFor="edit-student-name">姓名</label>
+            <input id="edit-student-name" name="name" defaultValue={student.name} required />
           </div>
           <div className="field">
-            <label>Google Email</label>
-            <input name="googleEmail" type="email" defaultValue={student.googleEmail ?? ""} />
+            <label htmlFor="edit-student-google-email">Google Email</label>
+            <input
+              id="edit-student-google-email"
+              name="googleEmail"
+              type="email"
+              defaultValue={student.googleEmail ?? ""}
+            />
             <p className="text-muted" style={{ margin: "6px 0 0", fontSize: "0.8125rem" }}>
               清空 Email 並儲存即可解除 Google 帳號綁定。
             </p>
           </div>
           {error && <p style={{ color: "#b42318" }}>{error}</p>}
           <div className="toolbar dialog-actions">
-            <button className="btn secondary" type="button" disabled={isSaving || isPending} onClick={() => setOpen(false)}>
+            <button
+              className="btn secondary"
+              type="button"
+              disabled={isSaving || isPending}
+              onClick={() => setOpen(false)}
+            >
               取消
             </button>
             <button className="btn" type="submit" disabled={isSaving || isPending}>

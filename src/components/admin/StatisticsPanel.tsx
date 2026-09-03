@@ -89,19 +89,38 @@ export function StatisticsPanel({
       <section className="panel">
         <div className="toolbar">
           <div className="field">
-            <label>開始日期</label>
-            <input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} />
+            <label htmlFor="stats-start-date">開始日期</label>
+            <input
+              id="stats-start-date"
+              type="date"
+              value={startDate}
+              onChange={(event) => setStartDate(event.target.value)}
+            />
           </div>
           <div className="field">
-            <label>結束日期</label>
-            <input type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} />
+            <label htmlFor="stats-end-date">結束日期</label>
+            <input
+              id="stats-end-date"
+              type="date"
+              value={endDate}
+              onChange={(event) => setEndDate(event.target.value)}
+            />
           </div>
-          <button className="btn secondary" type="button" disabled={isPending} onClick={loadFiltered}>
+          <button
+            className="btn secondary"
+            type="button"
+            disabled={isPending}
+            onClick={loadFiltered}
+          >
             套用篩選
           </button>
           <div className="field">
-            <label>狀態篩選</label>
-            <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+            <label htmlFor="stats-status-filter">狀態篩選</label>
+            <select
+              id="stats-status-filter"
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+            >
               <option value="all">全部學生</option>
               <option value="low">低出席率 (&lt; 80%)</option>
               <option value="absent">有缺席</option>
@@ -135,34 +154,34 @@ export function StatisticsPanel({
       {filteredRows.length === 0 ? (
         <div className="empty-state">目前篩選條件沒有統計資料</div>
       ) : (
-      <table>
-        <thead>
-          <tr>
-            <th>學號</th>
-            <th>姓名</th>
-            <th>準時</th>
-            <th>遲到</th>
-            <th>請假</th>
-            <th>缺席</th>
-            <th>出席率</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredRows.map((row) => (
-            <tr key={row.studentId}>
-              <td>{row.studentCode ?? "-"}</td>
-              <td>{row.name}</td>
-              <td>{row.onTimeCount}</td>
-              <td>{row.lateCount}</td>
-              <td>{row.leaveCount}</td>
-              <td>{row.absentCount}</td>
-              <td>
-                <span className="badge">{row.attendanceRate}%</span>
-              </td>
+        <table>
+          <thead>
+            <tr>
+              <th>學號</th>
+              <th>姓名</th>
+              <th>準時</th>
+              <th>遲到</th>
+              <th>請假</th>
+              <th>缺席</th>
+              <th>出席率</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {filteredRows.map((row) => (
+              <tr key={row.studentId}>
+                <td>{row.studentCode ?? "-"}</td>
+                <td>{row.name}</td>
+                <td>{row.onTimeCount}</td>
+                <td>{row.lateCount}</td>
+                <td>{row.leaveCount}</td>
+                <td>{row.absentCount}</td>
+                <td>
+                  <span className="badge">{row.attendanceRate}%</span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       )}
       <Dialog title="確認匯出個資 CSV" open={exportOpen} onClose={() => setExportOpen(false)}>
         <p>匯出的 CSV 含學生姓名、學號與出席資料。請確認你只會用於授權的課務或稽核目的。</p>

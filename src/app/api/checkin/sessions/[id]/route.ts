@@ -1,14 +1,14 @@
-import { auth } from "@/lib/auth"
-import { normalizeEmail } from "@/lib/email"
 import { error, handleRouteError, json } from "@/lib/api"
-import { hasTrustedRequestOrigin } from "@/lib/request-security"
+import { auth } from "@/lib/auth"
 import { checkConnectionAccess } from "@/lib/connection-access"
+import { normalizeEmail } from "@/lib/email"
 import { prisma } from "@/lib/prisma"
+import { hasTrustedRequestOrigin } from "@/lib/request-security"
 import { expireSessionIfNeeded } from "@/lib/session-expiry"
 import { toTaipeiIso } from "@/lib/time"
 
 export async function GET(_request: Request, props: any) {
-  const params = await props.params;
+  const params = await props.params
   if (!hasTrustedRequestOrigin(_request.headers)) {
     return error("請求來源驗證失敗", 403)
   }

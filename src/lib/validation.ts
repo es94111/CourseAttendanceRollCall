@@ -10,7 +10,12 @@ const courseBaseSchema = z.object({
   dayOfWeek: z.number().int().min(0).max(6),
   startTime: z.string().regex(timePattern, "開始時間格式需為 HH:MM"),
   endTime: z.string().regex(timePattern, "結束時間格式需為 HH:MM"),
-  lateThresholdMinutes: z.number().int().min(0).max(24 * 60).default(0)
+  lateThresholdMinutes: z
+    .number()
+    .int()
+    .min(0)
+    .max(24 * 60)
+    .default(0)
 })
 
 export const courseSchema = courseBaseSchema.refine((data) => data.endTime > data.startTime, {

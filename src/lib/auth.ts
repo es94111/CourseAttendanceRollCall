@@ -1,10 +1,10 @@
+import { PrismaAdapter } from "@auth/prisma-adapter"
 import NextAuth from "next-auth"
 import Google from "next-auth/providers/google"
-import { PrismaAdapter } from "@auth/prisma-adapter"
-import { resolveSignInRole } from "@/lib/auth-role"
 import { extractEmailDomain } from "@/lib/auth-domain"
-import { prisma } from "@/lib/prisma"
+import { resolveSignInRole } from "@/lib/auth-role"
 import { normalizeEmail } from "@/lib/email"
+import { prisma } from "@/lib/prisma"
 
 async function loadAllowedEmailDomains(): Promise<string[]> {
   const rows = await prisma.allowedEmailDomain.findMany({ select: { domain: true } })

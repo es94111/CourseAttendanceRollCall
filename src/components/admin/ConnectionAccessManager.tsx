@@ -111,9 +111,10 @@ export function ConnectionAccessManager({
         <div className="detail-grid">
           <div>
             <div className="field">
-              <label>封鎖國家代碼</label>
+              <label htmlFor="block-countries">封鎖國家代碼</label>
               <textarea
                 rows={8}
+                id="block-countries"
                 placeholder={"CN\nRU"}
                 value={blockCountries}
                 onChange={(event) => setBlockCountries(event.target.value)}
@@ -123,9 +124,10 @@ export function ConnectionAccessManager({
           </div>
           <div>
             <div className="field">
-              <label>封鎖 IP</label>
+              <label htmlFor="block-ips">封鎖 IP</label>
               <textarea
                 rows={8}
+                id="block-ips"
                 placeholder={"203.0.113.10\n173.245.48.0/20\n2001:db8::1"}
                 value={blockIps}
                 onChange={(event) => setBlockIps(event.target.value)}
@@ -135,9 +137,10 @@ export function ConnectionAccessManager({
           </div>
           <div>
             <div className="field">
-              <label>封鎖 ASN</label>
+              <label htmlFor="block-asns">封鎖 ASN</label>
               <textarea
                 rows={8}
+                id="block-asns"
                 placeholder={"AS13335\nAS15169"}
                 value={blockAsns}
                 onChange={(event) => setBlockAsns(event.target.value)}
@@ -153,9 +156,10 @@ export function ConnectionAccessManager({
         <div className="detail-grid">
           <div>
             <div className="field">
-              <label>允許國家代碼</label>
+              <label htmlFor="allow-countries">允許國家代碼</label>
               <textarea
                 rows={8}
+                id="allow-countries"
                 placeholder={"TW\nJP"}
                 value={allowCountries}
                 onChange={(event) => setAllowCountries(event.target.value)}
@@ -165,9 +169,10 @@ export function ConnectionAccessManager({
           </div>
           <div>
             <div className="field">
-              <label>允許 IP</label>
+              <label htmlFor="allow-ips">允許 IP</label>
               <textarea
                 rows={8}
+                id="allow-ips"
                 placeholder={"198.51.100.8\n103.21.244.0/22\n2001:db8::2"}
                 value={allowIps}
                 onChange={(event) => setAllowIps(event.target.value)}
@@ -177,9 +182,10 @@ export function ConnectionAccessManager({
           </div>
           <div>
             <div className="field">
-              <label>允許 ASN</label>
+              <label htmlFor="allow-asns">允許 ASN</label>
               <textarea
                 rows={8}
+                id="allow-asns"
                 placeholder={"AS3462\nAS9924"}
                 value={allowAsns}
                 onChange={(event) => setAllowAsns(event.target.value)}
@@ -251,8 +257,9 @@ function IpShareLimitForm({ initialValue }: { initialValue: number }) {
         3~5；若教室共用 Wi-Fi NAT 出口同 IP，請依實際同時上線人數調高，否則會誤殺正常學生。
       </p>
       <div className="field" style={{ maxWidth: 240 }}>
-        <label>同 IP 簽到上限</label>
+        <label htmlFor="ip-share-limit">同 IP 簽到上限</label>
         <input
+          id="ip-share-limit"
           type="number"
           min={0}
           max={1000}
