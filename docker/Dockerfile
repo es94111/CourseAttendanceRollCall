@@ -45,7 +45,9 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV TZ=Asia/Taipei
 # Pin base-image OpenSSL to the latest patched release from the Alpine repo
 # (e.g. CVE-2026-14456 fixed in 3.5.8-r0) until node:24-alpine is rebuilt.
-RUN apk add --no-cache libssl3 libcrypto3
+# --upgrade is required: the packages are already installed in the base image,
+# and plain `apk add` is a no-op for installed packages.
+RUN apk add --no-cache --upgrade libssl3 libcrypto3
 # Global npm CLI is never invoked at runtime (CMD only runs `node server.js`,
 # and startup-migrate.ts calls the prisma JS entrypoint directly), so drop it
 # to remove its bundled deps from the image.
