@@ -7,7 +7,8 @@
   },
   "files": {
     // *.min.js 未列在 .gitignore，需明確排除
-    "includes": ["**", "!*.min.js", "!package-lock.json"]
+    // next-env.d.ts 由 Next.js 自動產生（帶分號），不納入 Biome 管理
+    "includes": ["**", "!*.min.js", "!package-lock.json", "!next-env.d.ts"]
   },
   "formatter": {
     "enabled": true,
