@@ -2,7 +2,7 @@
 
 以 Next.js（App Router）打造的全端課程點名系統。管理員可建立課程、匯入學生名單、開啟動態 QR Code 點名 Session；學生使用 Google 帳號掃描 QR Code 完成點名。系統自動統計出席率，並支援含 PII 警告的 CSV 匯出與雙軌稽核日誌。
 
-> **目前版本**：0.7.4（開發中）
+> **目前版本**：0.7.5（開發中）
 > **版本歷程**：[changelog.json](./changelog.json)
 > **功能規格**：[specs/001-course-attendance-rollcall/spec.md](./specs/001-course-attendance-rollcall/spec.md)
 > **實作計畫**：[specs/001-course-attendance-rollcall/plan.md](./specs/001-course-attendance-rollcall/plan.md)
