@@ -1,0 +1,16 @@
+# 本機部署 override：改用 Docker Hub 上已發布的 image，而不從原始碼 build
+# 使用方式：docker compose -f docker/docker-compose.yml -f docker/docker-compose.local.yml ...
+services:
+  app:
+    image: es94111/courseattendancerollcall:latest
+    platform: linux/amd64
+    build: !reset null
+    environment:
+      TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:-}
+      TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-}
+      IPINFO_TOKEN: ${IPINFO_TOKEN:-}
+  db:
+    # postgres:18 image 把 PGDATA 移到 /var/lib/postgresql/<version>/docker，
+    # mount 需覆蓋到 /var/lib/postgresql 才能正確初始化
+    volumes: !reset
+      - postgres_data:/var/lib/postgresql

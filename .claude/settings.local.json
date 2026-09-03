@@ -88,7 +88,10 @@
       "Bash(echo \"SEMGREP_EXIT=$?\")",
       "Bash(echo \"TRIVY_EXIT=$?\")",
       "Bash(echo \"DOCKERCI_EXIT=$?\")",
-      "Bash(gh pr *)"
+      "Bash(gh pr *)",
+      "Bash(awk '{print $2}')",
+      "Bash(grep -v '^$')",
+      "WebSearch"
     ]
   },
   "enabledMcpjsonServers": [

@@ -7,8 +7,12 @@ export async function POST(_request: Request, props: any) {
   const guard = await requireAdmin()
   if ("response" in guard) return guard.response
   try {
-    const session = await prisma.attendanceSession.findUnique({ where: { id: params.id } })
+    const session = await prisma.attendanceSession.findUnique({
+      where: { id: params.id },
+      include: { course: { select: { status: true } } }
+    })
     if (!session) return error("點名 Session 不存在", 404)
+    if (session.course.status === "archived") return error("此課程已封存，無法重新開啟 Session", 400)
     if (session.status === "active") return error("此 Session 已在進行中", 409)
     if (session.status === "voided") return error("已作廢的 Session 無法重新開啟", 400)
     const otherActive = await prisma.attendanceSession.findFirst({
