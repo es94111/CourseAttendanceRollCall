@@ -37,8 +37,12 @@ export default async function SessionDisplayPage(props: any) {
           <p className="display-eyebrow">課程點名 QR Code</p>
           <h1>{session.course.name}</h1>
           <p>
-            第 {sessionOrder} 次點名 ·{" "}
-            {session.officialStartTime.toLocaleString("zh-TW", { timeZone: "Asia/Taipei" })}
+            {session.officialStartTime.toLocaleDateString("zh-TW", { timeZone: "Asia/Taipei" })} 第{" "}
+            {sessionOrder} 次點名 ·{" "}
+            {session.officialStartTime.toLocaleTimeString("zh-TW", {
+              timeZone: "Asia/Taipei",
+              hour12: false
+            })}
           </p>
         </div>
         <span className={`badge ${session.status}`}>
