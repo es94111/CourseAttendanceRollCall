@@ -1967,6 +1967,36 @@ a.stat-card:hover {
   padding: 14px;
 }
 
+.advanced-settings-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 0 14px 14px;
+}
+
+.advanced-settings-footer span {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+.reset-defaults-btn {
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--color-primary-700);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.reset-defaults-btn:hover {
+  color: var(--color-primary-900);
+}
+
 .launch-button {
   min-height: 46px;
 }

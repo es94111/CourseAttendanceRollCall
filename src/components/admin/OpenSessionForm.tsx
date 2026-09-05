@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { useMemo, useState, useTransition } from "react"
+import { useEffect, useMemo, useState, useTransition } from "react"
 
 function todayDateTime(time: string) {
   const now = new Date()
@@ -10,6 +10,47 @@ function todayDateTime(time: string) {
   const offset = now.getTimezoneOffset()
   const local = new Date(now.getTime() - offset * 60_000)
   return local.toISOString().slice(0, 16)
+}
+
+const DEFAULT_ADVANCED_SETTINGS = {
+  autoExpireMinutes: 90,
+  qrCodeValiditySeconds: 15,
+  gracePeriodSeconds: 60
+}
+
+type AdvancedSettings = typeof DEFAULT_ADVANCED_SETTINGS
+
+function advancedSettingsStorageKey(courseId: string) {
+  return `rollcall:advancedSettings:${courseId}`
+}
+
+function loadSavedAdvancedSettings(courseId: string): AdvancedSettings | null {
+  try {
+    const raw = window.localStorage.getItem(advancedSettingsStorageKey(courseId))
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as Partial<Record<keyof AdvancedSettings, unknown>>
+    const autoExpireMinutes = Number(parsed.autoExpireMinutes)
+    const qrCodeValiditySeconds = Number(parsed.qrCodeValiditySeconds)
+    const gracePeriodSeconds = Number(parsed.gracePeriodSeconds)
+    if (
+      !Number.isFinite(autoExpireMinutes) ||
+      !Number.isFinite(qrCodeValiditySeconds) ||
+      !Number.isFinite(gracePeriodSeconds)
+    ) {
+      return null
+    }
+    return { autoExpireMinutes, qrCodeValiditySeconds, gracePeriodSeconds }
+  } catch {
+    return null
+  }
+}
+
+function saveAdvancedSettings(courseId: string, settings: AdvancedSettings) {
+  try {
+    window.localStorage.setItem(advancedSettingsStorageKey(courseId), JSON.stringify(settings))
+  } catch {
+    // localStorage 不可用（例如無痕模式）時安靜略過，不影響點名建立
+  }
 }
 
 export function OpenSessionForm({
@@ -25,10 +66,29 @@ export function OpenSessionForm({
   const [error, setError] = useState("")
   const [isSaving, setIsSaving] = useState(false)
   const [isPending, startTransition] = useTransition()
+  const [advancedSettings, setAdvancedSettings] = useState<AdvancedSettings>(DEFAULT_ADVANCED_SETTINGS)
+  const [restoredFromSaved, setRestoredFromSaved] = useState(false)
   const defaultOfficialStartTime = useMemo(
     () => todayDateTime(defaultStartTime),
     [defaultStartTime]
   )
+
+  useEffect(() => {
+    const saved = loadSavedAdvancedSettings(courseId)
+    if (saved) {
+      setAdvancedSettings(saved)
+      setRestoredFromSaved(true)
+    }
+  }, [courseId])
+
+  function updateAdvancedSetting(key: keyof AdvancedSettings, rawValue: string) {
+    setAdvancedSettings((prev) => ({ ...prev, [key]: Number(rawValue) }))
+  }
+
+  function resetAdvancedSettings() {
+    setAdvancedSettings(DEFAULT_ADVANCED_SETTINGS)
+    setRestoredFromSaved(false)
+  }
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -73,6 +133,7 @@ export function OpenSessionForm({
       setError(body.error ?? "開啟點名失敗")
       return
     }
+    saveAdvancedSettings(courseId, { autoExpireMinutes, qrCodeValiditySeconds, gracePeriodSeconds })
     startTransition(() => router.push(`/sessions/${body.id}`))
   }
 
@@ -134,7 +195,7 @@ export function OpenSessionForm({
           <details className="advanced-settings">
             <summary>
               進階設定
-              <span>一般情況可使用預設值</span>
+              <span>{restoredFromSaved ? "已套用上次使用的設定" : "一般情況可使用預設值"}</span>
             </summary>
             <div className="form-grid">
               <div className="field">
@@ -145,7 +206,10 @@ export function OpenSessionForm({
                     name="autoExpireMinutes"
                     type="number"
                     min={1}
-                    defaultValue={90}
+                    value={advancedSettings.autoExpireMinutes}
+                    onChange={(event) =>
+                      updateAdvancedSetting("autoExpireMinutes", event.target.value)
+                    }
                     required
                   />
                   <span>分鐘</span>
@@ -159,7 +223,10 @@ export function OpenSessionForm({
                     name="qrCodeValiditySeconds"
                     type="number"
                     min={5}
-                    defaultValue={15}
+                    value={advancedSettings.qrCodeValiditySeconds}
+                    onChange={(event) =>
+                      updateAdvancedSetting("qrCodeValiditySeconds", event.target.value)
+                    }
                     required
                   />
                   <span>秒</span>
@@ -173,12 +240,21 @@ export function OpenSessionForm({
                     name="gracePeriodSeconds"
                     type="number"
                     min={1}
-                    defaultValue={60}
+                    value={advancedSettings.gracePeriodSeconds}
+                    onChange={(event) =>
+                      updateAdvancedSetting("gracePeriodSeconds", event.target.value)
+                    }
                     required
                   />
                   <span>秒</span>
                 </div>
               </div>
+            </div>
+            <div className="advanced-settings-footer">
+              <span>送出後會自動記住這些數值，供下次點名使用。</span>
+              <button type="button" className="reset-defaults-btn" onClick={resetAdvancedSettings}>
+                恢復預設值
+              </button>
             </div>
           </details>
 
