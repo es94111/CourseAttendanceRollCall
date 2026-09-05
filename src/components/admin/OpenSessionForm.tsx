@@ -66,7 +66,8 @@ export function OpenSessionForm({
   const [error, setError] = useState("")
   const [isSaving, setIsSaving] = useState(false)
   const [isPending, startTransition] = useTransition()
-  const [advancedSettings, setAdvancedSettings] = useState<AdvancedSettings>(DEFAULT_ADVANCED_SETTINGS)
+  const [advancedSettings, setAdvancedSettings] =
+    useState<AdvancedSettings>(DEFAULT_ADVANCED_SETTINGS)
   const [restoredFromSaved, setRestoredFromSaved] = useState(false)
   const defaultOfficialStartTime = useMemo(
     () => todayDateTime(defaultStartTime),
