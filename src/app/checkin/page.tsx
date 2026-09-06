@@ -24,8 +24,10 @@ function CheckinContent() {
   const validitySeconds = Math.max(5, Number(params.get("validitySeconds") ?? 15) || 15)
   const gracePeriodSeconds = Math.max(0, Number(params.get("gracePeriodSeconds") ?? 60) || 60)
   const slot = useMemo(() => parseTokenSlot(token, validitySeconds), [token, validitySeconds])
-  const [remaining, setRemaining] = useState(0)
-  const [acceptedRemaining, setAcceptedRemaining] = useState(0)
+  // null = 倒數尚未就緒（SSR／水合前）。不得以 0 起始，否則首次渲染會被誤判為
+  // 「已過期」，學生一打開頁面就看到誤導性的過期畫面。
+  const [remaining, setRemaining] = useState<number | null>(null)
+  const [acceptedRemaining, setAcceptedRemaining] = useState<number | null>(null)
   const [result, setResult] = useState<{
     kind: "info" | "success" | "error"
     title: string
@@ -35,19 +37,26 @@ function CheckinContent() {
   const [checkinInfo, setCheckinInfo] = useState<CheckinInfo | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [autoSubmitted, setAutoSubmitted] = useState(false)
-  const expired = remaining <= 0
+  // token 無法解析（slot === null）與倒數未就緒（remaining === null）都不算過期，
+  // 前者屬於「資料不完整／無法辨識」，後者屬於「尚未就緒」，各自有獨立畫面。
+  const expired = remaining !== null && remaining <= 0
   const hasCheckinParams = Boolean(token && sessionId)
   const completedAttendance = checkinInfo?.attendance ?? null
   const courseName = checkinInfo?.courseName ?? "課程點名"
 
   useEffect(() => {
     const tick = () => {
-      const expiresAt = slot?.expiresAt.getTime() ?? 0
-      setRemaining(slot ? Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000)) : 0)
+      // slot 無法解析時保持 null（由「QR Code 內容無法辨識」畫面處理），
+      // 不要倒數歸零被誤判成「已過期」。
+      if (!slot) {
+        setRemaining(null)
+        setAcceptedRemaining(null)
+        return
+      }
+      const expiresAt = slot.expiresAt.getTime()
+      setRemaining(Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000)))
       setAcceptedRemaining(
-        slot
-          ? Math.max(0, Math.ceil((expiresAt + gracePeriodSeconds * 1000 - Date.now()) / 1000))
-          : 0
+        Math.max(0, Math.ceil((expiresAt + gracePeriodSeconds * 1000 - Date.now()) / 1000))
       )
     }
     tick()
@@ -153,9 +162,13 @@ function CheckinContent() {
   }
 
   const totalForProgress = validitySeconds + gracePeriodSeconds
-  const totalRemaining = expired ? acceptedRemaining : remaining + gracePeriodSeconds
-  const progress = Math.max(0, Math.min(100, (totalRemaining / totalForProgress) * 100))
-  const inGracePeriod = expired && acceptedRemaining > 0
+  const totalRemaining =
+    remaining === null ? null : expired ? (acceptedRemaining ?? 0) : remaining + gracePeriodSeconds
+  const progress =
+    totalRemaining === null
+      ? 0
+      : Math.max(0, Math.min(100, (totalRemaining / totalForProgress) * 100))
+  const inGracePeriod = expired && (acceptedRemaining ?? 0) > 0
 
   return (
     <main className="min-h-dvh grid place-items-start sm:place-items-center px-4 py-6 bg-linear-to-b from-primary-50 via-paper to-paper">
@@ -203,11 +216,26 @@ function CheckinContent() {
             />
           ) : result?.kind === "success" ? (
             <StatusHeader icon="success" title={result.title} subtitle={result.detail} />
-          ) : expired && acceptedRemaining <= 0 ? (
+          ) : remaining === null ? (
+            // 倒數尚未就緒（SSR／水合中）：先以中性畫面呈現，勿預設「已過期」。
+            <StatusHeader
+              icon="qr"
+              title="點名資料載入中"
+              subtitle="請稍候；若畫面停在這裡，請重新掃描 QR Code"
+            />
+          ) : !slot ? (
+            // Token 無法解析不是「過期」，是資料無法辨識——可能是掃描不完整。
             <StatusHeader
               icon="warn"
-              title="QR Code 可能已過期"
-              subtitle="仍可嘗試登入，由系統確認是否可點名"
+              title="QR Code 內容無法辨識"
+              subtitle="請重新掃描管理員顯示的最新 QR Code"
+            />
+          ) : expired && (acceptedRemaining ?? 0) <= 0 ? (
+            // 真的超出有效期限＋寬限：不預先下結論，點名以伺服器驗證結果為準。
+            <StatusHeader
+              icon="warn"
+              title="已超出此組 QR Code 的顯示時限"
+              subtitle="請重新掃描最新的 QR Code 送出點名；若無法取得，請向授課老師回報"
             />
           ) : inGracePeriod ? (
             <StatusHeader

@@ -39,7 +39,7 @@ export async function POST(request: Request) {
       session.qrCodeValiditySeconds
     )
     if (!tokenResult.valid || tokenResult.sessionId !== parsed.data.sessionId) {
-      return error("Token 無效或已過期", 400)
+      return error("點名連結已失效，請重新掃描最新的 QR Code", 400)
     }
     if (session.status !== "active") return error("Session 已關閉", 403)
     const clientIp = getClientIpMetadata(request.headers)

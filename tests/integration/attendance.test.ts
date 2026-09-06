@@ -227,7 +227,8 @@ describe("POST /api/attendance — rejection paths", () => {
 
     expect(response.status).toBe(400)
     const body = await response.json()
-    expect(body.error).toContain("Token")
+    // 訊息需以學生可執行的措辭呈現（重新掃描），而非揭露 Token 技術細節。
+    expect(body.error).toContain("重新掃描")
   })
 
   it("rejects a valid token bound to a different session", async () => {
