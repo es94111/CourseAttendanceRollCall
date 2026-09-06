@@ -1,6 +1,18 @@
 {
-  "currentVersion": "0.8.2",
+  "currentVersion": "0.8.3",
   "releases": [
+    {
+      "version": "0.8.3",
+      "date": "2026-09-06",
+      "title": "修正學生點名頁一直顯示載入中",
+      "type": "fixed",
+      "changes": [
+        {
+          "tag": "fixed",
+          "text": "修正學生掃描 QR Code 開啟點名頁面後，畫面可能一直停在「點名資料載入中」、無法進入倒數與提交點名的問題；現在所有學生都能正常看到點名倒數與「使用 Google 登入」按鈕並完成點名。"
+        }
+      ]
+    },
     {
       "version": "0.8.2",
       "date": "2026-09-06",
