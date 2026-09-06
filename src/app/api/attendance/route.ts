@@ -16,6 +16,15 @@ export async function POST(request: Request) {
   if ("response" in guard) return guard.response
   const parsed = await parseJson(request, attendanceSchema)
   if ("response" in parsed) return parsed.response
+  // Hoisted so the P2002 fallback in the catch block can re-read the winning
+  // record when a concurrent duplicate submission loses the unique race.
+  let student: {
+    id: string
+    studentCode: string | null
+    name: string
+    googleEmail: string | null
+    userId: string | null
+  } | null = null
   try {
     await expireSessionIfNeeded(parsed.data.sessionId)
     const session = await prisma.attendanceSession.findUnique({
@@ -46,12 +55,12 @@ export async function POST(request: Request) {
     if (!access.allowed) return error(access.reason ?? "此連線來源不允許點名", 403)
     const userEmail = normalizeEmail(guard.user.email)
     if (!userEmail) return error("Google 帳號缺少 Email，無法點名", 400)
-    let student = await prisma.student.findFirst({
+    let matchedByName = false
+    student = await prisma.student.findFirst({
       where: {
         OR: [{ userId: guard.user.id }, { googleEmail: { equals: userEmail, mode: "insensitive" } }]
       }
     })
-    let matchedByName = false
     if (!student) {
       // Deliberate design: admins may not preset googleEmail, so allow binding
       // by matching the Google account's display name against unbound roster
@@ -160,9 +169,11 @@ export async function POST(request: Request) {
       })
     }
     const attendedAt = new Date()
+    // FR-015: officialStartTime is the sole late-judgment baseline — the admin
+    // may open the QR session before or after the official class start.
     const status = attendanceStatus(
       attendedAt,
-      session.createdAt,
+      session.officialStartTime,
       session.course.lateThresholdMinutes
     )
     const record = await prisma.attendanceRecord.create({
@@ -184,6 +195,37 @@ export async function POST(request: Request) {
       courseName: session.course.name
     })
   } catch (cause) {
+    // Concurrent duplicate submissions (e.g. network retries) race past the
+    // "existing record" check above and hit the DB unique constraint instead —
+    // the first submission already succeeded, so answer with the duplicate
+    // wording (FR-013) rather than a 500.
+    if (cause && typeof cause === "object" && "code" in cause && cause.code === "P2002") {
+      try {
+        // The P2002 came from inserting the attendance record, so the student
+        // was already resolved and is guaranteed non-null at this point.
+        const studentId = student?.id ?? ""
+        const record = await prisma.attendanceRecord.findUnique({
+          where: {
+            sessionId_studentId: {
+              sessionId: parsed.data.sessionId,
+              studentId
+            }
+          },
+          include: { session: { include: { course: true } } }
+        })
+        if (record) {
+          return json({
+            message: "已完成點名",
+            status: record.status,
+            attendedAt: toTaipeiIso(record.attendedAt),
+            courseName: record.session.course.name,
+            duplicate: true
+          })
+        }
+      } catch (fallbackCause) {
+        return handleRouteError(fallbackCause)
+      }
+    }
     return handleRouteError(cause)
   }
 }
