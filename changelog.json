@@ -1,6 +1,18 @@
 {
-  "currentVersion": "0.8.1",
+  "currentVersion": "0.8.2",
   "releases": [
+    {
+      "version": "0.8.2",
+      "date": "2026-09-06",
+      "title": "投影畫面僅顯示日期與時間",
+      "type": "improved",
+      "changes": [
+        {
+          "tag": "improved",
+          "text": "課程點名 QR Code 投影畫面不再顯示「第幾次點名」的次數資訊，現在只呈現課程名稱、日期與時間，畫面更簡潔，也避免讓學生在意這是本學期第幾次點名。"
+        }
+      ]
+    },
     {
       "version": "0.8.1",
       "date": "2026-09-06",

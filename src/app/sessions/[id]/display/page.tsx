@@ -23,13 +23,6 @@ export default async function SessionDisplayPage(props: any) {
   })
   if (!session) notFound()
 
-  const sessionOrder = await prisma.attendanceSession.count({
-    where: {
-      courseId: session.courseId,
-      createdAt: { lte: session.createdAt }
-    }
-  })
-
   return (
     <main className="display-page">
       <header className="display-header">
@@ -37,8 +30,7 @@ export default async function SessionDisplayPage(props: any) {
           <p className="display-eyebrow">課程點名 QR Code</p>
           <h1>{session.course.name}</h1>
           <p>
-            {session.officialStartTime.toLocaleDateString("zh-TW", { timeZone: "Asia/Taipei" })} 第{" "}
-            {sessionOrder} 次點名 ·{" "}
+            {session.officialStartTime.toLocaleDateString("zh-TW", { timeZone: "Asia/Taipei" })}{" "}
             {session.officialStartTime.toLocaleTimeString("zh-TW", {
               timeZone: "Asia/Taipei",
               hour12: false
