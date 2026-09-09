@@ -37,11 +37,13 @@ interface AttendanceRow {
 export function AttendanceTable({
   sessionId,
   records,
-  students
+  students,
+  isSessionActive
 }: {
   sessionId: string
   records: AttendanceRow[]
   students: StudentRow[]
+  isSessionActive: boolean
 }) {
   const router = useRouter()
   const { showToast } = useToast()
@@ -87,6 +89,7 @@ export function AttendanceTable({
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: refreshRecords 為閉包，重建 EventSource 會造成連線不斷重置
   useEffect(() => {
+    if (!isSessionActive) return
     const source = new EventSource(`/api/sessions/${sessionId}/stream`)
     source.addEventListener("attendance_count", () => {
       void refreshRecords()
@@ -102,7 +105,7 @@ export function AttendanceTable({
       source.close()
       window.clearInterval(interval)
     }
-  }, [sessionId])
+  }, [isSessionActive, sessionId])
 
   async function override() {
     if (!overrideTarget) return

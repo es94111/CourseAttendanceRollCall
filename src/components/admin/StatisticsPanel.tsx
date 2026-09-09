@@ -17,11 +17,13 @@ interface StatRow {
 export function StatisticsPanel({
   courseId,
   initialRows,
-  initialTotalSessions
+  initialTotalSessions,
+  hasActiveSession
 }: {
   courseId: string
   initialRows: StatRow[]
   initialTotalSessions: number
+  hasActiveSession: boolean
 }) {
   const [rows, setRows] = useState(initialRows)
   const [totalSessions, setTotalSessions] = useState(initialTotalSessions)
@@ -33,14 +35,16 @@ export function StatisticsPanel({
   const [isPending, startTransition] = useTransition()
 
   useEffect(() => {
+    if (!hasActiveSession) return
     const source = new EventSource(`/api/courses/${courseId}/statistics/stream`)
     source.addEventListener("statistics_update", (event) => {
       const data = JSON.parse((event as MessageEvent).data)
       setRows(data.students ?? [])
       setTotalSessions(data.totalSessions ?? 0)
     })
+    source.addEventListener("statistics_stream_closed", () => source.close())
     return () => source.close()
-  }, [courseId])
+  }, [courseId, hasActiveSession])
 
   async function loadFiltered() {
     setError("")

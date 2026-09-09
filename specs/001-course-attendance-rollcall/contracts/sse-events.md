@@ -108,7 +108,7 @@ data: {
 **路由**：`GET /api/courses/:courseId/statistics/stream`  
 **權限**：admin  
 **Content-Type**：`text/event-stream`  
-**說明**：管理員查看統計頁面時連線，每當有新的點名記錄、補登或請假時，推送最新統計資料。
+**說明**：管理員查看統計頁面且課程仍有進行中的點名 Session 時連線，每當有新的點名記錄、補登或請假時，推送最新統計資料；沒有進行中的 Session 時不建立串流，避免閒置連線喚醒服務。
 
 ### 事件類型
 
@@ -134,6 +134,17 @@ data: {
 }
 
 ```
+
+#### `statistics_stream_closed`（沒有進行中的 Session 或查詢發生錯誤時推送一次）
+```
+event: statistics_stream_closed
+data: {
+  "reason": "no_active_session"
+}
+
+```
+
+伺服器推送此事件後會關閉串流；前端收到後應關閉 EventSource。
 
 ---
 

@@ -52,9 +52,10 @@ export function QRCodeDisplay({
   }, [sessionId, status])
 
   useEffect(() => {
+    if (status !== "active") return
     const interval = setInterval(() => setRemaining((value) => Math.max(0, value - 1)), 1000)
     return () => clearInterval(interval)
-  }, [])
+  }, [status])
 
   const progress = total > 0 ? Math.max(0, Math.min(100, (remaining / total) * 100)) : 0
   const isLowTime = remaining > 0 && remaining <= 5

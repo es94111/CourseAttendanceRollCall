@@ -47,6 +47,7 @@ export default async function StatisticsPage(props: any) {
         initialTotalSessions={
           course?.sessions.filter((session) => session.status !== "voided").length ?? 0
         }
+        hasActiveSession={course?.sessions.some((session) => session.status === "active") ?? false}
       />
     </main>
   )

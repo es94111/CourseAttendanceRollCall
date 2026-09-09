@@ -89,7 +89,12 @@ export default async function SessionPage(props: any) {
           </div>
           <span className="count-badge">{students.length} 位學生</span>
         </div>
-        <AttendanceTable sessionId={session.id} records={records} students={students} />
+        <AttendanceTable
+          sessionId={session.id}
+          records={records}
+          students={students}
+          isSessionActive={session.status === "active"}
+        />
       </section>
     </main>
   )

@@ -1,6 +1,22 @@
 {
-  "currentVersion": "0.8.3",
+  "currentVersion": "0.8.4",
   "releases": [
+    {
+      "version": "0.8.4",
+      "date": "2026-09-09",
+      "title": "修正 Railway 閒置服務無法進入 Sleeping",
+      "type": "fixed",
+      "changes": [
+        {
+          "tag": "fixed",
+          "text": "修正管理員沒有開啟點名頁面時，統計頁與已結束 Session 頁面仍持續建立 SSE 連線及週期性請求，導致 Railway 服務無法進入 Sleeping 的問題。"
+        },
+        {
+          "tag": "improved",
+          "text": "調整 PostgreSQL 閒置連線回收與 TCP keepalive 設定，降低服務閒置時的私有網路流量。"
+        }
+      ]
+    },
     {
       "version": "0.8.3",
       "date": "2026-09-06",
