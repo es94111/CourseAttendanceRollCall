@@ -22,20 +22,48 @@ export async function GET(request: Request, props: any) {
             }
           }
         : {}
-    const where = {
-      session: {
-        courseId: params.id,
-        ...dateWhere
+    const [sessions, enrollments] = await Promise.all([
+      prisma.attendanceSession.findMany({
+        where: { courseId: params.id, ...dateWhere },
+        include: { records: { include: { student: true } } },
+        orderBy: { createdAt: "asc" }
+      }),
+      prisma.courseEnrollment.findMany({
+        where: { courseId: params.id },
+        include: { student: true },
+        orderBy: { createdAt: "asc" }
+      })
+    ])
+
+    const enrolledStudents = enrollments.map(({ student }) => student)
+    const enrolledStudentIds = new Set(enrolledStudents.map((student) => student.id))
+    const rows = sessions.flatMap((session) => {
+      const recordsByStudent = new Map(session.records.map((record) => [record.studentId, record]))
+      const students = [...enrolledStudents]
+
+      // Keep historical records for students who were removed from the
+      // course after attending, even though they are no longer in the roster.
+      for (const record of session.records) {
+        if (!enrolledStudentIds.has(record.studentId)) students.push(record.student)
       }
-    }
-    const total = await prisma.attendanceRecord.count({ where })
-    if (total > 30_000) return error("匯出筆數超過 30,000，請縮小日期範圍", 400)
-    const rows = await prisma.attendanceRecord.findMany({
-      where,
-      include: { student: true, session: true },
-      orderBy: { attendedAt: "asc" },
-      take: 30_000
+
+      return students.map((student) => {
+        const record = recordsByStudent.get(student.id)
+        return {
+          student,
+          session,
+          status: record?.status ?? "absent",
+          attendedAt: record?.attendedAt ?? null,
+          ipAddress: record?.ipAddress ?? null,
+          ipCountry: record?.ipCountry ?? null,
+          ipCountryName: record?.ipCountryName ?? null,
+          userAgent: record?.userAgent ?? null
+        }
+      })
     })
+
+    const total = rows.length
+    if (total > 30_000) return error("匯出筆數超過 30,000，請縮小日期範圍", 400)
     await writeAuditLog({
       eventType: "export_attendance",
       actorId: guard.user.id,
