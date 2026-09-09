@@ -154,7 +154,19 @@ compose 內建：
 - `depends_on` healthcheck，DB ready 後才啟動 app
 - App 啟動時自動跑 migrations，**首次啟動即可直接登入使用**
 
-### 方法二：自建 image 部署到 VPS／雲端
+### 方法二：部署到 Railway
+
+本專案已提供根目錄的 [`railway.json`](./railway.json)，會明確指定使用 `docker/Dockerfile`，避免 Railway 因 Dockerfile 不在根目錄而改用 Railpack。部署完成後，請在 Railway 服務設定執行以下操作：
+
+1. `Settings → Deploy → Serverless` 開啟 Serverless（舊介面可能顯示為 App Sleeping）。
+2. 開啟後重新部署一次；Railway 的 Serverless 設定要在新建立的 container 上才會生效。
+3. 確認服務沒有開啟中的點名頁、投影頁或外部 uptime monitor；這些連線與請求會讓服務保持活躍。
+
+Railway 會以服務的 outbound traffic 判斷閒置。應用程式已關閉 Next.js telemetry、讓 PostgreSQL pool 在 5 秒閒置後釋放連線，並在沒有 active Session 時不建立 SSE 輪詢；停止流量後通常需等待約 5～10 分鐘才會顯示 Sleeping。啟用 Serverless 本身不能由應用程式程式碼代替，且每次啟用後都需要重新部署。
+
+若 Railway 服務尚未使用 `railway.json`，也可在 Variables 新增 `RAILWAY_DOCKERFILE_PATH=docker/Dockerfile`，再重新部署。部署記錄應可看到使用 Dockerfile 建置，而非只使用 Railpack 的 `npm start`。
+
+### 方法三：自建 image 部署到 VPS／雲端
 
 適用於 Zeabur、Fly.io、GCP Cloud Run、AWS ECS、Hetzner VPS 等。
 

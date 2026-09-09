@@ -1,6 +1,22 @@
 {
-  "currentVersion": "0.8.4",
+  "currentVersion": "0.8.5",
   "releases": [
+    {
+      "version": "0.8.5",
+      "date": "2026-09-09",
+      "title": "強化 Railway 閒置服務休眠",
+      "type": "fixed",
+      "changes": [
+        {
+          "tag": "fixed",
+          "text": "修正 SSE 連線在瀏覽器或平台中斷後仍可能保留計時器的問題，避免閒置服務持續查詢資料庫而無法進入 Sleeping。"
+        },
+        {
+          "tag": "improved",
+          "text": "新增 Railway 部署設定，明確使用 Dockerfile 並提供健康檢查路徑，降低部署流程誤用預設建置方式的風險。"
+        }
+      ]
+    },
     {
       "version": "0.8.4",
       "date": "2026-09-09",

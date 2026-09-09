@@ -6,6 +6,7 @@ export async function GET(request: Request, props: any) {
   const guard = await requireAdmin()
   if ("response" in guard) return guard.response
   const encoder = new TextEncoder()
+  let closeStream: (() => void) | undefined
   const stream = new ReadableStream({
     start(controller) {
       let interval: ReturnType<typeof setInterval> | null = null
@@ -24,6 +25,7 @@ export async function GET(request: Request, props: any) {
           // The client may have disconnected while a database query was running.
         }
       }
+      closeStream = close
 
       const emit = (name: string, data: unknown) => {
         if (closed) return false
@@ -67,6 +69,9 @@ export async function GET(request: Request, props: any) {
       }
       interval = setInterval(() => void send(), 2000)
       void send()
+    },
+    cancel() {
+      closeStream?.()
     }
   })
   return new Response(stream, {

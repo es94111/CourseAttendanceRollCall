@@ -45,6 +45,7 @@ export async function GET(request: Request, props: any) {
   const guard = await requireAdmin()
   if ("response" in guard) return guard.response
   const encoder = new TextEncoder()
+  let closeStream: (() => void) | undefined
   const stream = new ReadableStream({
     async start(controller) {
       let timeout: ReturnType<typeof setTimeout> | null = null
@@ -53,12 +54,14 @@ export async function GET(request: Request, props: any) {
         if (closed) return
         closed = true
         if (timeout) clearTimeout(timeout)
+        request.signal.removeEventListener("abort", close)
         try {
           controller.close()
         } catch {
           // Client disconnected while the server was preparing the next SSE event.
         }
       }
+      closeStream = close
       const enqueue = (payload: string) => {
         if (closed) return false
         try {
@@ -138,6 +141,9 @@ export async function GET(request: Request, props: any) {
         }
       }
       await sendQr()
+    },
+    cancel() {
+      closeStream?.()
     }
   })
   return new Response(stream, {
